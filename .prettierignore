@@ -1,0 +1,8 @@
+# Add files here to ignore them from prettier formatting
+**/build
+**/.gradle
+**/.settings
+**/.project
+**/.classpath
+**/.git
+**/*.gradle
