@@ -39,16 +39,23 @@ final class PriceChartCanvas extends Canvas {
   private double xZoomDragStart;
   private int xZoomDragStartVisiblePricePointCount;
 
+  // X pan state
+  private double xPanDragStart;
+  private int xPanDragStartOffset;
+
   // Y zoom state
   private double yZoomScale = 1.0;
   private double yZoomDragStart;
   private double yZoomDragStartZoomScale;
 
-  // Zoom drag mode
-  private AxisZoomDragMode zoomDragMode = AxisZoomDragMode.NONE;
+  // Mouse drag mode
+  private DragMode dragMode = DragMode.NONE;
 
   // Size of 'visible' price points list as determined by x zoom
   private int visiblePricePointCount;
+
+  // Positive values show older data; negative values leave empty space after the newest point.
+  private int visiblePricePointOffset;
 
   // Track initial price points
   private final List<PricePoint> pricePoints;
@@ -83,7 +90,7 @@ final class PriceChartCanvas extends Canvas {
 
     drawTitle(graphics, width);
     drawHorizontalGridLines(graphics, bounds);
-    drawVerticalGridLines(graphics, bounds, visiblePricePoints);
+    drawVerticalGridLines(graphics, bounds);
     drawAxes(graphics, bounds);
     drawYAxisTicks(graphics, bounds, priceRange);
     drawXAxisTicks(graphics, bounds, visiblePricePoints);
@@ -92,18 +99,11 @@ final class PriceChartCanvas extends Canvas {
 
   private void setEventsListeners() {
     setOnMouseMoved(event -> {
-      ChartBounds bounds = chartBounds();
-      if (isOverPriceAxisArea(event.getX(), event.getY(), bounds)) {
-        setCursor(Cursor.V_RESIZE);
-      } else if (isOverDateAxisArea(event.getY(), bounds)) {
-        setCursor(Cursor.H_RESIZE);
-      } else {
-        setCursor(Cursor.DEFAULT);
-      }
+      updateCursor(event.getX(), event.getY());
     });
 
     setOnMouseExited(event -> {
-      if (zoomDragMode == AxisZoomDragMode.NONE) {
+      if (dragMode == DragMode.NONE) {
         setCursor(Cursor.DEFAULT);
       }
     });
@@ -112,42 +112,65 @@ final class PriceChartCanvas extends Canvas {
       ChartBounds bounds = chartBounds();
 
       if (isOverPriceAxisArea(event.getX(), event.getY(), bounds)) {
-        zoomDragMode = AxisZoomDragMode.PRICE;
+        dragMode = DragMode.ZOOM_PRICE;
         yZoomDragStart = event.getY();
         yZoomDragStartZoomScale = yZoomScale;
         setCursor(Cursor.V_RESIZE);
       } else if (isOverDateAxisArea(event.getY(), bounds)) {
-        zoomDragMode = AxisZoomDragMode.DATE;
+        dragMode = DragMode.ZOOM_DATE;
         xZoomDragStart = event.getX();
         xZoomDragStartVisiblePricePointCount = visiblePricePointCount;
         setCursor(Cursor.H_RESIZE);
+      } else if (isOverChartArea(event.getX(), event.getY(), bounds)) {
+        dragMode = DragMode.PAN;
+        xPanDragStart = event.getX();
+        xPanDragStartOffset = visiblePricePointOffset;
+        setCursor(Cursor.CLOSED_HAND);
       }
     });
 
     setOnMouseDragged(event -> {
-      if (zoomDragMode == AxisZoomDragMode.DATE) {
-        updateDateAxisZoom(event.getX());
-      } else if (zoomDragMode == AxisZoomDragMode.PRICE) {
-        updatePriceAxisZoom(event.getY());
+      if (dragMode == DragMode.ZOOM_DATE) {
+        handleXAxisZoom(event.getX());
+      } else if (dragMode == DragMode.ZOOM_PRICE) {
+        handleYAxisZoom(event.getY());
+      } else if (dragMode == DragMode.PAN) {
+        handleHorizontalPan(event.getX());
       }
     });
 
-    setOnMouseReleased(event -> zoomDragMode = AxisZoomDragMode.NONE);
+    setOnMouseReleased(event -> {
+      dragMode = DragMode.NONE;
+      updateCursor(event.getX(), event.getY());
+    });
   }
 
-  private void updateDateAxisZoom(double x) {
-    double deltaX = x - xZoomDragStart;
-    int pointDelta = (int) Math.round(deltaX / X_ZOOM_PIXELS_PER_POINT);
+  private void handleXAxisZoom(double x) {
+    double xDelta = x - xZoomDragStart;
+    int pointDelta = (int) Math.round(xDelta / X_ZOOM_PIXELS_PER_POINT);
     int requestedVisiblePointCount = xZoomDragStartVisiblePricePointCount - pointDelta;
     int clampedVisiblePointCount = clampVisiblePointCount(requestedVisiblePointCount);
 
     if (clampedVisiblePointCount != visiblePricePointCount) {
       visiblePricePointCount = clampedVisiblePointCount;
+      visiblePricePointOffset = clampVisiblePointOffset(visiblePricePointOffset);
       drawChart();
     }
   }
 
-  private void updatePriceAxisZoom(double y) {
+  private void handleHorizontalPan(double x) {
+    ChartBounds bounds = chartBounds();
+    double pointSpacing = bounds.width() / Math.max(1, visiblePricePointCount - 1);
+    int pointDelta = (int) Math.round((x - xPanDragStart) / pointSpacing);
+    int clampedOffset = clampVisiblePointOffset(xPanDragStartOffset + pointDelta);
+
+    if (clampedOffset != visiblePricePointOffset) {
+      visiblePricePointOffset = clampedOffset;
+      drawChart();
+    }
+  }
+
+  private void handleYAxisZoom(double y) {
     double deltaY = y - yZoomDragStart;
     double requestedYZoomScale = yZoomDragStartZoomScale * Math.exp(deltaY / Y_ZOOM_PIXELS_PER_STEP);
     double clampedYZoomScale = clampYZoomScale(requestedYZoomScale);
@@ -235,8 +258,8 @@ final class PriceChartCanvas extends Canvas {
     return bounds.bottom() - ratio * bounds.height();
   }
 
-  private void drawVerticalGridLines(GraphicsContext graphics, ChartBounds bounds, List<PricePoint> visiblePoints) {
-    int ticks = xTickCount(visiblePoints);
+  private void drawVerticalGridLines(GraphicsContext graphics, ChartBounds bounds) {
+    int ticks = xTickCount();
 
     graphics.setStroke(Color.rgb(223, 228, 236));
     graphics.setLineWidth(1.0);
@@ -252,25 +275,26 @@ final class PriceChartCanvas extends Canvas {
     graphics.setTextAlign(TextAlignment.CENTER);
     graphics.setTextBaseline(VPos.TOP);
 
-    int lastIndex = visiblePoints.size() - 1;
-    int ticks = xTickCount(visiblePoints);
+    int ticks = xTickCount();
     for (int tick = 0; tick <= ticks; tick++) {
       double ratio = xTickRatio(tick, ticks);
-      int index = (int) Math.round(ratio * lastIndex);
+      int index = (int) Math.round(ratio * (visiblePricePointCount - 1));
       double x = xForTick(tick, ticks, bounds);
-      PricePoint point = visiblePoints.get(index);
 
       graphics.setStroke(Color.rgb(40, 44, 52));
       graphics.setLineWidth(1.0);
       graphics.strokeLine(x, bounds.bottom(), x, bounds.bottom() + 5.0);
 
-      graphics.setFill(Color.rgb(74, 82, 94));
-      graphics.fillText(point.date().format(AXIS_DATE_FORMAT), x, bounds.bottom() + 10.0);
+      if (index < visiblePoints.size()) {
+        PricePoint point = visiblePoints.get(index);
+        graphics.setFill(Color.rgb(74, 82, 94));
+        graphics.fillText(point.date().format(AXIS_DATE_FORMAT), x, bounds.bottom() + 10.0);
+      }
     }
   }
 
-  private int xTickCount(List<PricePoint> visiblePoints) {
-    return Math.min(X_TICK_COUNT, visiblePoints.size() - 1);
+  private int xTickCount() {
+    return Math.min(X_TICK_COUNT, visiblePricePointCount - 1);
   }
 
   private double xForTick(int tick, int ticks, ChartBounds bounds) {
@@ -299,9 +323,9 @@ final class PriceChartCanvas extends Canvas {
       PricePoint current = visiblePoints.get(index);
 
       graphics.strokeLine(
-        xForIndex(index - 1, visiblePoints.size(), bounds),
+        xForIndex(index - 1, visiblePricePointCount, bounds),
         yForPrice(previous.price(), bounds, priceRange),
-        xForIndex(index, visiblePoints.size(), bounds),
+        xForIndex(index, visiblePricePointCount, bounds),
         yForPrice(current.price(), bounds, priceRange)
       );
     }
@@ -333,14 +357,21 @@ final class PriceChartCanvas extends Canvas {
     return y >= bounds.bottom() && y <= getHeight();
   }
 
+  private boolean isOverChartArea(double x, double y, ChartBounds bounds) {
+    return x >= bounds.left() && x <= bounds.right() && y >= bounds.top() && y <= bounds.bottom();
+  }
+
   private boolean isOverPriceAxisArea(double x, double y, ChartBounds bounds) {
     return x >= bounds.right() && x <= getWidth() && y >= bounds.top() && y <= bounds.bottom();
   }
 
   private List<PricePoint> visiblePricePoints() {
     int clampedPointCount = clampVisiblePointCount(visiblePricePointCount);
-    int firstVisibleIndex = Math.max(0, pricePoints.size() - clampedPointCount);
-    return pricePoints.subList(firstVisibleIndex, pricePoints.size());
+    int clampedOffset = clampVisiblePointOffset(visiblePricePointOffset);
+    int lastVisibleIndexExclusive = Math.min(pricePoints.size(), pricePoints.size() - clampedOffset);
+    int displayedPointCount = clampedPointCount + Math.min(0, clampedOffset);
+    int firstVisibleIndex = lastVisibleIndexExclusive - displayedPointCount;
+    return pricePoints.subList(firstVisibleIndex, lastVisibleIndexExclusive);
   }
 
   private int clampVisiblePointCount(int requestedPointCount) {
@@ -348,14 +379,34 @@ final class PriceChartCanvas extends Canvas {
     return Math.max(minimum, Math.min(pricePoints.size(), requestedPointCount));
   }
 
+  private int clampVisiblePointOffset(int requestedOffset) {
+    int minimumOffset = -(visiblePricePointCount - 1);
+    int maximumOffset = pricePoints.size() - visiblePricePointCount;
+    return Math.max(minimumOffset, Math.min(maximumOffset, requestedOffset));
+  }
+
   private double clampYZoomScale(double requestedYZoomScale) {
     return Math.max(MIN_Y_ZOOM_SCALE, Math.min(MAX_Y_ZOOM_SCALE, requestedYZoomScale));
   }
 
-  private enum AxisZoomDragMode {
+  private void updateCursor(double x, double y) {
+    ChartBounds bounds = chartBounds();
+    if (isOverPriceAxisArea(x, y, bounds)) {
+      setCursor(Cursor.V_RESIZE);
+    } else if (isOverDateAxisArea(y, bounds)) {
+      setCursor(Cursor.H_RESIZE);
+    } else if (isOverChartArea(x, y, bounds)) {
+      setCursor(Cursor.OPEN_HAND);
+    } else {
+      setCursor(Cursor.DEFAULT);
+    }
+  }
+
+  private enum DragMode {
     NONE,
-    DATE,
-    PRICE,
+    ZOOM_DATE,
+    ZOOM_PRICE,
+    PAN,
   }
 
   private record PriceRange(double min, double max) {
