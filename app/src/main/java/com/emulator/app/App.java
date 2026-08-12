@@ -17,6 +17,7 @@ import javafx.stage.Stage;
 public class App extends Application {
 
   private static final String CSV_RESOURCE = "/daily_IBM.csv";
+  private static final ChartInterval DATA_INTERVAL = ChartInterval.DAILY;
   private static final double MIN_CANVAS_WIDTH = 760.0;
   private static final double MIN_CANVAS_HEIGHT = 460.0;
   private static final String CHART_TITLE = "AAPL Close Price - Last 2 Months";
@@ -28,7 +29,7 @@ public class App extends Application {
   @Override
   public void start(Stage stage) {
     List<PricePoint> pricePoints = PriceDataLoader.loadFromResource(CSV_RESOURCE);
-    PriceChartCanvas chart = new PriceChartCanvas(pricePoints, CHART_TITLE);
+    PriceChartCanvas chart = new PriceChartCanvas(pricePoints, CHART_TITLE, DATA_INTERVAL);
 
     Pane root = new Pane(chart);
     Scene scene = new Scene(root, MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT, Color.WHITE);

@@ -1,7 +1,8 @@
 package com.emulator.app;
 
-import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
+import com.emulator.app.XAxisTickCalculator.XAxisTick;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -11,8 +12,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 
 final class PriceChartCanvas extends Canvas {
-
-  private static final DateTimeFormatter AXIS_DATE_FORMAT = DateTimeFormatter.ofPattern("MM/dd");
 
   // Padding
   private static final double LEFT_MARGIN = 28.0;
@@ -31,9 +30,8 @@ final class PriceChartCanvas extends Canvas {
   // X zoom minimum price points to display
   private static final int MIN_VISIBLE_POINTS = 8;
 
-  // Tick counts
+  // Tick count
   private static final int Y_TICK_COUNT = 5;
-  private static final int X_TICK_COUNT = 6;
 
   // X zoom state
   private double xZoomDragStart;
@@ -60,14 +58,22 @@ final class PriceChartCanvas extends Canvas {
   // Track initial price points
   private final List<PricePoint> pricePoints;
 
+  private final ChartInterval interval;
+
   // NOTE: No sure if title should be kept at the canvas level?
   private final String title;
 
   PriceChartCanvas(List<PricePoint> pricePoints, String title) {
+    this(pricePoints, title, ChartInterval.DAILY);
+  }
+
+  PriceChartCanvas(List<PricePoint> pricePoints, String title, ChartInterval interval) {
     this.visiblePricePointCount = pricePoints.size();
     this.pricePoints = List.copyOf(pricePoints);
     this.title = title;
+    this.interval = Objects.requireNonNull(interval);
 
+    ChartReloadHooks.register(this);
     widthProperty().addListener((ignored, oldWidth, newWidth) -> drawChart());
     heightProperty().addListener((ignored, oldHeight, newHeight) -> drawChart());
     setEventsListeners();
@@ -85,16 +91,17 @@ final class PriceChartCanvas extends Canvas {
     graphics.fillRect(0, 0, width, height);
 
     ChartBounds bounds = chartBounds();
-    List<PricePoint> visiblePricePoints = visiblePricePoints();
-    PriceRange priceRange = calculatePriceRange(visiblePricePoints);
+    VisibleWindow visibleWindow = visibleWindow();
+    List<XAxisTick> xAxisTicks = xAxisTicks(bounds, visibleWindow);
+    PriceRange priceRange = calculatePriceRange(visibleWindow.points());
 
     drawTitle(graphics, width);
     drawHorizontalGridLines(graphics, bounds);
-    drawVerticalGridLines(graphics, bounds);
+    drawVerticalGridLines(graphics, bounds, xAxisTicks);
     drawAxes(graphics, bounds);
     drawYAxisTicks(graphics, bounds, priceRange);
-    drawXAxisTicks(graphics, bounds, visiblePricePoints);
-    drawPriceLine(graphics, bounds, priceRange, visiblePricePoints);
+    drawXAxisTicks(graphics, bounds, visibleWindow, xAxisTicks);
+    drawPriceLine(graphics, bounds, priceRange, visibleWindow.points());
   }
 
   private void setEventsListeners() {
@@ -258,51 +265,50 @@ final class PriceChartCanvas extends Canvas {
     return bounds.bottom() - ratio * bounds.height();
   }
 
-  private void drawVerticalGridLines(GraphicsContext graphics, ChartBounds bounds) {
-    int ticks = xTickCount();
-
+  private void drawVerticalGridLines(GraphicsContext graphics, ChartBounds bounds, List<XAxisTick> ticks) {
     graphics.setStroke(Color.rgb(223, 228, 236));
     graphics.setLineWidth(1.0);
 
-    for (int tick = 0; tick <= ticks; tick++) {
-      double x = xForTick(tick, ticks, bounds);
+    for (XAxisTick tick : ticks) {
+      double x = xForSlot(tick.slotIndex(), visiblePricePointCount, bounds);
       graphics.strokeLine(x, bounds.top(), x, bounds.bottom());
     }
   }
 
-  private void drawXAxisTicks(GraphicsContext graphics, ChartBounds bounds, List<PricePoint> visiblePoints) {
+  private void drawXAxisTicks(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    VisibleWindow visibleWindow,
+    List<XAxisTick> ticks
+  ) {
     graphics.setFont(Font.font("System", 12));
     graphics.setTextAlign(TextAlignment.CENTER);
     graphics.setTextBaseline(VPos.TOP);
 
-    int ticks = xTickCount();
-    for (int tick = 0; tick <= ticks; tick++) {
-      double ratio = xTickRatio(tick, ticks);
-      int index = (int) Math.round(ratio * (visiblePricePointCount - 1));
-      double x = xForTick(tick, ticks, bounds);
+    for (XAxisTick tick : ticks) {
+      double x = xForSlot(tick.slotIndex(), visiblePricePointCount, bounds);
 
       graphics.setStroke(Color.rgb(40, 44, 52));
       graphics.setLineWidth(1.0);
       graphics.strokeLine(x, bounds.bottom(), x, bounds.bottom() + 5.0);
 
-      if (index < visiblePoints.size()) {
-        PricePoint point = visiblePoints.get(index);
+      int pointIndex = tick.dataIndex() - visibleWindow.firstDataIndex();
+      if (pointIndex >= 0 && pointIndex < visibleWindow.points().size()) {
+        PricePoint point = visibleWindow.points().get(pointIndex);
         graphics.setFill(Color.rgb(74, 82, 94));
-        graphics.fillText(point.date().format(AXIS_DATE_FORMAT), x, bounds.bottom() + 10.0);
+        graphics.fillText(interval.format(point.date()), x, bounds.bottom() + 10.0);
       }
     }
   }
 
-  private int xTickCount() {
-    return Math.min(X_TICK_COUNT, visiblePricePointCount - 1);
-  }
-
-  private double xForTick(int tick, int ticks, ChartBounds bounds) {
-    return bounds.left() + xTickRatio(tick, ticks) * bounds.width();
-  }
-
-  private double xTickRatio(int tick, int ticks) {
-    return ticks == 0 ? 0.5 : (double) tick / ticks;
+  private List<XAxisTick> xAxisTicks(ChartBounds bounds, VisibleWindow visibleWindow) {
+    return XAxisTickCalculator.calculate(
+      pricePoints.size(),
+      visibleWindow.firstDataIndex(),
+      visiblePricePointCount,
+      bounds.width(),
+      interval
+    );
   }
 
   private void drawPriceLine(
@@ -323,16 +329,16 @@ final class PriceChartCanvas extends Canvas {
       PricePoint current = visiblePoints.get(index);
 
       graphics.strokeLine(
-        xForIndex(index - 1, visiblePricePointCount, bounds),
+        xForSlot(index - 1, visiblePricePointCount, bounds),
         yForPrice(previous.price(), bounds, priceRange),
-        xForIndex(index, visiblePricePointCount, bounds),
+        xForSlot(index, visiblePricePointCount, bounds),
         yForPrice(current.price(), bounds, priceRange)
       );
     }
     graphics.restore();
   }
 
-  private double xForIndex(int index, int pointCount, ChartBounds bounds) {
+  private double xForSlot(int index, int pointCount, ChartBounds bounds) {
     if (pointCount == 1) {
       return bounds.left() + bounds.width() / 2.0;
     }
@@ -365,13 +371,13 @@ final class PriceChartCanvas extends Canvas {
     return x >= bounds.right() && x <= getWidth() && y >= bounds.top() && y <= bounds.bottom();
   }
 
-  private List<PricePoint> visiblePricePoints() {
+  private VisibleWindow visibleWindow() {
     int clampedPointCount = clampVisiblePointCount(visiblePricePointCount);
     int clampedOffset = clampVisiblePointOffset(visiblePricePointOffset);
     int lastVisibleIndexExclusive = Math.min(pricePoints.size(), pricePoints.size() - clampedOffset);
     int displayedPointCount = clampedPointCount + Math.min(0, clampedOffset);
     int firstVisibleIndex = lastVisibleIndexExclusive - displayedPointCount;
-    return pricePoints.subList(firstVisibleIndex, lastVisibleIndexExclusive);
+    return new VisibleWindow(pricePoints.subList(firstVisibleIndex, lastVisibleIndexExclusive), firstVisibleIndex);
   }
 
   private int clampVisiblePointCount(int requestedPointCount) {
@@ -414,6 +420,8 @@ final class PriceChartCanvas extends Canvas {
       return max - min;
     }
   }
+
+  private record VisibleWindow(List<PricePoint> points, int firstDataIndex) {}
 
   private record ChartBounds(double left, double top, double width, double height) {
     double right() {
