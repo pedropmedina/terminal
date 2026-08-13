@@ -1,4 +1,4 @@
-package com.emulator.app.hotreload;
+package com.acteque.terminal.hotreload;
 
 import org.hotswap.agent.annotation.LoadEvent;
 import org.hotswap.agent.annotation.OnClassLoadEvent;
@@ -12,10 +12,10 @@ import org.hotswap.agent.config.PluginManager;
     testedVersions = "2.0.3")
 public final class JavaFxRedrawPlugin {
 
-  private static final String SUPPORT_CLASS = "com.emulator.app.HotReloadSupport";
+  private static final String SUPPORT_CLASS = "com.acteque.terminal.HotReloadSupport";
 
   @OnClassLoadEvent(
-      classNameRegexp = "com[./]emulator[./]app[./](?!hotreload[./]).*",
+      classNameRegexp = "com[./]acteque[./]terminal[./](?!hotreload[./]).*",
       events = LoadEvent.REDEFINE)
   public static void redrawCharts(ClassLoader applicationClassLoader) {
     PluginManager.getInstance()

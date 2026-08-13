@@ -1,10 +1,10 @@
-package com.emulator.app;
+package com.acteque.terminal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.emulator.app.XAxisTickCalculator.XAxisTick;
+import com.acteque.terminal.XAxisTickCalculator.XAxisTick;
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;

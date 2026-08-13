@@ -38,7 +38,7 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass = "com.emulator.app.App"
+    mainClass = "com.acteque.terminal.App"
 }
 
 tasks.named<JavaExec>("run") {

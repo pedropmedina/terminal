@@ -1,4 +1,4 @@
-package com.emulator.app;
+package com.acteque.terminal;
 
 import java.util.ArrayList;
 import java.util.Collections;

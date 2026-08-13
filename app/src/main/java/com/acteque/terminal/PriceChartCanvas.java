@@ -1,8 +1,9 @@
-package com.emulator.app;
+package com.acteque.terminal;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
-import com.emulator.app.XAxisTickCalculator.XAxisTick;
+import com.acteque.terminal.XAxisTickCalculator.XAxisTick;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -293,11 +294,18 @@ final class PriceChartCanvas extends Canvas {
       graphics.strokeLine(x, bounds.bottom(), x, bounds.bottom() + 5.0);
 
       int pointIndex = tick.dataIndex() - visibleWindow.firstDataIndex();
+      LocalDate tickDate;
       if (pointIndex >= 0 && pointIndex < visibleWindow.points().size()) {
         PricePoint point = visibleWindow.points().get(pointIndex);
-        graphics.setFill(Color.rgb(74, 82, 94));
-        graphics.fillText(interval.format(point.date()), x, bounds.bottom() + 10.0);
+        tickDate = point.date();
+      } else {
+        PricePoint newestPoint = pricePoints.get(pricePoints.size() - 1);
+        int daysAfterNewestPoint = tick.dataIndex() - pricePoints.size() + 1;
+        tickDate = newestPoint.date().plusDays(daysAfterNewestPoint);
       }
+
+      graphics.setFill(Color.rgb(74, 82, 94));
+      graphics.fillText(interval.format(tickDate), x, bounds.bottom() + 10.0);
     }
   }
 

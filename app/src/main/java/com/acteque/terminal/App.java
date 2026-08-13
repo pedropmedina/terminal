@@ -1,4 +1,4 @@
-package com.emulator.app;
+package com.acteque.terminal;
 
 import java.util.List;
 import javafx.application.Application;
