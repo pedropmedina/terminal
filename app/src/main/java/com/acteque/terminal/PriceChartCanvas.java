@@ -2,6 +2,7 @@ package com.acteque.terminal;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import com.acteque.terminal.XAxisTickCalculator.XAxisTick;
 import javafx.geometry.VPos;
@@ -24,15 +25,11 @@ final class PriceChartCanvas extends Canvas {
   private static final double X_ZOOM_PIXELS_PER_POINT = 8.0;
   private static final double Y_ZOOM_PIXELS_PER_STEP = 96.0;
 
-  // Y zoom scale limits
-  private static final double MIN_Y_ZOOM_SCALE = 0.2;
+  // Y zoom scale limit
   private static final double MAX_Y_ZOOM_SCALE = 5.0;
 
   // X zoom minimum price points to display
   private static final int MIN_VISIBLE_POINTS = 8;
-
-  // Tick count
-  private static final int Y_TICK_COUNT = 5;
 
   // X zoom state
   private double xZoomDragStart;
@@ -74,7 +71,7 @@ final class PriceChartCanvas extends Canvas {
     this.title = title;
     this.interval = Objects.requireNonNull(interval);
 
-    ChartReloadHooks.register(this);
+    ChartReloadHooks.register(this); // <- Dev only hook to for canvas hot reloading
     widthProperty().addListener((ignored, oldWidth, newWidth) -> drawChart());
     heightProperty().addListener((ignored, oldHeight, newHeight) -> drawChart());
     setEventsListeners();
@@ -94,13 +91,21 @@ final class PriceChartCanvas extends Canvas {
     ChartBounds bounds = chartBounds();
     VisibleWindow visibleWindow = visibleWindow();
     List<XAxisTick> xAxisTicks = xAxisTicks(bounds, visibleWindow);
-    PriceRange priceRange = calculatePriceRange(visibleWindow.points());
+    PriceRange defaultPriceRange = calculateDefaultPriceRange(visibleWindow.points());
+    yZoomScale = clampYZoomScale(yZoomScale, defaultPriceRange.span(), bounds.height());
+    PriceRange priceRange = scalePriceRange(defaultPriceRange, yZoomScale);
+    List<Double> yAxisTicks = YAxisTickCalculator.calculate(
+      priceRange.min(),
+      priceRange.max(),
+      bounds.height(),
+      yZoomScale
+    );
 
     drawTitle(graphics, width);
-    drawHorizontalGridLines(graphics, bounds);
+    drawHorizontalGridLines(graphics, bounds, priceRange, yAxisTicks);
     drawVerticalGridLines(graphics, bounds, xAxisTicks);
     drawAxes(graphics, bounds);
-    drawYAxisTicks(graphics, bounds, priceRange);
+    drawYAxisTicks(graphics, bounds, priceRange, yAxisTicks);
     drawXAxisTicks(graphics, bounds, visibleWindow, xAxisTicks);
     drawPriceLine(graphics, bounds, priceRange, visibleWindow.points());
   }
@@ -181,7 +186,12 @@ final class PriceChartCanvas extends Canvas {
   private void handleYAxisZoom(double y) {
     double deltaY = y - yZoomDragStart;
     double requestedYZoomScale = yZoomDragStartZoomScale * Math.exp(deltaY / Y_ZOOM_PIXELS_PER_STEP);
-    double clampedYZoomScale = clampYZoomScale(requestedYZoomScale);
+    PriceRange defaultPriceRange = calculateDefaultPriceRange(visibleWindow().points());
+    double clampedYZoomScale = clampYZoomScale(
+      requestedYZoomScale,
+      defaultPriceRange.span(),
+      chartBounds().height()
+    );
 
     if (Double.compare(clampedYZoomScale, yZoomScale) != 0) {
       yZoomScale = clampedYZoomScale;
@@ -189,7 +199,7 @@ final class PriceChartCanvas extends Canvas {
     }
   }
 
-  private PriceRange calculatePriceRange(List<PricePoint> points) {
+  private PriceRange calculateDefaultPriceRange(List<PricePoint> points) {
     double min = Double.MAX_VALUE;
     double max = -Double.MAX_VALUE;
     for (PricePoint point : points) {
@@ -201,8 +211,12 @@ final class PriceChartCanvas extends Canvas {
     double padding = range == 0 ? Math.max(1.0, max * 0.05) : range * 0.08;
     double defaultMin = min - padding;
     double defaultMax = max + padding;
-    double midpoint = (defaultMin + defaultMax) / 2.0;
-    double zoomedSpan = (defaultMax - defaultMin) * yZoomScale;
+    return new PriceRange(defaultMin, defaultMax);
+  }
+
+  private PriceRange scalePriceRange(PriceRange defaultPriceRange, double zoomScale) {
+    double midpoint = (defaultPriceRange.min() + defaultPriceRange.max()) / 2.0;
+    double zoomedSpan = defaultPriceRange.span() * zoomScale;
     return new PriceRange(midpoint - zoomedSpan / 2.0, midpoint + zoomedSpan / 2.0);
   }
 
@@ -233,17 +247,27 @@ final class PriceChartCanvas extends Canvas {
     graphics.restore();
   }
 
-  private void drawHorizontalGridLines(GraphicsContext graphics, ChartBounds bounds) {
+  private void drawHorizontalGridLines(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    List<Double> ticks
+  ) {
     graphics.setStroke(Color.rgb(223, 228, 236));
     graphics.setLineWidth(1.0);
 
-    for (int tick = 0; tick <= Y_TICK_COUNT; tick++) {
-      double y = yForTick(tick, bounds);
+    for (double price : ticks) {
+      double y = yForPrice(price, bounds, priceRange);
       graphics.strokeLine(bounds.left(), y, bounds.right(), y);
     }
   }
 
-  private void drawYAxisTicks(GraphicsContext graphics, ChartBounds bounds, PriceRange priceRange) {
+  private void drawYAxisTicks(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    List<Double> ticks
+  ) {
     graphics.setFont(Font.font("System", 12));
     graphics.setTextAlign(TextAlignment.LEFT);
     graphics.setTextBaseline(VPos.CENTER);
@@ -251,19 +275,11 @@ final class PriceChartCanvas extends Canvas {
     graphics.setLineWidth(1.0);
     graphics.setFill(Color.rgb(74, 82, 94));
 
-    for (int tick = 0; tick <= Y_TICK_COUNT; tick++) {
-      double ratio = (double) tick / Y_TICK_COUNT;
-      double y = yForTick(tick, bounds);
-      double price = priceRange.min() + ratio * priceRange.span();
-
+    for (double price : ticks) {
+      double y = yForPrice(price, bounds, priceRange);
       graphics.strokeLine(bounds.right(), y, bounds.right() + 5.0, y);
-      graphics.fillText(String.format("$%.2f", price), bounds.right() + 10.0, y);
+      graphics.fillText(String.format(Locale.US, "$%.2f", price), bounds.right() + 10.0, y);
     }
-  }
-
-  private double yForTick(int tick, ChartBounds bounds) {
-    double ratio = (double) tick / Y_TICK_COUNT;
-    return bounds.bottom() - ratio * bounds.height();
   }
 
   private void drawVerticalGridLines(GraphicsContext graphics, ChartBounds bounds, List<XAxisTick> ticks) {
@@ -399,8 +415,10 @@ final class PriceChartCanvas extends Canvas {
     return Math.max(minimumOffset, Math.min(maximumOffset, requestedOffset));
   }
 
-  private double clampYZoomScale(double requestedYZoomScale) {
-    return Math.max(MIN_Y_ZOOM_SCALE, Math.min(MAX_Y_ZOOM_SCALE, requestedYZoomScale));
+  private double clampYZoomScale(double requestedYZoomScale, double defaultPriceSpan, double chartHeight) {
+    double minimumPriceSpan = YAxisTickCalculator.minimumPriceSpan(chartHeight);
+    double minimumYZoomScale = minimumPriceSpan / defaultPriceSpan;
+    return Math.max(minimumYZoomScale, Math.min(MAX_Y_ZOOM_SCALE, requestedYZoomScale));
   }
 
   private void updateCursor(double x, double y) {
