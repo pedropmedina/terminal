@@ -66,10 +66,10 @@ final class PriceChartCanvas extends Canvas {
   }
 
   PriceChartCanvas(List<PricePoint> pricePoints, String title, ChartInterval interval) {
-    this.visiblePricePointCount = pricePoints.size();
-    this.pricePoints = List.copyOf(pricePoints);
     this.title = title;
     this.interval = Objects.requireNonNull(interval);
+    this.visiblePricePointCount = pricePoints.size();
+    this.pricePoints = List.copyOf(pricePoints);
 
     ChartReloadHooks.register(this); // <- Dev only hook to for canvas hot reloading
     widthProperty().addListener((ignored, oldWidth, newWidth) -> drawChart());
@@ -187,11 +187,7 @@ final class PriceChartCanvas extends Canvas {
     double deltaY = y - yZoomDragStart;
     double requestedYZoomScale = yZoomDragStartZoomScale * Math.exp(deltaY / Y_ZOOM_PIXELS_PER_STEP);
     PriceRange defaultPriceRange = calculateDefaultPriceRange(visibleWindow().points());
-    double clampedYZoomScale = clampYZoomScale(
-      requestedYZoomScale,
-      defaultPriceRange.span(),
-      chartBounds().height()
-    );
+    double clampedYZoomScale = clampYZoomScale(requestedYZoomScale, defaultPriceRange.span(), chartBounds().height());
 
     if (Double.compare(clampedYZoomScale, yZoomScale) != 0) {
       yZoomScale = clampedYZoomScale;
@@ -262,12 +258,7 @@ final class PriceChartCanvas extends Canvas {
     }
   }
 
-  private void drawYAxisTicks(
-    GraphicsContext graphics,
-    ChartBounds bounds,
-    PriceRange priceRange,
-    List<Double> ticks
-  ) {
+  private void drawYAxisTicks(GraphicsContext graphics, ChartBounds bounds, PriceRange priceRange, List<Double> ticks) {
     graphics.setFont(Font.font("System", 12));
     graphics.setTextAlign(TextAlignment.LEFT);
     graphics.setTextBaseline(VPos.CENTER);

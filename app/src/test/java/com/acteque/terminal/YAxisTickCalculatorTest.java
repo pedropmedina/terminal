@@ -9,6 +9,14 @@ import org.junit.jupiter.api.Test;
 class YAxisTickCalculatorTest {
 
   @Test
+  void usesTenPriceIntervalsAtDefaultZoom() {
+    List<Double> ticks = YAxisTickCalculator.calculate(100.0, 120.0, 660.0, 1.0);
+
+    assertEquals(11, ticks.size());
+    assertEquals(2.0, ticks.get(1) - ticks.get(0), 0.000_001);
+  }
+
+  @Test
   void increasesPriceDetailAsTheVisibleRangeIsZoomedIn() {
     List<Double> defaultZoom = YAxisTickCalculator.calculate(100.0, 120.0, 660.0, 1.0);
     List<Double> zoomedIn = YAxisTickCalculator.calculate(108.0, 112.0, 660.0, 0.2);
@@ -17,11 +25,11 @@ class YAxisTickCalculatorTest {
   }
 
   @Test
-  void decreasesPriceDetailAsTheVisibleRangeIsZoomedOut() {
-    List<Double> defaultZoom = YAxisTickCalculator.calculate(100.0, 120.0, 660.0, 1.0);
-    List<Double> zoomedOut = YAxisTickCalculator.calculate(60.0, 160.0, 660.0, 5.0);
+  void keepsTenPriceIntervalsAtMaximumZoomScale() {
+    List<Double> ticks = YAxisTickCalculator.calculate(60.0, 160.0, 660.0, 5.0);
 
-    assertTrue(zoomedOut.size() < defaultZoom.size());
+    assertEquals(11, ticks.size());
+    assertEquals(10.0, ticks.get(1) - ticks.get(0), 0.000_001);
   }
 
   @Test
