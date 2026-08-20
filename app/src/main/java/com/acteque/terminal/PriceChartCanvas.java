@@ -39,10 +39,20 @@ final class PriceChartCanvas extends Canvas {
   private double xPanDragStart;
   private int xPanDragStartOffset;
 
+  // Y pan state. A range only exists after the user has manually scaled the price axis.
+  private double yPanDragStart;
+  private PriceRange yPanDragStartPriceRange;
+
   // Y zoom state
   private double yZoomScale = 1.0;
   private double yZoomDragStart;
   private double yZoomDragStartZoomScale;
+  private double yZoomDragDefaultPriceSpan;
+  private PriceRange yZoomDragStartPriceRange;
+
+  // Once set, this range is independent of the visible date window. This keeps the user's
+  // selected price coordinates stable while horizontally panning or zooming.
+  private PriceRange lockedPriceRange;
 
   // Mouse drag mode
   private DragMode dragMode = DragMode.NONE;
@@ -92,8 +102,13 @@ final class PriceChartCanvas extends Canvas {
     VisibleWindow visibleWindow = visibleWindow();
     List<XAxisTick> xAxisTicks = xAxisTicks(bounds, visibleWindow);
     PriceRange defaultPriceRange = calculateDefaultPriceRange(visibleWindow.points());
-    yZoomScale = clampYZoomScale(yZoomScale, defaultPriceRange.span(), bounds.height());
-    PriceRange priceRange = scalePriceRange(defaultPriceRange, yZoomScale);
+    PriceRange priceRange;
+    if (lockedPriceRange == null) {
+      yZoomScale = clampYZoomScale(yZoomScale, defaultPriceRange.span(), bounds.height());
+      priceRange = scalePriceRange(defaultPriceRange, yZoomScale);
+    } else {
+      priceRange = lockedPriceRange;
+    }
     List<Double> yAxisTicks = YAxisTickCalculator.calculate(
       priceRange.min(),
       priceRange.max(),
@@ -128,6 +143,8 @@ final class PriceChartCanvas extends Canvas {
         dragMode = DragMode.ZOOM_PRICE;
         yZoomDragStart = event.getY();
         yZoomDragStartZoomScale = yZoomScale;
+        yZoomDragStartPriceRange = displayedPriceRange();
+        yZoomDragDefaultPriceSpan = yZoomDragStartPriceRange.span() / yZoomScale;
         setCursor(Cursor.V_RESIZE);
       } else if (isOverDateAxisArea(event.getY(), bounds)) {
         dragMode = DragMode.ZOOM_DATE;
@@ -138,6 +155,8 @@ final class PriceChartCanvas extends Canvas {
         dragMode = DragMode.PAN;
         xPanDragStart = event.getX();
         xPanDragStartOffset = visiblePricePointOffset;
+        yPanDragStart = event.getY();
+        yPanDragStartPriceRange = lockedPriceRange;
         setCursor(Cursor.CLOSED_HAND);
       }
     });
@@ -148,7 +167,7 @@ final class PriceChartCanvas extends Canvas {
       } else if (dragMode == DragMode.ZOOM_PRICE) {
         handleYAxisZoom(event.getY());
       } else if (dragMode == DragMode.PAN) {
-        handleHorizontalPan(event.getX());
+        handlePan(event.getX(), event.getY());
       }
     });
 
@@ -171,14 +190,28 @@ final class PriceChartCanvas extends Canvas {
     }
   }
 
-  private void handleHorizontalPan(double x) {
+  private void handlePan(double x, double y) {
     ChartBounds bounds = chartBounds();
     double pointSpacing = bounds.width() / Math.max(1, visiblePricePointCount - 1);
     int pointDelta = (int) Math.round((x - xPanDragStart) / pointSpacing);
     int clampedOffset = clampVisiblePointOffset(xPanDragStartOffset + pointDelta);
+    boolean changed = false;
 
     if (clampedOffset != visiblePricePointOffset) {
       visiblePricePointOffset = clampedOffset;
+      changed = true;
+    }
+
+    if (yPanDragStartPriceRange != null) {
+      double priceDelta = (y - yPanDragStart) * yPanDragStartPriceRange.span() / bounds.height();
+      PriceRange pannedPriceRange = yPanDragStartPriceRange.translate(priceDelta);
+      if (!pannedPriceRange.equals(lockedPriceRange)) {
+        lockedPriceRange = pannedPriceRange;
+        changed = true;
+      }
+    }
+
+    if (changed) {
       drawChart();
     }
   }
@@ -186,13 +219,28 @@ final class PriceChartCanvas extends Canvas {
   private void handleYAxisZoom(double y) {
     double deltaY = y - yZoomDragStart;
     double requestedYZoomScale = yZoomDragStartZoomScale * Math.exp(deltaY / Y_ZOOM_PIXELS_PER_STEP);
-    PriceRange defaultPriceRange = calculateDefaultPriceRange(visibleWindow().points());
-    double clampedYZoomScale = clampYZoomScale(requestedYZoomScale, defaultPriceRange.span(), chartBounds().height());
+    double clampedYZoomScale = clampYZoomScale(
+      requestedYZoomScale,
+      yZoomDragDefaultPriceSpan,
+      chartBounds().height()
+    );
 
     if (Double.compare(clampedYZoomScale, yZoomScale) != 0) {
+      double scaleChange = clampedYZoomScale / yZoomDragStartZoomScale;
       yZoomScale = clampedYZoomScale;
+      lockedPriceRange = yZoomDragStartPriceRange.scale(scaleChange);
       drawChart();
     }
+  }
+
+  private PriceRange displayedPriceRange() {
+    if (lockedPriceRange != null) {
+      return lockedPriceRange;
+    }
+
+    PriceRange defaultPriceRange = calculateDefaultPriceRange(visibleWindow().points());
+    double clampedScale = clampYZoomScale(yZoomScale, defaultPriceRange.span(), chartBounds().height());
+    return scalePriceRange(defaultPriceRange, clampedScale);
   }
 
   private PriceRange calculateDefaultPriceRange(List<PricePoint> points) {
@@ -435,6 +483,16 @@ final class PriceChartCanvas extends Canvas {
   private record PriceRange(double min, double max) {
     double span() {
       return max - min;
+    }
+
+    PriceRange scale(double scale) {
+      double midpoint = (min + max) / 2.0;
+      double scaledSpan = span() * scale;
+      return new PriceRange(midpoint - scaledSpan / 2.0, midpoint + scaledSpan / 2.0);
+    }
+
+    PriceRange translate(double priceDelta) {
+      return new PriceRange(min + priceDelta, max + priceDelta);
     }
   }
 
