@@ -1,10 +1,10 @@
 package com.acteque.terminal;
 
+import com.acteque.terminal.XAxisTickCalculator.XAxisTick;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import com.acteque.terminal.XAxisTickCalculator.XAxisTick;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -20,6 +20,11 @@ final class PriceChartCanvas extends Canvas {
   private static final double RIGHT_MARGIN = 72.0;
   private static final double TOP_MARGIN = 52.0;
   private static final double BOTTOM_MARGIN = 64.0;
+
+  // Autoscale button, shown at the foot of the price axis while that axis is hovered.
+  private static final double AUTOSCALE_BUTTON_SIZE = 24.0;
+  private static final double AUTOSCALE_BUTTON_X_OFFSET = 8.0;
+  private static final double AUTOSCALE_BUTTON_Y_OFFSET = 0.0;
 
   // Pixels per x and y zoom adjustment
   private static final double X_ZOOM_PIXELS_PER_POINT = 8.0;
@@ -56,6 +61,10 @@ final class PriceChartCanvas extends Canvas {
 
   // Mouse drag mode
   private DragMode dragMode = DragMode.NONE;
+
+  // Price-axis hover state controls the visibility of the autoscale button.
+  private boolean priceAxisHovered;
+  private boolean autoscaleButtonPressed;
 
   // Size of 'visible' price points list as determined by x zoom
   private int visiblePricePointCount;
@@ -123,14 +132,20 @@ final class PriceChartCanvas extends Canvas {
     drawYAxisTicks(graphics, bounds, priceRange, yAxisTicks);
     drawXAxisTicks(graphics, bounds, visibleWindow, xAxisTicks);
     drawPriceLine(graphics, bounds, priceRange, visibleWindow.points());
+    drawAutoscaleButton(graphics, bounds);
   }
 
   private void setEventsListeners() {
     setOnMouseMoved(event -> {
+      updatePriceAxisHover(event.getX(), event.getY());
       updateCursor(event.getX(), event.getY());
     });
 
     setOnMouseExited(event -> {
+      if (priceAxisHovered) {
+        priceAxisHovered = false;
+        drawChart();
+      }
       if (dragMode == DragMode.NONE) {
         setCursor(Cursor.DEFAULT);
       }
@@ -138,8 +153,12 @@ final class PriceChartCanvas extends Canvas {
 
     setOnMousePressed(event -> {
       ChartBounds bounds = chartBounds();
+      autoscaleButtonPressed = isOverAutoscaleButton(event.getX(), event.getY(), bounds);
 
-      if (isOverPriceAxisArea(event.getX(), event.getY(), bounds)) {
+      if (autoscaleButtonPressed) {
+        dragMode = DragMode.NONE;
+        setCursor(Cursor.HAND);
+      } else if (isOverPriceAxisArea(event.getX(), event.getY(), bounds)) {
         dragMode = DragMode.ZOOM_PRICE;
         yZoomDragStart = event.getY();
         yZoomDragStartZoomScale = yZoomScale;
@@ -172,9 +191,35 @@ final class PriceChartCanvas extends Canvas {
     });
 
     setOnMouseReleased(event -> {
+      boolean toggleAutoscale =
+        autoscaleButtonPressed && isOverAutoscaleButton(event.getX(), event.getY(), chartBounds());
+      autoscaleButtonPressed = false;
       dragMode = DragMode.NONE;
+
+      if (toggleAutoscale) {
+        togglePriceRangeAutoscale();
+      }
+
+      updatePriceAxisHover(event.getX(), event.getY());
       updateCursor(event.getX(), event.getY());
     });
+
+    // Keep this no-op handler for hot-reload compatibility. A live canvas may still reference the
+    // generated lambda method from an earlier class definition. Press/release performs activation,
+    // so handling the subsequent clicked event would toggle the state a second time.
+    setOnMouseClicked(event -> keepHotReloadClickHandler());
+  }
+
+  private void keepHotReloadClickHandler() {}
+
+  private void togglePriceRangeAutoscale() {
+    if (lockedPriceRange == null) {
+      lockedPriceRange = displayedPriceRange();
+    } else {
+      yZoomScale = 1.0;
+      lockedPriceRange = null;
+    }
+    drawChart();
   }
 
   private void handleXAxisZoom(double x) {
@@ -203,7 +248,7 @@ final class PriceChartCanvas extends Canvas {
     }
 
     if (yPanDragStartPriceRange != null) {
-      double priceDelta = (y - yPanDragStart) * yPanDragStartPriceRange.span() / bounds.height();
+      double priceDelta = ((y - yPanDragStart) * yPanDragStartPriceRange.span()) / bounds.height();
       PriceRange pannedPriceRange = yPanDragStartPriceRange.translate(priceDelta);
       if (!pannedPriceRange.equals(lockedPriceRange)) {
         lockedPriceRange = pannedPriceRange;
@@ -219,11 +264,7 @@ final class PriceChartCanvas extends Canvas {
   private void handleYAxisZoom(double y) {
     double deltaY = y - yZoomDragStart;
     double requestedYZoomScale = yZoomDragStartZoomScale * Math.exp(deltaY / Y_ZOOM_PIXELS_PER_STEP);
-    double clampedYZoomScale = clampYZoomScale(
-      requestedYZoomScale,
-      yZoomDragDefaultPriceSpan,
-      chartBounds().height()
-    );
+    double clampedYZoomScale = clampYZoomScale(requestedYZoomScale, yZoomDragDefaultPriceSpan, chartBounds().height());
 
     if (Double.compare(clampedYZoomScale, yZoomScale) != 0) {
       double scaleChange = clampedYZoomScale / yZoomDragStartZoomScale;
@@ -289,6 +330,27 @@ final class PriceChartCanvas extends Canvas {
     graphics.rotate(90.0);
     graphics.fillText("Price", 0, 0);
     graphics.restore();
+  }
+
+  private void drawAutoscaleButton(GraphicsContext graphics, ChartBounds bounds) {
+    if (!priceAxisHovered) {
+      return;
+    }
+
+    ButtonBounds button = autoscaleButtonBounds(bounds);
+    boolean autoscaleActive = lockedPriceRange == null;
+
+    graphics.setFill(autoscaleActive ? Color.BLACK : Color.WHITE);
+    graphics.fillRoundRect(button.x(), button.y(), button.width(), button.height(), 4.0, 4.0);
+    graphics.setStroke(Color.BLACK);
+    graphics.setLineWidth(1.0);
+    graphics.strokeRoundRect(button.x(), button.y(), button.width(), button.height(), 4.0, 4.0);
+
+    graphics.setFill(autoscaleActive ? Color.WHITE : Color.BLACK);
+    graphics.setFont(Font.font("System", 13));
+    graphics.setTextAlign(TextAlignment.CENTER);
+    graphics.setTextBaseline(VPos.CENTER);
+    graphics.fillText("A", button.x() + button.width() / 2.0, button.y() + button.height() / 2.0);
   }
 
   private void drawHorizontalGridLines(
@@ -434,6 +496,20 @@ final class PriceChartCanvas extends Canvas {
     return x >= bounds.right() && x <= getWidth() && y >= bounds.top() && y <= bounds.bottom();
   }
 
+  private boolean isOverAutoscaleButton(double x, double y, ChartBounds bounds) {
+    ButtonBounds button = autoscaleButtonBounds(bounds);
+    return x >= button.x() && x <= button.x() + button.width() && y >= button.y() && y <= button.y() + button.height();
+  }
+
+  private ButtonBounds autoscaleButtonBounds(ChartBounds bounds) {
+    return new ButtonBounds(
+      bounds.right() + AUTOSCALE_BUTTON_X_OFFSET,
+      bounds.bottom() + AUTOSCALE_BUTTON_Y_OFFSET,
+      AUTOSCALE_BUTTON_SIZE,
+      AUTOSCALE_BUTTON_SIZE
+    );
+  }
+
   private VisibleWindow visibleWindow() {
     int clampedPointCount = clampVisiblePointCount(visiblePricePointCount);
     int clampedOffset = clampVisiblePointOffset(visiblePricePointOffset);
@@ -462,7 +538,9 @@ final class PriceChartCanvas extends Canvas {
 
   private void updateCursor(double x, double y) {
     ChartBounds bounds = chartBounds();
-    if (isOverPriceAxisArea(x, y, bounds)) {
+    if (isOverAutoscaleButton(x, y, bounds)) {
+      setCursor(Cursor.HAND);
+    } else if (isOverPriceAxisArea(x, y, bounds)) {
       setCursor(Cursor.V_RESIZE);
     } else if (isOverDateAxisArea(y, bounds)) {
       setCursor(Cursor.H_RESIZE);
@@ -470,6 +548,15 @@ final class PriceChartCanvas extends Canvas {
       setCursor(Cursor.OPEN_HAND);
     } else {
       setCursor(Cursor.DEFAULT);
+    }
+  }
+
+  private void updatePriceAxisHover(double x, double y) {
+    ChartBounds bounds = chartBounds();
+    boolean hovered = isOverPriceAxisArea(x, y, bounds) || isOverAutoscaleButton(x, y, bounds);
+    if (hovered != priceAxisHovered) {
+      priceAxisHovered = hovered;
+      drawChart();
     }
   }
 
@@ -497,6 +584,8 @@ final class PriceChartCanvas extends Canvas {
   }
 
   private record VisibleWindow(List<PricePoint> points, int firstDataIndex) {}
+
+  private record ButtonBounds(double x, double y, double width, double height) {}
 
   private record ChartBounds(double left, double top, double width, double height) {
     double right() {
