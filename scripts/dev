@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+cd -- "$PROJECT_ROOT"
+
+watcher_pid=""
+
+stop_watcher() {
+    if [[ -n "$watcher_pid" ]] && kill -0 "$watcher_pid" 2>/dev/null; then
+        kill "$watcher_pid" 2>/dev/null || true
+        wait "$watcher_pid" 2>/dev/null || true
+    fi
+}
+
+trap stop_watcher EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+# Populate the hot-reload directories before either long-running process starts.
+./gradlew hotClasses
+
+# Gradle only enters continuous mode after a build finishes, so the watcher and
+# application must use separate invocations. Plain console output avoids two
+# rich consoles overwriting one another in the same terminal.
+./gradlew hotClasses --continuous --console=plain &
+watcher_pid=$!
+
+# The initial build above already ran this dependency. Excluding it here also
+# prevents the two Gradle invocations from compiling into the same directories.
+./gradlew hotRun -x hotClasses --console=plain
