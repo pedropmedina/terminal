@@ -17,9 +17,9 @@ final class PriceChartCanvas extends Canvas {
 
   // Padding
   private static final double LEFT_MARGIN = 28.0;
-  private static final double RIGHT_MARGIN = 72.0;
+  private static final double RIGHT_MARGIN = 64.0;
   private static final double TOP_MARGIN = 52.0;
-  private static final double BOTTOM_MARGIN = 64.0;
+  private static final double BOTTOM_MARGIN = 32.0;
 
   // Latest-price badge in the price column.
   private static final double CURRENT_PRICE_BADGE_HEIGHT = 24.0;
@@ -323,18 +323,6 @@ final class PriceChartCanvas extends Canvas {
     graphics.setLineWidth(1.4);
     graphics.strokeLine(bounds.right(), bounds.top(), bounds.right(), bounds.bottom());
     graphics.strokeLine(bounds.left(), bounds.bottom(), bounds.right(), bounds.bottom());
-
-    graphics.setFill(Color.rgb(54, 61, 72));
-    graphics.setFont(Font.font("System", 13));
-    graphics.setTextAlign(TextAlignment.CENTER);
-    graphics.setTextBaseline(VPos.CENTER);
-    graphics.fillText("Time", bounds.left() + bounds.width() / 2.0, bounds.bottom() + 46.0);
-
-    graphics.save();
-    graphics.translate(bounds.right() + 54.0, bounds.top() + bounds.height() / 2.0);
-    graphics.rotate(90.0);
-    graphics.fillText("Price", 0, 0);
-    graphics.restore();
   }
 
   private void drawAutoscaleButton(GraphicsContext graphics, ChartBounds bounds) {
