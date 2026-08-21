@@ -22,12 +22,7 @@ final class PriceDataLoader {
     return load(stream, resourcePath);
   }
 
-  /**
-   * Reads OHLCV CSV data and converts each row into the close-price points needed by the chart.
-   *
-   * <p>The parser validates the minimum column count so bad data fails with a useful message
-   * instead of producing a misleading chart.
-   */
+  /** Reads OHLCV CSV data and retains the prices needed by the chart and its OHLC overlay. */
   static List<PricePoint> load(InputStream stream, String sourceName) {
     List<PricePoint> points = new ArrayList<>();
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
@@ -45,13 +40,17 @@ final class PriceDataLoader {
         }
 
         String[] columns = line.split(",");
-        if (columns.length < 5) {
-          throw new IllegalStateException("CSV row " + lineNumber + " has fewer than 5 columns: " + line);
+        if (columns.length < 6) {
+          throw new IllegalStateException("CSV row " + lineNumber + " has fewer than 6 columns: " + line);
         }
 
         LocalDate date = LocalDate.parse(columns[0].trim());
+        double openPrice = Double.parseDouble(columns[1].trim());
+        double highPrice = Double.parseDouble(columns[2].trim());
+        double lowPrice = Double.parseDouble(columns[3].trim());
         double closePrice = Double.parseDouble(columns[4].trim());
-        points.add(new PricePoint(date, closePrice));
+        long volume = Long.parseLong(columns[5].trim());
+        points.add(new PricePoint(date, openPrice, highPrice, lowPrice, closePrice, volume));
       }
     } catch (IOException | RuntimeException exception) {
       throw new IllegalStateException("Unable to read stock data from " + sourceName, exception);

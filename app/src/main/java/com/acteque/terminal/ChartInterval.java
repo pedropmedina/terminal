@@ -4,14 +4,20 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 enum ChartInterval {
-  DAILY(DateTimeFormatter.ofPattern("MM/dd"), 56.0);
+  DAILY("1D", DateTimeFormatter.ofPattern("MM/dd"), 56.0);
 
+  private final String displayName;
   private final DateTimeFormatter labelFormatter;
   private final double minimumLabelSpacing;
 
-  ChartInterval(DateTimeFormatter labelFormatter, double minimumLabelSpacing) {
+  ChartInterval(String displayName, DateTimeFormatter labelFormatter, double minimumLabelSpacing) {
+    this.displayName = displayName;
     this.labelFormatter = labelFormatter;
     this.minimumLabelSpacing = minimumLabelSpacing;
+  }
+
+  String displayName() {
+    return displayName;
   }
 
   String format(LocalDate date) {

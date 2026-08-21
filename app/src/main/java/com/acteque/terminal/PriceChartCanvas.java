@@ -81,15 +81,14 @@ final class PriceChartCanvas extends Canvas {
 
   private final ChartInterval interval;
 
-  // NOTE: No sure if title should be kept at the canvas level?
-  private final String title;
+  private final String stockSymbol;
 
-  PriceChartCanvas(List<PricePoint> pricePoints, String title) {
-    this(pricePoints, title, ChartInterval.DAILY);
+  PriceChartCanvas(List<PricePoint> pricePoints, String stockSymbol) {
+    this(pricePoints, stockSymbol, ChartInterval.DAILY);
   }
 
-  PriceChartCanvas(List<PricePoint> pricePoints, String title, ChartInterval interval) {
-    this.title = title;
+  PriceChartCanvas(List<PricePoint> pricePoints, String stockSymbol, ChartInterval interval) {
+    this.stockSymbol = Objects.requireNonNull(stockSymbol);
     this.interval = Objects.requireNonNull(interval);
     this.visiblePricePointCount = pricePoints.size();
     this.pricePoints = List.copyOf(pricePoints);
@@ -129,7 +128,6 @@ final class PriceChartCanvas extends Canvas {
       yZoomScale
     );
 
-    drawTitle(graphics, width);
     drawHorizontalGridLines(graphics, bounds, priceRange, yAxisTicks);
     drawVerticalGridLines(graphics, bounds, xAxisTicks);
     drawAxes(graphics, bounds);
@@ -138,6 +136,7 @@ final class PriceChartCanvas extends Canvas {
     drawPriceLine(graphics, bounds, priceRange, visibleWindow.points());
     drawCurrentPriceBadge(graphics, bounds, priceRange, visibleWindow.points());
     drawAutoscaleButton(graphics, bounds);
+    drawOhlcOverlay(graphics, bounds, visibleWindow.points());
   }
 
   private void setEventsListeners() {
@@ -310,12 +309,29 @@ final class PriceChartCanvas extends Canvas {
     return new PriceRange(midpoint - zoomedSpan / 2.0, midpoint + zoomedSpan / 2.0);
   }
 
-  private void drawTitle(GraphicsContext graphics, double width) {
+  private void drawOhlcOverlay(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    List<PricePoint> visiblePoints
+  ) {
+    PricePoint latestPoint = visiblePoints.get(visiblePoints.size() - 1);
+    String overlay = String.format(
+      Locale.US,
+      "%s  %s   O%,.2f  H%,.2f  L%,.2f  C%,.2f  Vol%,.2f M",
+      stockSymbol,
+      interval.displayName(),
+      latestPoint.open(),
+      latestPoint.high(),
+      latestPoint.low(),
+      latestPoint.close(),
+      latestPoint.volume() / 1_000_000.0
+    );
+
     graphics.setFill(Color.rgb(28, 32, 38));
-    graphics.setFont(Font.font("System", 20));
-    graphics.setTextAlign(TextAlignment.CENTER);
+    graphics.setFont(Font.font("System", 14));
+    graphics.setTextAlign(TextAlignment.LEFT);
     graphics.setTextBaseline(VPos.CENTER);
-    graphics.fillText(title, width / 2.0, 24.0);
+    graphics.fillText(overlay, bounds.left(), bounds.bottom() - 14.0);
   }
 
   private void drawAxes(GraphicsContext graphics, ChartBounds bounds) {
