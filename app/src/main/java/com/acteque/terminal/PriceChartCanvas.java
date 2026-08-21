@@ -1,10 +1,10 @@
 package com.acteque.terminal;
 
-import com.acteque.terminal.XAxisTickCalculator.XAxisTick;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import com.acteque.terminal.XAxisTickCalculator.XAxisTick;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -20,6 +20,10 @@ final class PriceChartCanvas extends Canvas {
   private static final double RIGHT_MARGIN = 72.0;
   private static final double TOP_MARGIN = 52.0;
   private static final double BOTTOM_MARGIN = 64.0;
+
+  // Latest-price badge in the price column.
+  private static final double CURRENT_PRICE_BADGE_HEIGHT = 24.0;
+  private static final double CURRENT_PRICE_TEXT_OFFSET = 10.0;
 
   // Autoscale button, shown at the foot of the price axis while that axis is hovered.
   private static final double AUTOSCALE_BUTTON_SIZE = 24.0;
@@ -132,6 +136,7 @@ final class PriceChartCanvas extends Canvas {
     drawYAxisTicks(graphics, bounds, priceRange, yAxisTicks);
     drawXAxisTicks(graphics, bounds, visibleWindow, xAxisTicks);
     drawPriceLine(graphics, bounds, priceRange, visibleWindow.points());
+    drawCurrentPriceBadge(graphics, bounds, priceRange, visibleWindow.points());
     drawAutoscaleButton(graphics, bounds);
   }
 
@@ -381,6 +386,31 @@ final class PriceChartCanvas extends Canvas {
       graphics.strokeLine(bounds.right(), y, bounds.right() + 5.0, y);
       graphics.fillText(String.format(Locale.US, "$%.2f", price), bounds.right() + 10.0, y);
     }
+  }
+
+  private void drawCurrentPriceBadge(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    List<PricePoint> visiblePoints
+  ) {
+    double currentPrice = visiblePoints.get(visiblePoints.size() - 1).price();
+    double y = yForPrice(currentPrice, bounds, priceRange);
+    if (y < bounds.top() || y > bounds.bottom()) {
+      return;
+    }
+
+    double badgeWidth = getWidth() - bounds.right();
+    double badgeTop = y - CURRENT_PRICE_BADGE_HEIGHT / 2.0;
+
+    graphics.setFill(Color.BLACK);
+    graphics.fillRect(bounds.right(), badgeTop, badgeWidth, CURRENT_PRICE_BADGE_HEIGHT);
+
+    graphics.setFill(Color.WHITE);
+    graphics.setFont(Font.font("System", 12));
+    graphics.setTextAlign(TextAlignment.LEFT);
+    graphics.setTextBaseline(VPos.CENTER);
+    graphics.fillText(String.format(Locale.US, "$%.2f", currentPrice), bounds.right() + CURRENT_PRICE_TEXT_OFFSET, y);
   }
 
   private void drawVerticalGridLines(GraphicsContext graphics, ChartBounds bounds, List<XAxisTick> ticks) {
