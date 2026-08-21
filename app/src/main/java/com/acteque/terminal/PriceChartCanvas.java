@@ -144,7 +144,7 @@ final class PriceChartCanvas extends Canvas {
     drawVerticalGridLines(graphics, bounds, xAxisTicks);
     drawAxes(graphics, bounds);
     drawYAxisTicks(graphics, bounds, priceRange, yAxisTicks);
-    drawXAxisTicks(graphics, bounds, visibleWindow, xAxisTicks);
+    drawXAxisTicks(graphics, bounds, xAxisTicks);
     drawPriceLine(graphics, bounds, priceRange, visibleWindow.points());
     drawCurrentPriceBadge(graphics, bounds, priceRange, visibleWindow.points());
     drawCrosshair(graphics, bounds, priceRange, visibleWindow);
@@ -504,12 +504,7 @@ final class PriceChartCanvas extends Canvas {
     }
   }
 
-  private void drawXAxisTicks(
-    GraphicsContext graphics,
-    ChartBounds bounds,
-    VisibleWindow visibleWindow,
-    List<XAxisTick> ticks
-  ) {
+  private void drawXAxisTicks(GraphicsContext graphics, ChartBounds bounds, List<XAxisTick> ticks) {
     graphics.setFont(Font.font("System", 12));
     graphics.setTextAlign(TextAlignment.CENTER);
     graphics.setTextBaseline(VPos.TOP);
@@ -521,25 +516,14 @@ final class PriceChartCanvas extends Canvas {
       graphics.setLineWidth(1.0);
       graphics.strokeLine(x, bounds.bottom(), x, bounds.bottom() + 5.0);
 
-      int pointIndex = tick.dataIndex() - visibleWindow.firstDataIndex();
-      LocalDate tickDate;
-      if (pointIndex >= 0 && pointIndex < visibleWindow.points().size()) {
-        PricePoint point = visibleWindow.points().get(pointIndex);
-        tickDate = point.date();
-      } else {
-        PricePoint newestPoint = pricePoints.get(pricePoints.size() - 1);
-        int daysAfterNewestPoint = tick.dataIndex() - pricePoints.size() + 1;
-        tickDate = newestPoint.date().plusDays(daysAfterNewestPoint);
-      }
-
       graphics.setFill(Color.rgb(74, 82, 94));
-      graphics.fillText(interval.format(tickDate), x, bounds.bottom() + 10.0);
+      graphics.fillText(tick.label(), x, bounds.bottom() + 10.0);
     }
   }
 
   private List<XAxisTick> xAxisTicks(ChartBounds bounds, VisibleWindow visibleWindow) {
     return XAxisTickCalculator.calculate(
-      pricePoints.size(),
+      pricePoints.stream().map(PricePoint::date).toList(),
       visibleWindow.firstDataIndex(),
       visiblePricePointCount,
       bounds.width(),
