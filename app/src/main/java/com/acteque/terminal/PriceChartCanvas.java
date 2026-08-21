@@ -16,10 +16,12 @@ import javafx.scene.text.TextAlignment;
 final class PriceChartCanvas extends Canvas {
 
   // Padding
-  private static final double LEFT_MARGIN = 28.0;
+  private static final double LEFT_MARGIN = 0.0;
   private static final double RIGHT_MARGIN = 64.0;
-  private static final double TOP_MARGIN = 52.0;
+  private static final double TOP_MARGIN = 0.0;
   private static final double BOTTOM_MARGIN = 32.0;
+
+  private static final double STATUS_LINE_LEFT_PADDING = 12.0;
 
   // Latest-price badge in the price column.
   private static final double CURRENT_PRICE_BADGE_HEIGHT = 24.0;
@@ -356,7 +358,7 @@ final class PriceChartCanvas extends Canvas {
     graphics.setFont(Font.font("System", 14));
     graphics.setTextAlign(TextAlignment.LEFT);
     graphics.setTextBaseline(VPos.CENTER);
-    graphics.fillText(statusLine, bounds.left(), bounds.bottom() - 14.0);
+    graphics.fillText(statusLine, bounds.left() + STATUS_LINE_LEFT_PADDING, bounds.bottom() - 14.0);
   }
 
   private void drawAxes(GraphicsContext graphics, ChartBounds bounds) {
