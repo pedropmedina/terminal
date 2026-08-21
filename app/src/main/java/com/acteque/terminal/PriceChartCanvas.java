@@ -1,10 +1,10 @@
 package com.acteque.terminal;
 
-import com.acteque.terminal.XAxisTickCalculator.XAxisTick;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import com.acteque.terminal.XAxisTickCalculator.XAxisTick;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -90,8 +90,10 @@ final class PriceChartCanvas extends Canvas {
   // Positive values show older data; negative values leave empty space after the newest point.
   private int visiblePricePointOffset;
 
-  // Track initial price points
-  private final List<PricePoint> pricePoints;
+  // Price points are ordered oldest to newest and replaced when the controller publishes history.
+  private List<PricePoint> pricePoints;
+
+  private Runnable onEarlierHistoryRequested = () -> {};
 
   private final ChartInterval interval;
 
@@ -111,6 +113,27 @@ final class PriceChartCanvas extends Canvas {
     widthProperty().addListener((ignored, oldWidth, newWidth) -> drawChart());
     heightProperty().addListener((ignored, oldHeight, newHeight) -> drawChart());
     setEventsListeners();
+  }
+
+  void setOnEarlierHistoryRequested(Runnable callback) {
+    onEarlierHistoryRequested = Objects.requireNonNull(callback, "callback");
+  }
+
+  void setPricePoints(List<PricePoint> updatedPoints) {
+    List<PricePoint> replacement = List.copyOf(updatedPoints);
+    if (replacement.equals(pricePoints)) {
+      return;
+    }
+
+    boolean establishingInitialData = pricePoints.isEmpty();
+    pricePoints = replacement;
+    if (establishingInitialData) {
+      visiblePricePointCount = pricePoints.size();
+    } else {
+      visiblePricePointCount = clampVisiblePointCount(visiblePricePointCount);
+    }
+    visiblePricePointOffset = clampVisiblePointOffset(visiblePricePointOffset);
+    drawChart();
   }
 
   void drawChart() {
@@ -287,6 +310,14 @@ final class PriceChartCanvas extends Canvas {
     if (changed) {
       drawChart();
     }
+    requestEarlierHistoryIfNeeded();
+  }
+
+  private void requestEarlierHistoryIfNeeded() {
+    if (pricePoints.isEmpty() || visibleWindow().firstDataIndex() > visiblePricePointCount) {
+      return;
+    }
+    onEarlierHistoryRequested.run();
   }
 
   private void handleYAxisZoom(double y) {

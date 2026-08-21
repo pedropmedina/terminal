@@ -42,6 +42,7 @@ application {
 }
 
 tasks.named<JavaExec>("run") {
+    workingDir(rootProject.projectDir)
     jvmArgs("--enable-native-access=javafx.graphics")
 }
 
@@ -125,6 +126,7 @@ tasks.register<JavaExec>("hotRun") {
     group = "application"
     description = "Runs the JavaFX application with enhanced class redefinition."
     dependsOn(hotClasses)
+    workingDir(rootProject.projectDir)
 
     mainClass.set(application.mainClass)
     javaLauncher.set(javaToolchains.launcherFor {
