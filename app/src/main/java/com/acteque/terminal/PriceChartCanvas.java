@@ -1,10 +1,10 @@
 package com.acteque.terminal;
 
+import com.acteque.terminal.XAxisTickCalculator.XAxisTick;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import com.acteque.terminal.XAxisTickCalculator.XAxisTick;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -24,6 +24,11 @@ final class PriceChartCanvas extends Canvas {
   // Latest-price badge in the price column.
   private static final double CURRENT_PRICE_BADGE_HEIGHT = 24.0;
   private static final double CURRENT_PRICE_TEXT_OFFSET = 10.0;
+
+  // Crosshair and axis value badges.
+  private static final double CROSSHAIR_BADGE_HEIGHT = 24.0;
+  private static final double CROSSHAIR_DATE_BADGE_WIDTH = 56.0;
+  private static final double CROSSHAIR_PRICE_TEXT_OFFSET = 10.0;
 
   // Autoscale button, shown at the foot of the price axis while that axis is hovered.
   private static final double AUTOSCALE_BUTTON_SIZE = 24.0;
@@ -72,6 +77,10 @@ final class PriceChartCanvas extends Canvas {
 
   // Visible point currently aligned with the cursor. Null displays the latest visible point.
   private Integer hoveredVisiblePointIndex;
+
+  // Exact cursor position while it is inside the plot area.
+  private Double crosshairX;
+  private Double crosshairY;
 
   // Size of 'visible' price points list as determined by x zoom
   private int visiblePricePointCount;
@@ -138,6 +147,7 @@ final class PriceChartCanvas extends Canvas {
     drawXAxisTicks(graphics, bounds, visibleWindow, xAxisTicks);
     drawPriceLine(graphics, bounds, priceRange, visibleWindow.points());
     drawCurrentPriceBadge(graphics, bounds, priceRange, visibleWindow.points());
+    drawCrosshair(graphics, bounds, priceRange, visibleWindow);
     drawAutoscaleButton(graphics, bounds);
     drawStatusLine(graphics, bounds, visibleWindow.points(), hoveredVisiblePointIndex);
   }
@@ -150,8 +160,10 @@ final class PriceChartCanvas extends Canvas {
     });
 
     setOnMouseExited(event -> {
-      boolean redrawNeeded = hoveredVisiblePointIndex != null;
+      boolean redrawNeeded = hoveredVisiblePointIndex != null || crosshairX != null;
       hoveredVisiblePointIndex = null;
+      crosshairX = null;
+      crosshairY = null;
       if (priceAxisHovered) {
         priceAxisHovered = false;
         redrawNeeded = true;
@@ -200,6 +212,7 @@ final class PriceChartCanvas extends Canvas {
         handleYAxisZoom(event.getY());
       } else if (dragMode == DragMode.PAN) {
         handlePan(event.getX(), event.getY());
+        updateStatusLinePoint(event.getX(), event.getY());
       }
     });
 
@@ -429,6 +442,58 @@ final class PriceChartCanvas extends Canvas {
     graphics.fillText(String.format(Locale.US, "$%.2f", currentPrice), bounds.right() + CURRENT_PRICE_TEXT_OFFSET, y);
   }
 
+  private void drawCrosshair(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    VisibleWindow visibleWindow
+  ) {
+    if (crosshairX == null || crosshairY == null) {
+      return;
+    }
+
+    double x = crosshairX;
+    double y = crosshairY;
+    double price = priceForY(y, bounds, priceRange);
+    int slotIndex = slotIndexForX(x, bounds);
+    LocalDate date = dateForSlot(slotIndex, visibleWindow);
+
+    graphics.save();
+    graphics.setStroke(Color.rgb(120, 126, 136));
+    graphics.setLineWidth(1.0);
+    graphics.setLineDashes(4.0, 4.0);
+    graphics.strokeLine(x, bounds.top(), x, bounds.bottom());
+    graphics.strokeLine(bounds.left(), y, bounds.right(), y);
+    graphics.restore();
+
+    Color badgeColor = Color.rgb(232, 234, 237);
+    Color badgeTextColor = Color.rgb(40, 44, 52);
+
+    double priceBadgeTop = y - CROSSHAIR_BADGE_HEIGHT / 2.0;
+    graphics.setFill(badgeColor);
+    graphics.fillRect(bounds.right(), priceBadgeTop, getWidth() - bounds.right(), CROSSHAIR_BADGE_HEIGHT);
+    graphics.setFill(badgeTextColor);
+    graphics.setFont(Font.font("System", 12));
+    graphics.setTextAlign(TextAlignment.LEFT);
+    graphics.setTextBaseline(VPos.CENTER);
+    graphics.fillText(String.format(Locale.US, "$%.2f", price), bounds.right() + CROSSHAIR_PRICE_TEXT_OFFSET, y);
+
+    double dateBadgeLeft = Math.max(
+      bounds.left(),
+      Math.min(bounds.right() - CROSSHAIR_DATE_BADGE_WIDTH, x - CROSSHAIR_DATE_BADGE_WIDTH / 2.0)
+    );
+    graphics.setFill(badgeColor);
+    graphics.fillRect(dateBadgeLeft, bounds.bottom(), CROSSHAIR_DATE_BADGE_WIDTH, CROSSHAIR_BADGE_HEIGHT);
+    graphics.setFill(badgeTextColor);
+    graphics.setTextAlign(TextAlignment.CENTER);
+    graphics.setTextBaseline(VPos.CENTER);
+    graphics.fillText(
+      interval.format(date),
+      dateBadgeLeft + CROSSHAIR_DATE_BADGE_WIDTH / 2.0,
+      bounds.bottom() + CROSSHAIR_BADGE_HEIGHT / 2.0
+    );
+  }
+
   private void drawVerticalGridLines(GraphicsContext graphics, ChartBounds bounds, List<XAxisTick> ticks) {
     graphics.setStroke(Color.rgb(223, 228, 236));
     graphics.setLineWidth(1.0);
@@ -521,6 +586,25 @@ final class PriceChartCanvas extends Canvas {
     return bounds.bottom() - normalized * bounds.height();
   }
 
+  private double priceForY(double y, ChartBounds bounds, PriceRange priceRange) {
+    double normalized = (bounds.bottom() - y) / bounds.height();
+    return priceRange.min() + normalized * priceRange.span();
+  }
+
+  private int slotIndexForX(double x, ChartBounds bounds) {
+    return (int) Math.round(((x - bounds.left()) / bounds.width()) * Math.max(0, visiblePricePointCount - 1));
+  }
+
+  private LocalDate dateForSlot(int slotIndex, VisibleWindow visibleWindow) {
+    int dataIndex = visibleWindow.firstDataIndex() + slotIndex;
+    if (dataIndex < pricePoints.size()) {
+      return pricePoints.get(dataIndex).date();
+    }
+
+    PricePoint newestPoint = pricePoints.get(pricePoints.size() - 1);
+    return newestPoint.date().plusDays(dataIndex - pricePoints.size() + 1L);
+  }
+
   private ChartBounds chartBounds() {
     return new ChartBounds(
       LEFT_MARGIN,
@@ -591,7 +675,7 @@ final class PriceChartCanvas extends Canvas {
     } else if (isOverDateAxisArea(y, bounds)) {
       setCursor(Cursor.H_RESIZE);
     } else if (isOverChartArea(x, y, bounds)) {
-      setCursor(Cursor.OPEN_HAND);
+      setCursor(Cursor.CROSSHAIR);
     } else {
       setCursor(Cursor.DEFAULT);
     }
@@ -600,18 +684,26 @@ final class PriceChartCanvas extends Canvas {
   private void updateStatusLinePoint(double x, double y) {
     ChartBounds bounds = chartBounds();
     Integer pointIndex = null;
+    Double nextCrosshairX = null;
+    Double nextCrosshairY = null;
 
     if (isOverChartArea(x, y, bounds)) {
-      int slotIndex = (int) Math.round(
-        ((x - bounds.left()) / bounds.width()) * Math.max(0, visiblePricePointCount - 1)
-      );
+      nextCrosshairX = x;
+      nextCrosshairY = y;
+      int slotIndex = slotIndexForX(x, bounds);
       if (slotIndex < visibleWindow().points().size()) {
         pointIndex = slotIndex;
       }
     }
 
-    if (!Objects.equals(pointIndex, hoveredVisiblePointIndex)) {
+    if (
+      !Objects.equals(pointIndex, hoveredVisiblePointIndex) ||
+      !Objects.equals(nextCrosshairX, crosshairX) ||
+      !Objects.equals(nextCrosshairY, crosshairY)
+    ) {
       hoveredVisiblePointIndex = pointIndex;
+      crosshairX = nextCrosshairX;
+      crosshairY = nextCrosshairY;
       drawChart();
     }
   }
