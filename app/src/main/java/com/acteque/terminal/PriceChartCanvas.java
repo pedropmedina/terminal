@@ -27,7 +27,7 @@ final class PriceChartCanvas extends Canvas {
 
   // Crosshair and axis value badges.
   private static final double CROSSHAIR_BADGE_HEIGHT = 24.0;
-  private static final double CROSSHAIR_DATE_BADGE_WIDTH = 56.0;
+  private static final double CROSSHAIR_DATE_BADGE_WIDTH = 120.0;
   private static final double CROSSHAIR_PRICE_TEXT_OFFSET = 10.0;
 
   // Autoscale button, shown at the foot of the price axis while that axis is hovered.
@@ -413,7 +413,7 @@ final class PriceChartCanvas extends Canvas {
     for (double price : ticks) {
       double y = yForPrice(price, bounds, priceRange);
       graphics.strokeLine(bounds.right(), y, bounds.right() + 5.0, y);
-      graphics.fillText(String.format(Locale.US, "$%.2f", price), bounds.right() + 10.0, y);
+      graphics.fillText(String.format(Locale.US, "%.2f", price), bounds.right() + 10.0, y);
     }
   }
 
@@ -439,7 +439,7 @@ final class PriceChartCanvas extends Canvas {
     graphics.setFont(Font.font("System", 12));
     graphics.setTextAlign(TextAlignment.LEFT);
     graphics.setTextBaseline(VPos.CENTER);
-    graphics.fillText(String.format(Locale.US, "$%.2f", currentPrice), bounds.right() + CURRENT_PRICE_TEXT_OFFSET, y);
+    graphics.fillText(String.format(Locale.US, "%.2f", currentPrice), bounds.right() + CURRENT_PRICE_TEXT_OFFSET, y);
   }
 
   private void drawCrosshair(
@@ -476,7 +476,7 @@ final class PriceChartCanvas extends Canvas {
     graphics.setFont(Font.font("System", 12));
     graphics.setTextAlign(TextAlignment.LEFT);
     graphics.setTextBaseline(VPos.CENTER);
-    graphics.fillText(String.format(Locale.US, "$%.2f", price), bounds.right() + CROSSHAIR_PRICE_TEXT_OFFSET, y);
+    graphics.fillText(String.format(Locale.US, "%.2f", price), bounds.right() + CROSSHAIR_PRICE_TEXT_OFFSET, y);
 
     double dateBadgeLeft = Math.max(
       bounds.left(),
@@ -486,11 +486,11 @@ final class PriceChartCanvas extends Canvas {
     graphics.fillRect(dateBadgeLeft, bounds.bottom(), CROSSHAIR_DATE_BADGE_WIDTH, CROSSHAIR_BADGE_HEIGHT);
     graphics.setFill(badgeTextColor);
     graphics.setTextAlign(TextAlignment.CENTER);
-    graphics.setTextBaseline(VPos.CENTER);
+    graphics.setTextBaseline(VPos.TOP);
     graphics.fillText(
-      interval.format(date),
+      interval.formatCrosshair(date),
       dateBadgeLeft + CROSSHAIR_DATE_BADGE_WIDTH / 2.0,
-      bounds.bottom() + CROSSHAIR_BADGE_HEIGHT / 2.0
+      bounds.bottom() + 10.0
     );
   }
 

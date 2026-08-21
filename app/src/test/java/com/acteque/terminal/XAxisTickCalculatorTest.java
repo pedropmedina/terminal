@@ -63,4 +63,9 @@ class XAxisTickCalculatorTest {
   void formatsDailyLabels() {
     assertEquals("07/16", ChartInterval.DAILY.format(LocalDate.of(2026, 7, 16)));
   }
+
+  @Test
+  void formatsCrosshairLabelsWithWeekdayAndFullDate() {
+    assertEquals("Thu Jul 09, 2026", ChartInterval.DAILY.formatCrosshair(LocalDate.of(2026, 7, 9)));
+  }
 }
