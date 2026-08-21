@@ -70,6 +70,9 @@ final class PriceChartCanvas extends Canvas {
   private boolean priceAxisHovered;
   private boolean autoscaleButtonPressed;
 
+  // Visible point currently aligned with the cursor. Null displays the latest visible point.
+  private Integer hoveredVisiblePointIndex;
+
   // Size of 'visible' price points list as determined by x zoom
   private int visiblePricePointCount;
 
@@ -136,18 +139,24 @@ final class PriceChartCanvas extends Canvas {
     drawPriceLine(graphics, bounds, priceRange, visibleWindow.points());
     drawCurrentPriceBadge(graphics, bounds, priceRange, visibleWindow.points());
     drawAutoscaleButton(graphics, bounds);
-    drawOhlcOverlay(graphics, bounds, visibleWindow.points());
+    drawOhlcOverlay(graphics, bounds, visibleWindow.points(), hoveredVisiblePointIndex);
   }
 
   private void setEventsListeners() {
     setOnMouseMoved(event -> {
+      updateOhlcOverlayPoint(event.getX(), event.getY());
       updatePriceAxisHover(event.getX(), event.getY());
       updateCursor(event.getX(), event.getY());
     });
 
     setOnMouseExited(event -> {
+      boolean redrawNeeded = hoveredVisiblePointIndex != null;
+      hoveredVisiblePointIndex = null;
       if (priceAxisHovered) {
         priceAxisHovered = false;
+        redrawNeeded = true;
+      }
+      if (redrawNeeded) {
         drawChart();
       }
       if (dragMode == DragMode.NONE) {
@@ -312,19 +321,22 @@ final class PriceChartCanvas extends Canvas {
   private void drawOhlcOverlay(
     GraphicsContext graphics,
     ChartBounds bounds,
-    List<PricePoint> visiblePoints
+    List<PricePoint> visiblePoints,
+    Integer hoveredPointIndex
   ) {
-    PricePoint latestPoint = visiblePoints.get(visiblePoints.size() - 1);
+    int pointIndex =
+      hoveredPointIndex == null ? visiblePoints.size() - 1 : Math.min(hoveredPointIndex, visiblePoints.size() - 1);
+    PricePoint overlayPoint = visiblePoints.get(pointIndex);
     String overlay = String.format(
       Locale.US,
       "%s  %s   O%,.2f  H%,.2f  L%,.2f  C%,.2f  Vol%,.2f M",
       stockSymbol,
       interval.displayName(),
-      latestPoint.open(),
-      latestPoint.high(),
-      latestPoint.low(),
-      latestPoint.close(),
-      latestPoint.volume() / 1_000_000.0
+      overlayPoint.open(),
+      overlayPoint.high(),
+      overlayPoint.low(),
+      overlayPoint.close(),
+      overlayPoint.volume() / 1_000_000.0
     );
 
     graphics.setFill(Color.rgb(28, 32, 38));
@@ -582,6 +594,25 @@ final class PriceChartCanvas extends Canvas {
       setCursor(Cursor.OPEN_HAND);
     } else {
       setCursor(Cursor.DEFAULT);
+    }
+  }
+
+  private void updateOhlcOverlayPoint(double x, double y) {
+    ChartBounds bounds = chartBounds();
+    Integer pointIndex = null;
+
+    if (isOverChartArea(x, y, bounds)) {
+      int slotIndex = (int) Math.round(
+        ((x - bounds.left()) / bounds.width()) * Math.max(0, visiblePricePointCount - 1)
+      );
+      if (slotIndex < visibleWindow().points().size()) {
+        pointIndex = slotIndex;
+      }
+    }
+
+    if (!Objects.equals(pointIndex, hoveredVisiblePointIndex)) {
+      hoveredVisiblePointIndex = pointIndex;
+      drawChart();
     }
   }
 
