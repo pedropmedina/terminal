@@ -139,12 +139,12 @@ final class PriceChartCanvas extends Canvas {
     drawPriceLine(graphics, bounds, priceRange, visibleWindow.points());
     drawCurrentPriceBadge(graphics, bounds, priceRange, visibleWindow.points());
     drawAutoscaleButton(graphics, bounds);
-    drawOhlcOverlay(graphics, bounds, visibleWindow.points(), hoveredVisiblePointIndex);
+    drawStatusLine(graphics, bounds, visibleWindow.points(), hoveredVisiblePointIndex);
   }
 
   private void setEventsListeners() {
     setOnMouseMoved(event -> {
-      updateOhlcOverlayPoint(event.getX(), event.getY());
+      updateStatusLinePoint(event.getX(), event.getY());
       updatePriceAxisHover(event.getX(), event.getY());
       updateCursor(event.getX(), event.getY());
     });
@@ -318,7 +318,7 @@ final class PriceChartCanvas extends Canvas {
     return new PriceRange(midpoint - zoomedSpan / 2.0, midpoint + zoomedSpan / 2.0);
   }
 
-  private void drawOhlcOverlay(
+  private void drawStatusLine(
     GraphicsContext graphics,
     ChartBounds bounds,
     List<PricePoint> visiblePoints,
@@ -326,24 +326,24 @@ final class PriceChartCanvas extends Canvas {
   ) {
     int pointIndex =
       hoveredPointIndex == null ? visiblePoints.size() - 1 : Math.min(hoveredPointIndex, visiblePoints.size() - 1);
-    PricePoint overlayPoint = visiblePoints.get(pointIndex);
-    String overlay = String.format(
+    PricePoint statusLinePoint = visiblePoints.get(pointIndex);
+    String statusLine = String.format(
       Locale.US,
       "%s  %s   O%,.2f  H%,.2f  L%,.2f  C%,.2f  Vol%,.2f M",
       stockSymbol,
       interval.displayName(),
-      overlayPoint.open(),
-      overlayPoint.high(),
-      overlayPoint.low(),
-      overlayPoint.close(),
-      overlayPoint.volume() / 1_000_000.0
+      statusLinePoint.open(),
+      statusLinePoint.high(),
+      statusLinePoint.low(),
+      statusLinePoint.close(),
+      statusLinePoint.volume() / 1_000_000.0
     );
 
     graphics.setFill(Color.rgb(28, 32, 38));
     graphics.setFont(Font.font("System", 14));
     graphics.setTextAlign(TextAlignment.LEFT);
     graphics.setTextBaseline(VPos.CENTER);
-    graphics.fillText(overlay, bounds.left(), bounds.bottom() - 14.0);
+    graphics.fillText(statusLine, bounds.left(), bounds.bottom() - 14.0);
   }
 
   private void drawAxes(GraphicsContext graphics, ChartBounds bounds) {
@@ -597,7 +597,7 @@ final class PriceChartCanvas extends Canvas {
     }
   }
 
-  private void updateOhlcOverlayPoint(double x, double y) {
+  private void updateStatusLinePoint(double x, double y) {
     ChartBounds bounds = chartBounds();
     Integer pointIndex = null;
 
