@@ -31,22 +31,17 @@ public class App extends Application {
 
   @Override
   public void start(Stage stage) {
-    marketData = new MarketDataController(
-      TiingoMarketDataClient.fromEnvironment(),
-      STOCK_SYMBOL
-    );
+    marketData = new MarketDataController(TiingoMarketDataClient.fromEnvironment(), STOCK_SYMBOL);
     List<PricePoint> pricePoints = marketData.loadInitial();
     PriceChartCanvas chart = new PriceChartCanvas(pricePoints, STOCK_SYMBOL, DATA_INTERVAL);
     chart.setOnEarlierHistoryRequested(() ->
-      marketData
-        .loadEarlier()
-        .whenComplete((updatedPoints, failure) -> {
-          if (failure != null) {
-            reportEarlierHistoryLoadFailure(failure);
-          } else {
-            Platform.runLater(() -> chart.setPricePoints(updatedPoints));
-          }
-        })
+      marketData.loadEarlier().whenComplete((updatedPoints, failure) -> {
+        if (failure != null) {
+          reportEarlierHistoryLoadFailure(failure);
+        } else {
+          Platform.runLater(() -> chart.setPricePoints(updatedPoints));
+        }
+      })
     );
 
     Pane root = new Pane(chart);
