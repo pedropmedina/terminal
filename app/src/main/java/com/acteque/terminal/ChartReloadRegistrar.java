@@ -1,7 +1,6 @@
 package com.acteque.terminal;
 
-/** Optional registration point implemented by development-time chart tooling. */
+/** Optional registration point implemented by development-time view tooling. */
 public interface ChartReloadRegistrar {
-
-  void register(Object chart);
+  void register(Object view);
 }

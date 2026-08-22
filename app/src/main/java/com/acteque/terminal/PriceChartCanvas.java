@@ -13,7 +13,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 
-final class PriceChartCanvas extends Canvas {
+final class PriceChartCanvas extends Canvas implements RefreshableView {
 
   // Padding
   private static final double LEFT_MARGIN = 0.0;
@@ -109,7 +109,7 @@ final class PriceChartCanvas extends Canvas {
     this.visiblePricePointCount = pricePoints.size();
     this.pricePoints = List.copyOf(pricePoints);
 
-    ChartReloadHooks.register(this); // <- Dev only hook to for canvas hot reloading
+    ChartReloadHooks.register(this); // Development runs refresh this view after class redefinition.
     widthProperty().addListener((ignored, oldWidth, newWidth) -> drawChart());
     heightProperty().addListener((ignored, oldHeight, newHeight) -> drawChart());
     setEventsListeners();
@@ -175,6 +175,11 @@ final class PriceChartCanvas extends Canvas {
     drawCrosshair(graphics, bounds, priceRange, visibleWindow);
     drawAutoscaleButton(graphics, bounds);
     drawStatusLine(graphics, bounds, visibleWindow.points(), hoveredVisiblePointIndex);
+  }
+
+  @Override
+  public void refreshView() {
+    drawChart();
   }
 
   private void setEventsListeners() {

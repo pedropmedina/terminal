@@ -5,7 +5,7 @@ import com.acteque.terminal.marketdata.provider.tiingo.TiingoMarketDataClient;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
@@ -44,7 +44,8 @@ public class App extends Application {
       })
     );
 
-    Pane root = new Pane(chart);
+    ChartMenu chartMenu = new ChartMenu();
+    StackPane root = new StackPane(chart, chartMenu);
     Scene scene = new Scene(root, MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT, Color.WHITE);
 
     // Keep the canvas the same size as the window content and redraw after every resize.

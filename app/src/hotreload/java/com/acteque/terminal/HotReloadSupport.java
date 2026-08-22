@@ -9,28 +9,26 @@ import javafx.application.Platform;
 /** Development hooks invoked by the project's HotswapAgent plugin. */
 public final class HotReloadSupport implements ChartReloadRegistrar {
 
-  private static final Set<PriceChartCanvas> CHARTS =
-      Collections.newSetFromMap(new WeakHashMap<>());
+  private static final Set<RefreshableView> VIEWS = Collections.newSetFromMap(new WeakHashMap<>());
 
   @Override
-  public void register(Object chart) {
-    if (!(chart instanceof PriceChartCanvas priceChart)) {
+  public void register(Object candidate) {
+    if (!(candidate instanceof RefreshableView view)) {
       return;
     }
 
-    synchronized (CHARTS) {
-      CHARTS.add(priceChart);
+    synchronized (VIEWS) {
+      VIEWS.add(view);
     }
   }
 
-  public static void redrawChartsAfterReload() {
-    Platform.runLater(
-        () -> {
-          ArrayList<PriceChartCanvas> charts;
-          synchronized (CHARTS) {
-            charts = new ArrayList<>(CHARTS);
-          }
-          charts.forEach(PriceChartCanvas::drawChart);
-        });
+  public static void refreshViewsAfterReload() {
+    Platform.runLater(() -> {
+      ArrayList<RefreshableView> views;
+      synchronized (VIEWS) {
+        views = new ArrayList<>(VIEWS);
+      }
+      views.forEach(RefreshableView::refreshView);
+    });
   }
 }
