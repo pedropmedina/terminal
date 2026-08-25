@@ -21,8 +21,6 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
   private static final double TOP_MARGIN = 0.0;
   private static final double BOTTOM_MARGIN = 32.0;
 
-  private static final double STATUS_LINE_LEFT_PADDING = 12.0;
-
   // Latest-price badge in the price column.
   private static final double CURRENT_PRICE_BADGE_HEIGHT = 24.0;
   private static final double CURRENT_PRICE_TEXT_OFFSET = 10.0;
@@ -97,15 +95,15 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
 
   private final ChartInterval interval;
 
-  private final String stockSymbol;
+  private final PriceChartStatusLine statusLine;
 
   PriceChartCanvas(List<PricePoint> pricePoints, String stockSymbol) {
     this(pricePoints, stockSymbol, ChartInterval.DAILY);
   }
 
   PriceChartCanvas(List<PricePoint> pricePoints, String stockSymbol, ChartInterval interval) {
-    this.stockSymbol = Objects.requireNonNull(stockSymbol);
     this.interval = Objects.requireNonNull(interval);
+    this.statusLine = new PriceChartStatusLine(stockSymbol, interval);
     this.visiblePricePointCount = pricePoints.size();
     this.pricePoints = List.copyOf(pricePoints);
 
@@ -149,6 +147,7 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
 
     ChartBounds bounds = chartBounds();
     VisibleWindow visibleWindow = visibleWindow();
+    PricePoint currentPricePoint = currentPricePoint(visibleWindow.points());
     List<XAxisTick> xAxisTicks = xAxisTicks(bounds, visibleWindow);
     PriceRange defaultPriceRange = calculateDefaultPriceRange(visibleWindow.points());
     PriceRange priceRange;
@@ -174,7 +173,7 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
     drawCurrentPriceBadge(graphics, bounds, priceRange, visibleWindow.points());
     drawCrosshair(graphics, bounds, priceRange, visibleWindow);
     drawAutoscaleButton(graphics, bounds);
-    drawStatusLine(graphics, bounds, visibleWindow.points(), hoveredVisiblePointIndex);
+    statusLine.draw(graphics, bounds.left(), bounds.bottom(), currentPricePoint);
   }
 
   @Override
@@ -369,32 +368,12 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
     return new PriceRange(midpoint - zoomedSpan / 2.0, midpoint + zoomedSpan / 2.0);
   }
 
-  private void drawStatusLine(
-    GraphicsContext graphics,
-    ChartBounds bounds,
-    List<PricePoint> visiblePoints,
-    Integer hoveredPointIndex
-  ) {
+  private PricePoint currentPricePoint(List<PricePoint> visiblePoints) {
     int pointIndex =
-      hoveredPointIndex == null ? visiblePoints.size() - 1 : Math.min(hoveredPointIndex, visiblePoints.size() - 1);
-    PricePoint statusLinePoint = visiblePoints.get(pointIndex);
-    String statusLine = String.format(
-      Locale.US,
-      "%s  %s   O%,.2f  H%,.2f  L%,.2f  C%,.2f  Vol%,.2f M",
-      stockSymbol,
-      interval.displayName(),
-      statusLinePoint.open(),
-      statusLinePoint.high(),
-      statusLinePoint.low(),
-      statusLinePoint.close(),
-      statusLinePoint.volume() / 1_000_000.0
-    );
-
-    graphics.setFill(Color.rgb(28, 32, 38));
-    graphics.setFont(Font.font("System", 14));
-    graphics.setTextAlign(TextAlignment.LEFT);
-    graphics.setTextBaseline(VPos.CENTER);
-    graphics.fillText(statusLine, bounds.left() + STATUS_LINE_LEFT_PADDING, bounds.bottom() - 14.0);
+      hoveredVisiblePointIndex == null
+        ? visiblePoints.size() - 1
+        : Math.min(hoveredVisiblePointIndex, visiblePoints.size() - 1);
+    return visiblePoints.get(pointIndex);
   }
 
   private void drawAxes(GraphicsContext graphics, ChartBounds bounds) {
