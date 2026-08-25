@@ -25,11 +25,6 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
   private static final double CURRENT_PRICE_BADGE_HEIGHT = 24.0;
   private static final double CURRENT_PRICE_TEXT_OFFSET = 10.0;
 
-  // Crosshair and axis value badges.
-  private static final double CROSSHAIR_BADGE_HEIGHT = 24.0;
-  private static final double CROSSHAIR_DATE_BADGE_WIDTH = 120.0;
-  private static final double CROSSHAIR_PRICE_TEXT_OFFSET = 10.0;
-
   // Autoscale button, shown at the foot of the price axis while that axis is hovered.
   private static final double AUTOSCALE_BUTTON_SIZE = 24.0;
   private static final double AUTOSCALE_BUTTON_X_OFFSET = 8.0;
@@ -95,6 +90,8 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
 
   private final ChartInterval interval;
 
+  private final PriceChartCrosshair crosshair;
+
   private final PriceChartStatusLine statusLine;
 
   PriceChartCanvas(List<PricePoint> pricePoints, String stockSymbol) {
@@ -103,6 +100,7 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
 
   PriceChartCanvas(List<PricePoint> pricePoints, String stockSymbol, ChartInterval interval) {
     this.interval = Objects.requireNonNull(interval);
+    this.crosshair = new PriceChartCrosshair(interval);
     this.statusLine = new PriceChartStatusLine(stockSymbol, interval);
     this.visiblePricePointCount = pricePoints.size();
     this.pricePoints = List.copyOf(pricePoints);
@@ -474,40 +472,17 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
     double price = priceForY(y, bounds, priceRange);
     int slotIndex = slotIndexForX(x, bounds);
     LocalDate date = dateForSlot(slotIndex, visibleWindow);
-
-    graphics.save();
-    graphics.setStroke(Color.rgb(120, 126, 136));
-    graphics.setLineWidth(1.0);
-    graphics.setLineDashes(4.0, 4.0);
-    graphics.strokeLine(x, bounds.top(), x, bounds.bottom());
-    graphics.strokeLine(bounds.left(), y, bounds.right(), y);
-    graphics.restore();
-
-    Color badgeColor = Color.rgb(232, 234, 237);
-    Color badgeTextColor = Color.rgb(40, 44, 52);
-
-    double priceBadgeTop = y - CROSSHAIR_BADGE_HEIGHT / 2.0;
-    graphics.setFill(badgeColor);
-    graphics.fillRect(bounds.right(), priceBadgeTop, getWidth() - bounds.right(), CROSSHAIR_BADGE_HEIGHT);
-    graphics.setFill(badgeTextColor);
-    graphics.setFont(Font.font("System", 12));
-    graphics.setTextAlign(TextAlignment.LEFT);
-    graphics.setTextBaseline(VPos.CENTER);
-    graphics.fillText(String.format(Locale.US, "%.2f", price), bounds.right() + CROSSHAIR_PRICE_TEXT_OFFSET, y);
-
-    double dateBadgeLeft = Math.max(
+    crosshair.draw(
+      graphics,
       bounds.left(),
-      Math.min(bounds.right() - CROSSHAIR_DATE_BADGE_WIDTH, x - CROSSHAIR_DATE_BADGE_WIDTH / 2.0)
-    );
-    graphics.setFill(badgeColor);
-    graphics.fillRect(dateBadgeLeft, bounds.bottom(), CROSSHAIR_DATE_BADGE_WIDTH, CROSSHAIR_BADGE_HEIGHT);
-    graphics.setFill(badgeTextColor);
-    graphics.setTextAlign(TextAlignment.CENTER);
-    graphics.setTextBaseline(VPos.TOP);
-    graphics.fillText(
-      interval.formatCrosshair(date),
-      dateBadgeLeft + CROSSHAIR_DATE_BADGE_WIDTH / 2.0,
-      bounds.bottom() + 10.0
+      bounds.top(),
+      bounds.right(),
+      bounds.bottom(),
+      getWidth(),
+      x,
+      y,
+      price,
+      date
     );
   }
 
