@@ -13,7 +13,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 
-final class PriceChartCanvas extends Canvas implements RefreshableView {
+final class ChartCanvas extends Canvas implements RefreshableView {
 
   // Padding
   private static final double LEFT_MARGIN = 0.0;
@@ -87,21 +87,24 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
   private List<PricePoint> pricePoints;
 
   private Runnable onEarlierHistoryRequested = () -> {};
-
   private final ChartInterval interval;
 
-  private final PriceChartCrosshair crosshair;
+  private final ChartCrosshair crosshair;
 
-  private final PriceChartStatusLine statusLine;
+  private final ChartStatusLine statusLine;
 
-  PriceChartCanvas(List<PricePoint> pricePoints, String stockSymbol) {
+  ChartCanvas(List<PricePoint> pricePoints, String stockSymbol) {
     this(pricePoints, stockSymbol, ChartInterval.DAILY);
   }
 
-  PriceChartCanvas(List<PricePoint> pricePoints, String stockSymbol, ChartInterval interval) {
+  ChartCanvas(List<PricePoint> pricePoints, String stockSymbol, ChartInterval interval) {
+    this(pricePoints, interval, new ChartStatusLine(stockSymbol, interval));
+  }
+
+  ChartCanvas(List<PricePoint> pricePoints, ChartInterval interval, ChartStatusLine statusLine) {
     this.interval = Objects.requireNonNull(interval);
-    this.crosshair = new PriceChartCrosshair(interval);
-    this.statusLine = new PriceChartStatusLine(stockSymbol, interval);
+    this.crosshair = new ChartCrosshair(interval);
+    this.statusLine = Objects.requireNonNull(statusLine, "statusLine");
     this.visiblePricePointCount = pricePoints.size();
     this.pricePoints = List.copyOf(pricePoints);
 
@@ -123,6 +126,9 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
 
     boolean establishingInitialData = pricePoints.isEmpty();
     pricePoints = replacement;
+    if (pricePoints.isEmpty()) {
+      statusLine.clearPricePoint();
+    }
     if (establishingInitialData) {
       visiblePricePointCount = pricePoints.size();
     } else {
@@ -171,7 +177,7 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
     drawCurrentPriceBadge(graphics, bounds, priceRange, visibleWindow.points());
     drawCrosshair(graphics, bounds, priceRange, visibleWindow);
     drawAutoscaleButton(graphics, bounds);
-    statusLine.draw(graphics, bounds.left(), bounds.bottom(), currentPricePoint);
+    statusLine.setPricePoint(currentPricePoint);
   }
 
   @Override
@@ -244,8 +250,8 @@ final class PriceChartCanvas extends Canvas implements RefreshableView {
     });
 
     setOnMouseReleased(event -> {
-      boolean toggleAutoscale =
-        autoscaleButtonPressed && isOverAutoscaleButton(event.getX(), event.getY(), chartBounds());
+      ChartBounds bounds = chartBounds();
+      boolean toggleAutoscale = autoscaleButtonPressed && isOverAutoscaleButton(event.getX(), event.getY(), bounds);
       autoscaleButtonPressed = false;
       dragMode = DragMode.NONE;
 

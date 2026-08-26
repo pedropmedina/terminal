@@ -5,7 +5,6 @@ import com.acteque.terminal.marketdata.provider.tiingo.TiingoMarketDataClient;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
@@ -33,24 +32,18 @@ public class App extends Application {
   public void start(Stage stage) {
     marketData = new MarketDataController(TiingoMarketDataClient.fromEnvironment(), STOCK_SYMBOL);
     List<PricePoint> pricePoints = marketData.loadInitial();
-    PriceChartCanvas chart = new PriceChartCanvas(pricePoints, STOCK_SYMBOL, DATA_INTERVAL);
-    chart.setOnEarlierHistoryRequested(() ->
+    Chart chartView = new Chart(pricePoints, STOCK_SYMBOL, DATA_INTERVAL);
+    chartView.setOnEarlierHistoryRequested(() ->
       marketData.loadEarlier().whenComplete((updatedPoints, failure) -> {
         if (failure != null) {
           reportEarlierHistoryLoadFailure(failure);
         } else {
-          Platform.runLater(() -> chart.setPricePoints(updatedPoints));
+          Platform.runLater(() -> chartView.setPricePoints(updatedPoints));
         }
       })
     );
 
-    ChartMenu chartMenu = new ChartMenu();
-    StackPane root = new StackPane(chart, chartMenu);
-    Scene scene = new Scene(root, MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT, Color.WHITE);
-
-    // Keep the canvas the same size as the window content and redraw after every resize.
-    chart.widthProperty().bind(root.widthProperty());
-    chart.heightProperty().bind(root.heightProperty());
+    Scene scene = new Scene(chartView, MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT, Color.WHITE);
 
     stage.setTitle(STOCK_SYMBOL);
     stage.setMinWidth(MIN_CANVAS_WIDTH);
@@ -58,7 +51,7 @@ public class App extends Application {
     stage.setScene(scene);
     stage.show();
 
-    chart.drawChart();
+    chartView.drawChart();
   }
 
   @Override

@@ -10,7 +10,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 
 /** Renders the chart's crosshair and its price and date badges. */
-final class PriceChartCrosshair {
+final class ChartCrosshair {
 
   private static final double BADGE_HEIGHT = 24.0;
   private static final double DATE_BADGE_WIDTH = 120.0;
@@ -19,7 +19,7 @@ final class PriceChartCrosshair {
 
   private final ChartInterval interval;
 
-  PriceChartCrosshair(ChartInterval interval) {
+  ChartCrosshair(ChartInterval interval) {
     this.interval = Objects.requireNonNull(interval, "interval");
   }
 

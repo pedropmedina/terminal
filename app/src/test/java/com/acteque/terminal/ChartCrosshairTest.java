@@ -1,13 +1,12 @@
 package com.acteque.terminal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
-class PriceChartCrosshairTest {
+class ChartCrosshairTest {
 
-  private final PriceChartCrosshair crosshair = new PriceChartCrosshair(ChartInterval.DAILY);
+  private final ChartCrosshair crosshair = new ChartCrosshair(ChartInterval.DAILY);
 
   @Test
   void formatsThePriceBadge() {

@@ -147,7 +147,7 @@ tasks.register<JavaExec>("hotRun") {
         classpath = files(hotClassesDirectory, hotResourcesDirectory, applicationFiles)
         jvmArgs(
             "--module-path", javaFxFiles.joinToString(File.pathSeparator),
-            "--add-modules", "javafx.graphics",
+            "--add-modules", "javafx.controls",
             "--enable-native-access=javafx.graphics",
             "-javaagent:${hotswapAgent.singleFile.absolutePath}=autoHotswap=true",
         )
@@ -156,5 +156,5 @@ tasks.register<JavaExec>("hotRun") {
 
 javafx {
     version = "25.0.1"
-    modules = listOf("javafx.graphics")
+    modules = listOf("javafx.controls")
 }
