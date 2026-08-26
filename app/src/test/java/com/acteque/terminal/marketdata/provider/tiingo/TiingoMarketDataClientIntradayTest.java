@@ -20,22 +20,24 @@ class TiingoMarketDataClientIntradayTest {
 
   @Test
   void requestsAndMapsTimestampedIexBars() {
-    String csv =
-      "date,close,high,low,open,volume" +
-      "\n2024-01-02T14:35:00.000Z,102,103,99,100,2000" +
-      "\n2024-01-02T14:30:00.000Z,98,101,97,99,1500";
+    String json =
+      "[" +
+      "{\"date\":\"2024-01-02T14:35:00.000Z\",\"close\":102,\"high\":103,\"low\":99," +
+      "\"open\":100,\"volume\":2000}," +
+      "{\"date\":\"2024-01-02T14:30:00.000Z\",\"close\":98,\"high\":101,\"low\":97," +
+      "\"open\":99,\"volume\":1500}" +
+      "]";
     AtomicReference<URI> requestedUri = new AtomicReference<>();
     AtomicReference<Map<String, String>> requestedHeaders = new AtomicReference<>();
     TiingoHttpTransport transport = (uri, headers) -> {
       requestedUri.set(uri);
       requestedHeaders.set(headers);
-      return new TiingoHttpTransport.Response(200, csv);
+      return new TiingoHttpTransport.Response(200, json);
     };
     TiingoMarketDataClient client = new TiingoMarketDataClient(
       "test-token",
       URI.create("https://example.test"),
-      transport,
-      TiingoIntradayFeed.IEX
+      transport
     );
 
     List<IntradayBar> bars = client.getIntradayBars(
@@ -52,11 +54,11 @@ class TiingoMarketDataClientIntradayTest {
     assertEquals("tiingo", client.provider());
     assertEquals(
       "https://example.test/iex/AAPL/prices?startDate=2024-01-02&endDate=2024-01-03" +
-      "&resampleFreq=5min&columns=open,high,low,close,volume&afterHours=true&forceFill=true&format=csv",
+      "&resampleFreq=5min&columns=open,high,low,close,volume&afterHours=true&forceFill=true&format=json",
       requestedUri.get().toString()
     );
     assertEquals("Token test-token", requestedHeaders.get().get("Authorization"));
-    assertEquals("text/csv", requestedHeaders.get().get("Accept"));
+    assertEquals("application/json", requestedHeaders.get().get("Accept"));
 
     assertEquals(2, bars.size());
     IntradayBar first = bars.getFirst();
@@ -68,17 +70,16 @@ class TiingoMarketDataClientIntradayTest {
   }
 
   @Test
-  void supportsTheConsolidatedFeedAndHourlyIntervals() {
+  void supportsHourlyIexIntervals() {
     AtomicReference<URI> requestedUri = new AtomicReference<>();
     TiingoHttpTransport transport = (uri, headers) -> {
       requestedUri.set(uri);
-      return new TiingoHttpTransport.Response(200, "");
+      return new TiingoHttpTransport.Response(200, "[]");
     };
     TiingoMarketDataClient client = new TiingoMarketDataClient(
       "test-token",
       URI.create("https://example.test"),
-      transport,
-      TiingoIntradayFeed.CONSOLIDATED
+      transport
     );
 
     client.getIntradayBars(
@@ -91,21 +92,20 @@ class TiingoMarketDataClientIntradayTest {
     );
 
     assertEquals(
-      "https://example.test/tiingo/equity/intraday/MSFT/prices?startDate=2024-01-02&endDate=2024-01-02" +
-      "&resampleFreq=1hour&columns=open,high,low,close,volume&afterHours=false&forceFill=false&format=csv",
+      "https://example.test/iex/MSFT/prices?startDate=2024-01-02&endDate=2024-01-02" +
+      "&resampleFreq=1hour&columns=open,high,low,close,volume&afterHours=false&forceFill=false&format=json",
       requestedUri.get().toString()
     );
   }
 
   @Test
-  void rejectsResponsesMissingRequiredColumns() {
+  void rejectsResponsesMissingRequiredFields() {
     TiingoHttpTransport transport = (uri, headers) ->
-      new TiingoHttpTransport.Response(200, "date,close\n2024-01-02T14:30:00Z,10");
+      new TiingoHttpTransport.Response(200, "[{\"date\":\"2024-01-02T14:30:00Z\",\"close\":10}]");
     TiingoMarketDataClient client = new TiingoMarketDataClient(
       "test-token",
       URI.create("https://example.test"),
-      transport,
-      TiingoIntradayFeed.IEX
+      transport
     );
 
     MarketDataException exception = assertThrows(MarketDataException.class, () ->
@@ -135,8 +135,7 @@ class TiingoMarketDataClientIntradayTest {
     TiingoMarketDataClient client = new TiingoMarketDataClient(
       "test-token",
       URI.create("https://example.test"),
-      transport,
-      TiingoIntradayFeed.IEX
+      transport
     );
 
     MarketDataException exception = assertThrows(MarketDataException.class, () ->

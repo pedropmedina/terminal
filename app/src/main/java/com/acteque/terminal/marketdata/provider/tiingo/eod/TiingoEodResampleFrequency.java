@@ -1,4 +1,4 @@
-package com.acteque.terminal.marketdata.provider.tiingo;
+package com.acteque.terminal.marketdata.provider.tiingo.eod;
 
 /** Frequencies accepted by Tiingo's end-of-day historical prices endpoint. */
 public enum TiingoEodResampleFrequency {

@@ -27,6 +27,7 @@ val hotReload = sourceSets.create("hotreload") {
 
 dependencies {
     implementation("org.apache.commons:commons-text")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
     implementation("io.github.cdimascio:dotenv-java:3.0.0")
 
     // Only development sources compile against the agent API. HotswapAgent supplies its

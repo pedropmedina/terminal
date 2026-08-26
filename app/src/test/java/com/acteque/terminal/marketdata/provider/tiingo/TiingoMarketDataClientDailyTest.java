@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.acteque.terminal.marketdata.DailyBar;
 import com.acteque.terminal.marketdata.DailyBarRequest;
 import com.acteque.terminal.marketdata.MarketDataException;
+import com.acteque.terminal.marketdata.provider.tiingo.eod.TiingoEodResampleFrequency;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.LocalDate;
@@ -16,21 +17,23 @@ import org.junit.jupiter.api.Test;
 
 class TiingoMarketDataClientDailyTest {
 
-  private static final String HEADER =
-    "date,close,high,low,open,volume,adjClose,adjHigh,adjLow,adjOpen,adjVolume,divCash,splitFactor";
-
   @Test
   void mapsTiingoDataToTheProviderNeutralContract() {
-    String csv =
-      HEADER +
-      "\n2024-01-03T00:00:00.000Z,102,103,99,100,2000,51,51.5,49.5,50,4000,0,2" +
-      "\n2024-01-02T00:00:00.000Z,98,101,97,99,1500,49,50.5,48.5,49.5,3000,0.25,1";
+    String json =
+      "[" +
+      "{\"date\":\"2024-01-03T00:00:00.000Z\",\"close\":102,\"high\":103,\"low\":99," +
+      "\"open\":100,\"volume\":2000,\"adjClose\":51,\"adjHigh\":51.5,\"adjLow\":49.5," +
+      "\"adjOpen\":50,\"adjVolume\":4000,\"divCash\":0,\"splitFactor\":2}," +
+      "{\"date\":\"2024-01-02T00:00:00.000Z\",\"close\":98,\"high\":101,\"low\":97," +
+      "\"open\":99,\"volume\":1500,\"adjClose\":49,\"adjHigh\":50.5,\"adjLow\":48.5," +
+      "\"adjOpen\":49.5,\"adjVolume\":3000,\"divCash\":0.25,\"splitFactor\":1}" +
+      "]";
     AtomicReference<URI> requestedUri = new AtomicReference<>();
     AtomicReference<Map<String, String>> requestedHeaders = new AtomicReference<>();
     TiingoHttpTransport transport = (uri, headers) -> {
       requestedUri.set(uri);
       requestedHeaders.set(headers);
-      return new TiingoHttpTransport.Response(200, csv);
+      return new TiingoHttpTransport.Response(200, json);
     };
     TiingoMarketDataClient client = new TiingoMarketDataClient(
       "test-token",
@@ -44,11 +47,11 @@ class TiingoMarketDataClientDailyTest {
 
     assertEquals("tiingo", client.provider());
     assertEquals(
-      "https://example.test/tiingo/daily/AAPL/prices?startDate=2024-01-02&endDate=2024-01-03&format=csv",
+      "https://example.test/tiingo/daily/AAPL/prices?startDate=2024-01-02&endDate=2024-01-03&format=json",
       requestedUri.get().toString()
     );
     assertEquals("Token test-token", requestedHeaders.get().get("Authorization"));
-    assertEquals("text/csv", requestedHeaders.get().get("Accept"));
+    assertEquals("application/json", requestedHeaders.get().get("Accept"));
 
     assertEquals(2, bars.size());
     DailyBar first = bars.getFirst();
@@ -67,7 +70,7 @@ class TiingoMarketDataClientDailyTest {
     AtomicReference<URI> requestedUri = new AtomicReference<>();
     TiingoHttpTransport transport = (uri, headers) -> {
       requestedUri.set(uri);
-      return new TiingoHttpTransport.Response(200, "");
+      return new TiingoHttpTransport.Response(200, "[]");
     };
     TiingoMarketDataClient client = new TiingoMarketDataClient(
       "test-token",
@@ -75,14 +78,14 @@ class TiingoMarketDataClientDailyTest {
       transport
     );
 
-    client.getDailyBars(
+    client.daily.getBars(
       new DailyBarRequest("aapl", LocalDate.parse("2024-01-01"), LocalDate.parse("2024-12-31")),
       TiingoEodResampleFrequency.MONTHLY
     );
 
     assertEquals(
       "https://example.test/tiingo/daily/AAPL/prices?startDate=2024-01-01&endDate=2024-12-31" +
-      "&format=csv&resampleFreq=monthly",
+      "&format=json&resampleFreq=monthly",
       requestedUri.get().toString()
     );
   }
@@ -96,9 +99,9 @@ class TiingoMarketDataClientDailyTest {
   }
 
   @Test
-  void rejectsResponsesMissingRequiredColumns() {
+  void rejectsResponsesMissingRequiredFields() {
     TiingoHttpTransport transport = (uri, headers) ->
-      new TiingoHttpTransport.Response(200, "date,close\n2024-01-02,10");
+      new TiingoHttpTransport.Response(200, "[{\"date\":\"2024-01-02\",\"close\":10}]");
     TiingoMarketDataClient client = new TiingoMarketDataClient(
       "test-token",
       URI.create("https://example.test"),

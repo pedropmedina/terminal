@@ -1,71 +1,60 @@
 package com.acteque.terminal.marketdata.provider.tiingo;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.util.List;
 import com.acteque.terminal.marketdata.DailyBar;
 import com.acteque.terminal.marketdata.DailyBarRequest;
 import com.acteque.terminal.marketdata.IntradayBar;
 import com.acteque.terminal.marketdata.IntradayBarRequest;
 import com.acteque.terminal.marketdata.MarketDataClient;
-import com.acteque.terminal.marketdata.MarketDataException;
+import com.acteque.terminal.marketdata.provider.tiingo.eod.TiingoDailyApi;
+import com.acteque.terminal.marketdata.provider.tiingo.iex.TiingoIexApi;
+import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
+import com.acteque.terminal.marketdata.provider.tiingo.utilities.TiingoTickerSearchResult;
+import com.acteque.terminal.marketdata.provider.tiingo.utilities.TiingoUtilitiesApi;
 import io.github.cdimascio.dotenv.Dotenv;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
-/** Tiingo client for historical end-of-day and intraday market data. */
+/** Tiingo facade exposing endpoint-aligned daily and IEX APIs. */
 public final class TiingoMarketDataClient implements MarketDataClient {
 
   public static final String API_KEY_ENVIRONMENT_VARIABLE = "TIINGO_API_KEY";
 
-  private static final URI DEFAULT_BASE_URI = URI.create("https://api.tiingo.com");
+  /** Tiingo's {@code /tiingo/daily} endpoint module. */
+  public final TiingoDailyApi daily;
 
-  private final String apiKey;
-  private final URI baseUri;
-  private final TiingoHttpTransport transport;
-  private final TiingoIntradayFeed intradayFeed;
+  /** Tiingo's {@code /iex} endpoint module. */
+  public final TiingoIexApi iex;
 
-  /** Creates a client using Tiingo's production-recommended IEX intraday feed. */
+  /** Tiingo's supported-ticker catalog module. */
+  public final TiingoTickerCatalogApi tickerCatalog;
+
+  private final TiingoUtilitiesApi utilities;
+
+  /** Creates a client for Tiingo's daily and IEX APIs. */
   public TiingoMarketDataClient(String apiKey) {
-    this(apiKey, TiingoIntradayFeed.IEX);
-  }
-
-  public TiingoMarketDataClient(String apiKey, TiingoIntradayFeed intradayFeed) {
-    this(
-      apiKey,
-      DEFAULT_BASE_URI,
-      TiingoHttpTransport.using(HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()),
-      intradayFeed
+    TiingoRequestExecutor requests = new TiingoRequestExecutor(
+      requireApiKey(apiKey),
+      TiingoHttpTransport.using(HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build())
     );
+    daily = TiingoDailyApi.usingDefaults(requests);
+    iex = TiingoIexApi.usingDefaults(requests);
+    tickerCatalog = TiingoTickerCatalogApi.usingDefaults(requests);
+    utilities = TiingoUtilitiesApi.usingDefaults(requests);
   }
 
+  /** Test-only constructor for injecting a transport and local endpoint base URI. */
   TiingoMarketDataClient(String apiKey, URI baseUri, TiingoHttpTransport transport) {
-    this(apiKey, baseUri, transport, TiingoIntradayFeed.IEX);
+    TiingoRequestExecutor requests = new TiingoRequestExecutor(requireApiKey(apiKey), transport);
+    daily = new TiingoDailyApi(baseUri, requests);
+    iex = new TiingoIexApi(baseUri, requests);
+    tickerCatalog = new TiingoTickerCatalogApi(baseUri.resolve("/supported_tickers.zip"), requests);
+    utilities = new TiingoUtilitiesApi(baseUri, requests);
   }
 
-  TiingoMarketDataClient(
-    String apiKey,
-    URI baseUri,
-    TiingoHttpTransport transport,
-    TiingoIntradayFeed intradayFeed
-  ) {
-    this.apiKey = requireApiKey(apiKey);
-    this.baseUri = Objects.requireNonNull(baseUri, "baseUri");
-    this.transport = Objects.requireNonNull(transport, "transport");
-    this.intradayFeed = Objects.requireNonNull(intradayFeed, "intradayFeed");
-  }
-
-  public static TiingoMarketDataClient fromEnvironment() {
-    return fromEnvironment(TiingoIntradayFeed.IEX);
-  }
-
-  public static TiingoMarketDataClient fromEnvironment(TiingoIntradayFeed intradayFeed) {
+  public static TiingoMarketDataClient create() {
     String apiKey = Dotenv.configure().ignoreIfMissing().load().get(API_KEY_ENVIRONMENT_VARIABLE);
-    return new TiingoMarketDataClient(apiKey, intradayFeed);
+    return new TiingoMarketDataClient(apiKey);
   }
 
   @Override
@@ -75,92 +64,17 @@ public final class TiingoMarketDataClient implements MarketDataClient {
 
   @Override
   public List<DailyBar> getDailyBars(DailyBarRequest request) {
-    return getDailyBarsInternal(request, null);
-  }
-
-  /** Returns end-of-day data resampled by Tiingo to the requested frequency. */
-  public List<DailyBar> getDailyBars(DailyBarRequest request, TiingoEodResampleFrequency frequency) {
-    return getDailyBarsInternal(request, Objects.requireNonNull(frequency, "frequency"));
-  }
-
-  private List<DailyBar> getDailyBarsInternal(DailyBarRequest request, TiingoEodResampleFrequency frequency) {
-    Objects.requireNonNull(request, "request");
-    URI uri = dailyPricesUri(request, frequency);
-    return TiingoCsvParser.parse(request.symbol(), getCsv(uri));
+    return daily.getBars(request);
   }
 
   @Override
   public List<IntradayBar> getIntradayBars(IntradayBarRequest request) {
-    Objects.requireNonNull(request, "request");
-    URI uri = intradayPricesUri(request);
-    return TiingoIntradayCsvParser.parse(request.symbol(), getCsv(uri));
+    return iex.getPrices(request);
   }
 
-  private String getCsv(URI uri) {
-    TiingoHttpTransport.Response response;
-    try {
-      response = transport.get(uri, Map.of("Accept", "text/csv", "Authorization", "Token " + apiKey));
-    } catch (InterruptedException exception) {
-      Thread.currentThread().interrupt();
-      throw new MarketDataException(MarketDataException.Code.NETWORK, "Tiingo request was interrupted", exception);
-    } catch (IOException exception) {
-      throw new MarketDataException(MarketDataException.Code.NETWORK, "Unable to reach Tiingo", exception);
-    }
-
-    ensureSuccess(response);
-    return response.body();
-  }
-
-  private URI dailyPricesUri(DailyBarRequest request, TiingoEodResampleFrequency frequency) {
-    String query = "startDate=" + request.startDate() + "&endDate=" + request.endDate() + "&format=csv";
-    if (frequency != null) {
-      query += "&resampleFreq=" + frequency.apiValue();
-    }
-    return baseUri.resolve("/tiingo/daily/" + encodedSymbol(request.symbol()) + "/prices?" + query);
-  }
-
-  private URI intradayPricesUri(IntradayBarRequest request) {
-    String query =
-      "startDate=" +
-      request.startDate() +
-      "&endDate=" +
-      request.endDate() +
-      "&resampleFreq=" +
-      resampleFrequency(request.interval()) +
-      "&columns=open,high,low,close,volume" +
-      "&afterHours=" +
-      request.includeAfterHours() +
-      "&forceFill=" +
-      request.forceFill() +
-      "&format=csv";
-    return baseUri.resolve(intradayFeed.pathPrefix() + encodedSymbol(request.symbol()) + "/prices?" + query);
-  }
-
-  private static String encodedSymbol(String symbol) {
-    return URLEncoder.encode(symbol, StandardCharsets.UTF_8).replace("+", "%20");
-  }
-
-  private static String resampleFrequency(Duration interval) {
-    long minutes = interval.toMinutes();
-    if (minutes % 60 == 0) {
-      return (minutes / 60) + "hour";
-    }
-    return minutes + "min";
-  }
-
-  private static void ensureSuccess(TiingoHttpTransport.Response response) {
-    int status = response.statusCode();
-    if (status >= 200 && status < 300) {
-      return;
-    }
-
-    MarketDataException.Code code = switch (status) {
-      case 401, 403 -> MarketDataException.Code.AUTHENTICATION;
-      case 404 -> MarketDataException.Code.NOT_FOUND;
-      case 429 -> MarketDataException.Code.RATE_LIMITED;
-      default -> MarketDataException.Code.PROVIDER_ERROR;
-    };
-    throw new MarketDataException(code, "Tiingo request failed with HTTP status " + status);
+  /** Searches Tiingo's utilities endpoint by ticker or asset name. */
+  public List<TiingoTickerSearchResult> searchTickers(String query) {
+    return utilities.searchTickers(query);
   }
 
   private static String requireApiKey(String apiKey) {

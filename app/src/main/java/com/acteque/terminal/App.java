@@ -30,7 +30,7 @@ public class App extends Application {
 
   @Override
   public void start(Stage stage) {
-    marketData = new MarketDataController(TiingoMarketDataClient.fromEnvironment(), STOCK_SYMBOL);
+    marketData = new MarketDataController(TiingoMarketDataClient.create(), STOCK_SYMBOL);
     List<PricePoint> pricePoints = marketData.loadInitial();
     Chart chartView = new Chart(pricePoints, STOCK_SYMBOL, DATA_INTERVAL);
     chartView.setOnEarlierHistoryRequested(() ->
