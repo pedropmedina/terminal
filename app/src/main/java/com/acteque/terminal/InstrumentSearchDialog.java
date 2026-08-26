@@ -21,7 +21,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 /** A transient symbol picker. Selection is intentionally not applied to market data yet. */
-final class InstrumentSearchDialog extends StackPane {
+final class InstrumentSearchDialog extends StackPane implements RefreshableView {
 
   private static final double MODAL_WIDTH = 320.0;
   private static final double MAX_VIEWPORT_WIDTH_RATIO = 0.70;
@@ -43,9 +43,23 @@ final class InstrumentSearchDialog extends StackPane {
         symbolField.requestFocus();
       }
     });
+    addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+      if (event.getCode() == KeyCode.ESCAPE) {
+        closeRequestHandler.run();
+        event.consume();
+      }
+    });
+
+    refreshView();
+    ChartReloadHooks.register(this);
+  }
+
+  @Override
+  public void refreshView() {
     setPickOnBounds(true);
     setAlignment(Pos.CENTER);
     setBackground(Background.EMPTY);
+    setOnMouseClicked(event -> overlayClickHandler.run());
 
     Label title = new Label("Instrument search");
     title.setFont(Font.font("System", FontWeight.SEMI_BOLD, 18.0));
@@ -53,6 +67,7 @@ final class InstrumentSearchDialog extends StackPane {
     symbolField.setPromptText("Symbol");
     symbolField.setAccessibleText("Stock symbol");
 
+    getChildren().clear();
     VBox card = new VBox(16.0, title, symbolField);
     card.setPrefWidth(MODAL_WIDTH);
     card.maxWidthProperty().bind(widthProperty().multiply(MAX_VIEWPORT_WIDTH_RATIO));
@@ -66,13 +81,6 @@ final class InstrumentSearchDialog extends StackPane {
     StackPane.setAlignment(card, Pos.CENTER);
 
     getChildren().setAll(card);
-    setOnMouseClicked(event -> overlayClickHandler.run());
-    addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-      if (event.getCode() == KeyCode.ESCAPE) {
-        closeRequestHandler.run();
-        event.consume();
-      }
-    });
   }
 
   void onOverlayClick(Runnable callback) {
