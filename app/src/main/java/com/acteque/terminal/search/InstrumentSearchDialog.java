@@ -43,6 +43,10 @@ public final class InstrumentSearchDialog extends StackPane implements Refreshab
   private static final double MODAL_WIDTH = 640.0;
   private static final double MAX_VIEWPORT_WIDTH_RATIO = 0.70;
   private static final double MAX_VIEWPORT_HEIGHT_RATIO = 0.70;
+  private static final String STYLESHEET = Objects.requireNonNull(
+    InstrumentSearchDialog.class.getResource("instrument-search-dialog.css"),
+    "instrument-search-dialog.css"
+  ).toExternalForm();
   private static final Color ROW_BORDER_COLOR = Color.rgb(220, 223, 229);
   private static final Background OVERLAY_BACKGROUND = new Background(
     new BackgroundFill(Color.rgb(45, 48, 55, 0.24), CornerRadii.EMPTY, Insets.EMPTY)
@@ -122,7 +126,15 @@ public final class InstrumentSearchDialog extends StackPane implements Refreshab
     getChildren().setAll(card);
   }
 
+  @Override
+  public void refreshStylesheets() {
+    instruments.getStylesheets().remove(STYLESHEET);
+    instruments.getStylesheets().add(STYLESHEET);
+  }
+
   private void configureInstrumentList() {
+    instruments.getStyleClass().add("instrument-list");
+    instruments.getStylesheets().add(STYLESHEET);
     instruments.setItems(filteredInstruments);
     instruments.setCellFactory(ignored -> new InstrumentCell(instruments.glidingProperty()));
     instruments.setBackground(Background.EMPTY);

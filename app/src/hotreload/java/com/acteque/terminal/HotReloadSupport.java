@@ -25,12 +25,16 @@ public final class HotReloadSupport implements ChartReloadRegistrar {
   }
 
   public static void refreshViewsAfterReload() {
-    Platform.runLater(() -> {
-      ArrayList<RefreshableView> views;
-      synchronized (VIEWS) {
-        views = new ArrayList<>(VIEWS);
-      }
-      views.forEach(RefreshableView::refreshView);
-    });
+    Platform.runLater(() -> snapshotViews().forEach(RefreshableView::refreshView));
+  }
+
+  public static void refreshStylesheetsAfterReload() {
+    Platform.runLater(() -> snapshotViews().forEach(RefreshableView::refreshStylesheets));
+  }
+
+  private static ArrayList<RefreshableView> snapshotViews() {
+    synchronized (VIEWS) {
+      return new ArrayList<>(VIEWS);
+    }
   }
 }
