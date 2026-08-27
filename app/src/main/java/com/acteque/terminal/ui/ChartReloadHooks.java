@@ -1,10 +1,10 @@
-package com.acteque.terminal;
+package com.acteque.terminal.ui;
 
 import java.util.List;
 import java.util.ServiceLoader;
 
 /** Dispatches refreshable-view registration to optional classpath-provided tooling. */
-final class ChartReloadHooks {
+public final class ChartReloadHooks {
 
   private static final List<ChartReloadRegistrar> REGISTRARS = ServiceLoader.load(ChartReloadRegistrar.class)
     .stream()
@@ -13,7 +13,7 @@ final class ChartReloadHooks {
 
   private ChartReloadHooks() {}
 
-  static void register(Object view) {
+  public static void register(Object view) {
     REGISTRARS.forEach(registrar -> registrar.register(view));
   }
 }

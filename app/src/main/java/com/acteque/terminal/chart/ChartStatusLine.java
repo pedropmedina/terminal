@@ -1,4 +1,7 @@
-package com.acteque.terminal;
+package com.acteque.terminal.chart;
+
+import com.acteque.terminal.ui.ChartReloadHooks;
+import com.acteque.terminal.ui.RefreshableView;
 
 import java.util.Locale;
 import java.util.Objects;

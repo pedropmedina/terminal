@@ -1,4 +1,4 @@
-package com.acteque.terminal;
+package com.acteque.terminal.chart;
 
 import java.util.ArrayList;
 import java.util.List;

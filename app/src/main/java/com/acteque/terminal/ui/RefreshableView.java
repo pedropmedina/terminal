@@ -1,7 +1,6 @@
-package com.acteque.terminal;
+package com.acteque.terminal.ui;
 
 /** A view whose visual state can be rebuilt without replacing its scene-graph node. */
-interface RefreshableView {
-
+public interface RefreshableView {
   void refreshView();
 }

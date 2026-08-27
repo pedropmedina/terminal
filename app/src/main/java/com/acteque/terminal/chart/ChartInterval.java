@@ -1,10 +1,10 @@
-package com.acteque.terminal;
+package com.acteque.terminal.chart;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-enum ChartInterval {
+public enum ChartInterval {
   DAILY("1D", 56.0);
 
   private static final DateTimeFormatter MONTH_LABEL_FORMATTER = DateTimeFormatter.ofPattern("MMM", Locale.US);

@@ -1,7 +1,11 @@
 package com.acteque.terminal;
 
-import java.util.List;
+import com.acteque.terminal.chart.Chart;
+import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.PricePoint;
+import com.acteque.terminal.marketdata.MarketDataController;
 import com.acteque.terminal.marketdata.provider.tiingo.TiingoMarketDataClient;
+import java.util.List;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -30,9 +34,10 @@ public class App extends Application {
 
   @Override
   public void start(Stage stage) {
-    marketData = new MarketDataController(TiingoMarketDataClient.create(), STOCK_SYMBOL);
+    TiingoMarketDataClient client = TiingoMarketDataClient.create();
+    marketData = new MarketDataController(client, STOCK_SYMBOL);
     List<PricePoint> pricePoints = marketData.loadInitial();
-    Chart chartView = new Chart(pricePoints, STOCK_SYMBOL, DATA_INTERVAL);
+    Chart chartView = new Chart(pricePoints, STOCK_SYMBOL, DATA_INTERVAL, client.tickerCatalog);
     chartView.setOnEarlierHistoryRequested(() ->
       marketData.loadEarlier().whenComplete((updatedPoints, failure) -> {
         if (failure != null) {

@@ -1,4 +1,8 @@
-package com.acteque.terminal;
+package com.acteque.terminal.chart;
+
+import com.acteque.terminal.ui.ChartReloadHooks;
+import com.acteque.terminal.ui.RefreshableView;
+import com.acteque.terminal.ui.UiStyles;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,7 +21,6 @@ final class ChartMenu extends HBox implements RefreshableView {
 
   private static final double TOP_MARGIN = 12.0;
   private static final double ITEM_SIZE = 32.0;
-
   ChartMenu() {
     refreshView();
     ChartReloadHooks.register(this);
@@ -29,7 +32,7 @@ final class ChartMenu extends HBox implements RefreshableView {
     setAlignment(Pos.CENTER);
     setPadding(new Insets(4.0));
     setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
-    setBackground(new Background(new BackgroundFill(Color.rgb(242, 243, 245), new CornerRadii(8.0), Insets.EMPTY)));
+    setBackground(UiStyles.SURFACE_BACKGROUND);
     StackPane.setAlignment(this, Pos.TOP_CENTER);
     StackPane.setMargin(this, new Insets(TOP_MARGIN, 0.0, 0.0, 0.0));
     getChildren().setAll(

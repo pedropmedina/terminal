@@ -1,5 +1,6 @@
-package com.acteque.terminal;
+package com.acteque.terminal.marketdata;
 
+import com.acteque.terminal.chart.PricePoint;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
@@ -11,13 +12,9 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import com.acteque.terminal.marketdata.DailyBar;
-import com.acteque.terminal.marketdata.DailyBarRequest;
-import com.acteque.terminal.marketdata.MarketDataClient;
-import com.acteque.terminal.marketdata.Ohlcv;
 
 /** Owns the loaded daily-price history and fetches earlier pages on demand. */
-final class MarketDataController implements AutoCloseable {
+public final class MarketDataController implements AutoCloseable {
 
   private static final long HISTORY_PAGE_MONTHS = 6;
 
@@ -30,7 +27,7 @@ final class MarketDataController implements AutoCloseable {
   private boolean earlierHistoryLoadInProgress;
   private boolean allEarlierHistoryLoaded;
 
-  MarketDataController(MarketDataClient client, String symbol) {
+  public MarketDataController(MarketDataClient client, String symbol) {
     this(client, symbol, Clock.systemDefaultZone(), Executors.newVirtualThreadPerTaskExecutor());
   }
 
@@ -41,7 +38,7 @@ final class MarketDataController implements AutoCloseable {
     this.executor = Objects.requireNonNull(executor, "executor");
   }
 
-  List<PricePoint> loadInitial() {
+  public List<PricePoint> loadInitial() {
     LocalDate endDate = LocalDate.now(clock);
     List<PricePoint> initialPoints = loadPage(endDate.minusMonths(HISTORY_PAGE_MONTHS), endDate);
     synchronized (this) {
@@ -50,7 +47,7 @@ final class MarketDataController implements AutoCloseable {
     }
   }
 
-  CompletionStage<List<PricePoint>> loadEarlier() {
+  public CompletionStage<List<PricePoint>> loadEarlier() {
     LocalDate oldestAvailableDate;
     synchronized (this) {
       if (earlierHistoryLoadInProgress || allEarlierHistoryLoaded || pointsByDate.isEmpty()) {

@@ -1,4 +1,4 @@
-package com.acteque.terminal;
+package com.acteque.terminal.chart;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
