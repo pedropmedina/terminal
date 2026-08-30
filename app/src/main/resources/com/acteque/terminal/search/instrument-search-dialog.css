@@ -105,6 +105,9 @@
 
 .instrument-list > .virtual-flow > .scroll-bar:vertical > .increment-button,
 .instrument-list > .virtual-flow > .scroll-bar:vertical > .decrement-button {
+  -fx-pref-width: 10px;
+  -fx-min-width: 10px;
+  -fx-max-width: 10px;
   -fx-pref-height: 0;
   -fx-min-height: 0;
   -fx-max-height: 0;

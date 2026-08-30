@@ -1,14 +1,14 @@
 package com.acteque.terminal.search;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoSupportedTicker;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.KineticListView;
 import com.acteque.terminal.ui.RefreshableView;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.collections.FXCollections;
