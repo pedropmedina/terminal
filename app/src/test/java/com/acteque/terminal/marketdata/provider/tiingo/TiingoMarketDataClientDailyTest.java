@@ -85,7 +85,7 @@ class TiingoMarketDataClientDailyTest {
 
     assertEquals(
       "https://example.test/tiingo/daily/AAPL/prices?startDate=2024-01-01&endDate=2024-12-31" +
-      "&format=json&resampleFreq=monthly",
+        "&format=json&resampleFreq=monthly",
       requestedUri.get().toString()
     );
   }

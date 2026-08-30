@@ -54,7 +54,7 @@ class TiingoMarketDataClientIntradayTest {
     assertEquals("tiingo", client.provider());
     assertEquals(
       "https://example.test/iex/AAPL/prices?startDate=2024-01-02&endDate=2024-01-03" +
-      "&resampleFreq=5min&columns=open,high,low,close,volume&afterHours=true&forceFill=true&format=json",
+        "&resampleFreq=5min&columns=open,high,low,close,volume&afterHours=true&forceFill=true&format=json",
       requestedUri.get().toString()
     );
     assertEquals("Token test-token", requestedHeaders.get().get("Authorization"));
@@ -83,17 +83,12 @@ class TiingoMarketDataClientIntradayTest {
     );
 
     client.getIntradayBars(
-      new IntradayBarRequest(
-        "MSFT",
-        LocalDate.parse("2024-01-02"),
-        LocalDate.parse("2024-01-02"),
-        Duration.ofHours(1)
-      )
+      new IntradayBarRequest("MSFT", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-02"), Duration.ofHours(1))
     );
 
     assertEquals(
       "https://example.test/iex/MSFT/prices?startDate=2024-01-02&endDate=2024-01-02" +
-      "&resampleFreq=1hour&columns=open,high,low,close,volume&afterHours=false&forceFill=false&format=json",
+        "&resampleFreq=1hour&columns=open,high,low,close,volume&afterHours=false&forceFill=false&format=json",
       requestedUri.get().toString()
     );
   }

@@ -4,9 +4,10 @@ import static com.acteque.terminal.marketdata.provider.tiingo.TiingoResponseDeco
 import static com.acteque.terminal.marketdata.provider.tiingo.TiingoResponseDecoder.optionalText;
 import static com.acteque.terminal.marketdata.provider.tiingo.TiingoResponseDecoder.readList;
 import static com.acteque.terminal.marketdata.provider.tiingo.TiingoResponseDecoder.requiredText;
-import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.List;
 
 final class TiingoUtilitiesJsonParser {
 

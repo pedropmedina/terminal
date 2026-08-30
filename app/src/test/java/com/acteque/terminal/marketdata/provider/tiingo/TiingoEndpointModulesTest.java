@@ -54,7 +54,7 @@ class TiingoEndpointModulesTest {
 
     assertEquals(
       "https://example.test/tiingo/daily/AAPL/prices?startDate=2024-01-01&endDate=2024-12-31" +
-      "&format=json&resampleFreq=monthly",
+        "&format=json&resampleFreq=monthly",
       requestedUri.get().toString()
     );
   }
@@ -62,8 +62,7 @@ class TiingoEndpointModulesTest {
   @Test
   void iexModuleGetsAllAndSingleLastPrices() {
     AtomicReference<URI> requestedUri = new AtomicReference<>();
-    String json =
-      """
+    String json = """
       [{
         "ticker": "AAPL",
         "timestamp": "2024-01-02T20:59:59.000Z",
@@ -117,16 +116,11 @@ class TiingoEndpointModulesTest {
       transport
     );
 
-    tiingo.iex.getPrices(
-      "msft",
-      LocalDate.parse("2024-01-02"),
-      LocalDate.parse("2024-01-03"),
-      Duration.ofMinutes(5)
-    );
+    tiingo.iex.getPrices("msft", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-03"), Duration.ofMinutes(5));
 
     assertEquals(
       "https://example.test/iex/MSFT/prices?startDate=2024-01-02&endDate=2024-01-03" +
-      "&resampleFreq=5min&columns=open,high,low,close,volume&afterHours=false&forceFill=false&format=json",
+        "&resampleFreq=5min&columns=open,high,low,close,volume&afterHours=false&forceFill=false&format=json",
       requestedUri.get().toString()
     );
   }

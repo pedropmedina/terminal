@@ -30,14 +30,10 @@ class IntradayBarRequestTest {
     assertThrows(IllegalArgumentException.class, () ->
       new IntradayBarRequest("AAPL", date.plusDays(1), date, Duration.ofMinutes(5))
     );
-    assertThrows(IllegalArgumentException.class, () ->
-      new IntradayBarRequest("AAPL", date, date, Duration.ZERO)
-    );
+    assertThrows(IllegalArgumentException.class, () -> new IntradayBarRequest("AAPL", date, date, Duration.ZERO));
     assertThrows(IllegalArgumentException.class, () ->
       new IntradayBarRequest("AAPL", date, date, Duration.ofSeconds(90))
     );
-    assertThrows(IllegalArgumentException.class, () ->
-      new IntradayBarRequest("AAPL", date, date, Duration.ofDays(1))
-    );
+    assertThrows(IllegalArgumentException.class, () -> new IntradayBarRequest("AAPL", date, date, Duration.ofDays(1)));
   }
 }

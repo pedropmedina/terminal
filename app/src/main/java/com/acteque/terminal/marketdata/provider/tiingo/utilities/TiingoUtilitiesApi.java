@@ -1,10 +1,10 @@
 package com.acteque.terminal.marketdata.provider.tiingo.utilities;
 
+import com.acteque.terminal.marketdata.provider.tiingo.TiingoRequestExecutor;
+import com.acteque.terminal.marketdata.provider.tiingo.TiingoUris;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
-import com.acteque.terminal.marketdata.provider.tiingo.TiingoRequestExecutor;
-import com.acteque.terminal.marketdata.provider.tiingo.TiingoUris;
 
 /** Internal client for Tiingo's ticker-search utilities endpoint. */
 public final class TiingoUtilitiesApi {

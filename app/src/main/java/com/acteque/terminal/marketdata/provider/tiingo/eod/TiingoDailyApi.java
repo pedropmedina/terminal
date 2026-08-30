@@ -1,13 +1,13 @@
 package com.acteque.terminal.marketdata.provider.tiingo.eod;
 
-import java.net.URI;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
 import com.acteque.terminal.marketdata.DailyBar;
 import com.acteque.terminal.marketdata.DailyBarRequest;
 import com.acteque.terminal.marketdata.provider.tiingo.TiingoRequestExecutor;
 import com.acteque.terminal.marketdata.provider.tiingo.TiingoUris;
+import java.net.URI;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Objects;
 
 /** Client for Tiingo's {@code /tiingo/daily} API. */
 public final class TiingoDailyApi {

@@ -1,11 +1,11 @@
 package com.acteque.terminal.marketdata.provider.tiingo.tickercatalog;
 
+import com.acteque.terminal.marketdata.provider.tiingo.TiingoRequestExecutor;
 import java.net.URI;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
-import com.acteque.terminal.marketdata.provider.tiingo.TiingoRequestExecutor;
 
 /** Client for Tiingo's daily supported-ticker catalog. */
 public final class TiingoTickerCatalogApi {

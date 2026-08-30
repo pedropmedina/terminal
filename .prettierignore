@@ -6,3 +6,4 @@
 **/.classpath
 **/.git
 **/*.gradle
+**/package-lock.json

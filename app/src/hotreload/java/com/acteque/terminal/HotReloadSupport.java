@@ -1,11 +1,11 @@
 package com.acteque.terminal;
 
+import com.acteque.terminal.ui.ChartReloadRegistrar;
+import com.acteque.terminal.ui.RefreshableView;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
-import com.acteque.terminal.ui.ChartReloadRegistrar;
-import com.acteque.terminal.ui.RefreshableView;
 import javafx.application.Platform;
 
 /** Development hooks invoked by the project's HotswapAgent plugin. */

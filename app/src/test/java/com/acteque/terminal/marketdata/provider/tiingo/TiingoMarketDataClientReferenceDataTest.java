@@ -36,8 +36,8 @@ class TiingoMarketDataClientReferenceDataTest {
   void downloadsAndParsesSupportedTickersOnlyOncePerDay() throws IOException {
     byte[] archive = zip(
       "ticker,exchange,assetType,priceCurrency,startDate,endDate\n" +
-      "AAPL,NASDAQ,Stock,USD,1980-12-12,2026-08-25\n" +
-      "RESERVED,NASDAQ,Stock,USD,,"
+        "AAPL,NASDAQ,Stock,USD,1980-12-12,2026-08-25\n" +
+        "RESERVED,NASDAQ,Stock,USD,,"
     );
     AtomicInteger requests = new AtomicInteger();
     AtomicReference<Map<String, String>> requestedHeaders = new AtomicReference<>();

@@ -1,15 +1,15 @@
 package com.acteque.terminal.marketdata.provider.tiingo.iex;
 
-import java.net.URI;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
 import com.acteque.terminal.marketdata.IntradayBar;
 import com.acteque.terminal.marketdata.IntradayBarRequest;
 import com.acteque.terminal.marketdata.MarketDataException;
 import com.acteque.terminal.marketdata.provider.tiingo.TiingoRequestExecutor;
 import com.acteque.terminal.marketdata.provider.tiingo.TiingoUris;
+import java.net.URI;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Objects;
 
 /** Client for Tiingo's {@code /iex} API. */
 public final class TiingoIexApi {

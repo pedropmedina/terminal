@@ -1,5 +1,6 @@
 package com.acteque.terminal.marketdata.provider.tiingo.tickercatalog;
 
+import com.acteque.terminal.marketdata.MarketDataException;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -15,7 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import com.acteque.terminal.marketdata.MarketDataException;
 
 final class TiingoSupportedTickerParser {
 

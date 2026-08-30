@@ -42,10 +42,7 @@ class MarketDataControllerTest {
       List<PricePoint> withEarlierHistory = controller.loadEarlier().toCompletableFuture().join();
 
       assertEquals(List.of(date("2026-02-23"), date("2026-08-20")), dates(initial));
-      assertEquals(
-        List.of(date("2025-09-02"), date("2026-02-23"), date("2026-08-20")),
-        dates(withEarlierHistory)
-      );
+      assertEquals(List.of(date("2025-09-02"), date("2026-02-23"), date("2026-08-20")), dates(withEarlierHistory));
       assertEquals(100.0, withEarlierHistory.get(1).close());
       assertEquals(
         List.of(

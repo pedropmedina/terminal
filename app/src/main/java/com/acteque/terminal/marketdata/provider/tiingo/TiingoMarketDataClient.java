@@ -1,8 +1,5 @@
 package com.acteque.terminal.marketdata.provider.tiingo;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.util.List;
 import com.acteque.terminal.marketdata.DailyBar;
 import com.acteque.terminal.marketdata.DailyBarRequest;
 import com.acteque.terminal.marketdata.IntradayBar;
@@ -14,6 +11,9 @@ import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTicke
 import com.acteque.terminal.marketdata.provider.tiingo.utilities.TiingoTickerSearchResult;
 import com.acteque.terminal.marketdata.provider.tiingo.utilities.TiingoUtilitiesApi;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.util.List;
 
 /** Tiingo facade exposing endpoint-aligned daily and IEX APIs. */
 public final class TiingoMarketDataClient implements MarketDataClient {

@@ -3,6 +3,5 @@
   "semi": true,
   "bracketSpacing": true,
   "printWidth": 120,
-  "pluginSearchDirs": false,
   "plugins": ["prettier-plugin-java"]
 }

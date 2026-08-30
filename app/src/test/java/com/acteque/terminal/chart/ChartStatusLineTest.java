@@ -3,6 +3,7 @@ package com.acteque.terminal.chart;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.scene.layout.HBox;

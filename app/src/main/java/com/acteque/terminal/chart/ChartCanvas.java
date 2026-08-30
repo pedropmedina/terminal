@@ -1,13 +1,12 @@
 package com.acteque.terminal.chart;
 
+import com.acteque.terminal.chart.XAxisTickCalculator.XAxisTick;
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.RefreshableView;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import com.acteque.terminal.chart.XAxisTickCalculator.XAxisTick;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;

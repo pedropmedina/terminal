@@ -8,14 +8,15 @@ import static com.acteque.terminal.marketdata.provider.tiingo.TiingoResponseDeco
 import static com.acteque.terminal.marketdata.provider.tiingo.TiingoResponseDecoder.required;
 import static com.acteque.terminal.marketdata.provider.tiingo.TiingoResponseDecoder.requiredDate;
 import static com.acteque.terminal.marketdata.provider.tiingo.TiingoResponseDecoder.requiredText;
+
+import com.acteque.terminal.marketdata.DailyBar;
+import com.acteque.terminal.marketdata.Ohlcv;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import com.acteque.terminal.marketdata.DailyBar;
-import com.acteque.terminal.marketdata.Ohlcv;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 final class TiingoDailyJsonParser {
 
