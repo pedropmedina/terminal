@@ -1,15 +1,16 @@
 package com.acteque.terminal;
 
+import java.util.List;
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.marketdata.MarketDataController;
 import com.acteque.terminal.marketdata.provider.tiingo.TiingoMarketDataClient;
-import java.util.List;
+import com.acteque.terminal.ui.AppTheme;
+import com.acteque.terminal.ui.ThemeManager;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 /**
@@ -27,6 +28,7 @@ public class App extends Application {
   private static final double MIN_CANVAS_HEIGHT = 460.0;
 
   private MarketDataController marketData;
+  private ThemeManager themeManager;
 
   public static void main(String[] args) {
     launch(args);
@@ -48,7 +50,8 @@ public class App extends Application {
       })
     );
 
-    Scene scene = new Scene(chartView, MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT, Color.WHITE);
+    Scene scene = new Scene(chartView, MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT);
+    themeManager = new ThemeManager(scene, AppTheme.LIGHT);
 
     stage.setTitle(STOCK_SYMBOL);
     stage.setMinWidth(MIN_CANVAS_WIDTH);

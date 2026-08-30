@@ -1,21 +1,33 @@
 package com.acteque.terminal.chart;
 
-import com.acteque.terminal.chart.XAxisTickCalculator.XAxisTick;
-import com.acteque.terminal.ui.ChartReloadHooks;
-import com.acteque.terminal.ui.RefreshableView;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Function;
+import com.acteque.terminal.chart.XAxisTickCalculator.XAxisTick;
+import com.acteque.terminal.ui.ChartReloadHooks;
+import com.acteque.terminal.ui.RefreshableView;
+import javafx.application.Platform;
+import javafx.beans.Observable;
+import javafx.css.CssMetaData;
+import javafx.css.Styleable;
+import javafx.css.StyleableProperty;
+import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 
 final class ChartCanvas extends Canvas implements RefreshableView {
+
+  private static final StyleablePropertyFactory<ChartCanvas> STYLEABLES = new StyleablePropertyFactory<>(
+    Canvas.getClassCssMetaData()
+  );
 
   // Padding
   private static final double LEFT_MARGIN = 0.0;
@@ -24,7 +36,6 @@ final class ChartCanvas extends Canvas implements RefreshableView {
   private static final double BOTTOM_MARGIN = 32.0;
 
   // Latest-price badge in the price column.
-  private static final double CURRENT_PRICE_BADGE_HEIGHT = 24.0;
   private static final double CURRENT_PRICE_TEXT_OFFSET = 10.0;
 
   // Autoscale button, shown at the foot of the price axis while that axis is hovered.
@@ -95,6 +106,111 @@ final class ChartCanvas extends Canvas implements RefreshableView {
 
   private final ChartStatusLine statusLine;
 
+  private final StyleableProperty<Paint> chartBackground = paintProperty(
+    "chartBackground",
+    "-chart-background",
+    Color.WHITE,
+    canvas -> canvas.chartBackground
+  );
+  private final StyleableProperty<Paint> chartAxis = paintProperty(
+    "chartAxis",
+    "-chart-axis",
+    Color.rgb(40, 44, 52),
+    canvas -> canvas.chartAxis
+  );
+  private final StyleableProperty<Paint> chartGrid = paintProperty(
+    "chartGrid",
+    "-chart-grid",
+    Color.rgb(223, 228, 236),
+    canvas -> canvas.chartGrid
+  );
+  private final StyleableProperty<Paint> chartMutedForeground = paintProperty(
+    "chartMutedForeground",
+    "-chart-muted-foreground",
+    Color.rgb(74, 82, 94),
+    canvas -> canvas.chartMutedForeground
+  );
+  private final StyleableProperty<Paint> chartSeries = paintProperty(
+    "chartSeries",
+    "-chart-series",
+    Color.rgb(26, 115, 232),
+    canvas -> canvas.chartSeries
+  );
+  private final StyleableProperty<Paint> chartCrosshair = paintProperty(
+    "chartCrosshair",
+    "-chart-crosshair",
+    Color.rgb(120, 126, 136),
+    canvas -> canvas.chartCrosshair
+  );
+  private final StyleableProperty<Paint> chartBadgeBackground = paintProperty(
+    "chartBadgeBackground",
+    "-chart-badge-background",
+    Color.rgb(232, 234, 237),
+    canvas -> canvas.chartBadgeBackground
+  );
+  private final StyleableProperty<Paint> chartBadgeForeground = paintProperty(
+    "chartBadgeForeground",
+    "-chart-badge-foreground",
+    Color.rgb(40, 44, 52),
+    canvas -> canvas.chartBadgeForeground
+  );
+  private final StyleableProperty<Paint> chartPrimary = paintProperty(
+    "chartPrimary",
+    "-chart-primary",
+    Color.BLACK,
+    canvas -> canvas.chartPrimary
+  );
+  private final StyleableProperty<Paint> chartPrimaryForeground = paintProperty(
+    "chartPrimaryForeground",
+    "-chart-primary-foreground",
+    Color.WHITE,
+    canvas -> canvas.chartPrimaryForeground
+  );
+  private final StyleableProperty<Font> chartAxisFont = fontProperty(
+    "chartAxisFont",
+    "-chart-axis-font",
+    Font.font("System", 12),
+    canvas -> canvas.chartAxisFont
+  );
+  private final StyleableProperty<Font> chartBadgeFont = fontProperty(
+    "chartBadgeFont",
+    "-chart-badge-font",
+    Font.font("System", 12),
+    canvas -> canvas.chartBadgeFont
+  );
+  private final StyleableProperty<Number> chartAxisLineWidth = numberProperty(
+    "chartAxisLineWidth",
+    "-chart-axis-line-width",
+    1.4,
+    canvas -> canvas.chartAxisLineWidth
+  );
+  private final StyleableProperty<Number> chartGridLineWidth = numberProperty(
+    "chartGridLineWidth",
+    "-chart-grid-line-width",
+    1.0,
+    canvas -> canvas.chartGridLineWidth
+  );
+  private final StyleableProperty<Number> chartSeriesLineWidth = numberProperty(
+    "chartSeriesLineWidth",
+    "-chart-series-line-width",
+    2.2,
+    canvas -> canvas.chartSeriesLineWidth
+  );
+  private final StyleableProperty<Number> chartBadgeHeight = numberProperty(
+    "chartBadgeHeight",
+    "-chart-badge-height",
+    24.0,
+    canvas -> canvas.chartBadgeHeight
+  );
+  private final StyleableProperty<Number> chartControlRadius = numberProperty(
+    "chartControlRadius",
+    "-chart-control-radius",
+    4.0,
+    canvas -> canvas.chartControlRadius
+  );
+
+  private boolean redrawScheduled;
+
   ChartCanvas(List<PricePoint> pricePoints, String stockSymbol) {
     this(pricePoints, stockSymbol, ChartInterval.DAILY);
   }
@@ -109,6 +225,8 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     this.statusLine = Objects.requireNonNull(statusLine, "statusLine");
     this.visiblePricePointCount = pricePoints.size();
     this.pricePoints = List.copyOf(pricePoints);
+
+    getStyleClass().add("chart-canvas");
 
     ChartReloadHooks.register(this); // Development runs refresh this view after class redefinition.
     widthProperty().addListener((ignored, oldWidth, newWidth) -> drawChart());
@@ -143,13 +261,18 @@ final class ChartCanvas extends Canvas implements RefreshableView {
   void drawChart() {
     double width = getWidth();
     double height = getHeight();
-    if (width <= 0 || height <= 0 || pricePoints.isEmpty()) {
+    if (width <= 0 || height <= 0) {
       return;
     }
 
     GraphicsContext graphics = getGraphicsContext2D();
-    graphics.setFill(Color.WHITE);
+    ChartRenderStyle style = renderStyle();
+    graphics.setFill(style.background());
     graphics.fillRect(0, 0, width, height);
+    if (pricePoints.isEmpty()) {
+      statusLine.clearPricePoint();
+      return;
+    }
 
     ChartBounds bounds = chartBounds();
     VisibleWindow visibleWindow = visibleWindow();
@@ -170,21 +293,110 @@ final class ChartCanvas extends Canvas implements RefreshableView {
       yZoomScale
     );
 
-    drawHorizontalGridLines(graphics, bounds, priceRange, yAxisTicks);
-    drawVerticalGridLines(graphics, bounds, xAxisTicks);
-    drawAxes(graphics, bounds);
-    drawYAxisTicks(graphics, bounds, priceRange, yAxisTicks);
-    drawXAxisTicks(graphics, bounds, xAxisTicks);
-    drawPriceLine(graphics, bounds, priceRange, visibleWindow.points());
-    drawCurrentPriceBadge(graphics, bounds, priceRange, visibleWindow.points());
-    drawCrosshair(graphics, bounds, priceRange, visibleWindow);
-    drawAutoscaleButton(graphics, bounds);
+    drawHorizontalGridLines(graphics, bounds, priceRange, yAxisTicks, style);
+    drawVerticalGridLines(graphics, bounds, xAxisTicks, style);
+    drawAxes(graphics, bounds, style);
+    drawYAxisTicks(graphics, bounds, priceRange, yAxisTicks, style);
+    drawXAxisTicks(graphics, bounds, xAxisTicks, style);
+    drawPriceLine(graphics, bounds, priceRange, visibleWindow.points(), style);
+    drawCurrentPriceBadge(graphics, bounds, priceRange, visibleWindow.points(), style);
+    drawCrosshair(graphics, bounds, priceRange, visibleWindow, style);
+    drawAutoscaleButton(graphics, bounds, style);
     statusLine.setPricePoint(currentPricePoint);
   }
 
   @Override
   public void refreshView() {
     drawChart();
+  }
+
+  @Override
+  public List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
+    return STYLEABLES.getCssMetaData();
+  }
+
+  ChartRenderStyle renderStyle() {
+    return new ChartRenderStyle(
+      chartBackground.getValue(),
+      chartAxis.getValue(),
+      chartGrid.getValue(),
+      chartMutedForeground.getValue(),
+      chartSeries.getValue(),
+      chartCrosshair.getValue(),
+      chartBadgeBackground.getValue(),
+      chartBadgeForeground.getValue(),
+      chartPrimary.getValue(),
+      chartPrimaryForeground.getValue(),
+      chartAxisFont.getValue(),
+      chartBadgeFont.getValue(),
+      chartAxisLineWidth.getValue().doubleValue(),
+      chartGridLineWidth.getValue().doubleValue(),
+      chartSeriesLineWidth.getValue().doubleValue(),
+      chartBadgeHeight.getValue().doubleValue(),
+      chartControlRadius.getValue().doubleValue()
+    );
+  }
+
+  private StyleableProperty<Paint> paintProperty(
+    String name,
+    String cssProperty,
+    Paint initialValue,
+    Function<ChartCanvas, StyleableProperty<Paint>> accessor
+  ) {
+    StyleableProperty<Paint> property = STYLEABLES.createStyleablePaintProperty(
+      this,
+      name,
+      cssProperty,
+      accessor,
+      initialValue
+    );
+    ((Observable) property).addListener(ignored -> requestRedraw());
+    return property;
+  }
+
+  private StyleableProperty<Font> fontProperty(
+    String name,
+    String cssProperty,
+    Font initialValue,
+    Function<ChartCanvas, StyleableProperty<Font>> accessor
+  ) {
+    StyleableProperty<Font> property = STYLEABLES.createStyleableFontProperty(
+      this,
+      name,
+      cssProperty,
+      accessor,
+      initialValue
+    );
+    ((Observable) property).addListener(ignored -> requestRedraw());
+    return property;
+  }
+
+  private StyleableProperty<Number> numberProperty(
+    String name,
+    String cssProperty,
+    Number initialValue,
+    Function<ChartCanvas, StyleableProperty<Number>> accessor
+  ) {
+    StyleableProperty<Number> property = STYLEABLES.createStyleableNumberProperty(
+      this,
+      name,
+      cssProperty,
+      accessor,
+      initialValue
+    );
+    ((Observable) property).addListener(ignored -> requestRedraw());
+    return property;
+  }
+
+  private void requestRedraw() {
+    if (redrawScheduled) {
+      return;
+    }
+    redrawScheduled = true;
+    Platform.runLater(() -> {
+      redrawScheduled = false;
+      drawChart();
+    });
   }
 
   private void setEventsListeners() {
@@ -382,14 +594,14 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     return visiblePoints.get(pointIndex);
   }
 
-  private void drawAxes(GraphicsContext graphics, ChartBounds bounds) {
-    graphics.setStroke(Color.rgb(40, 44, 52));
-    graphics.setLineWidth(1.4);
+  private void drawAxes(GraphicsContext graphics, ChartBounds bounds, ChartRenderStyle style) {
+    graphics.setStroke(style.axis());
+    graphics.setLineWidth(style.axisLineWidth());
     graphics.strokeLine(bounds.right(), bounds.top(), bounds.right(), bounds.bottom());
     graphics.strokeLine(bounds.left(), bounds.bottom(), bounds.right(), bounds.bottom());
   }
 
-  private void drawAutoscaleButton(GraphicsContext graphics, ChartBounds bounds) {
+  private void drawAutoscaleButton(GraphicsContext graphics, ChartBounds bounds, ChartRenderStyle style) {
     if (!priceAxisHovered) {
       return;
     }
@@ -397,14 +609,28 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     ButtonBounds button = autoscaleButtonBounds(bounds);
     boolean autoscaleActive = lockedPriceRange == null;
 
-    graphics.setFill(autoscaleActive ? Color.BLACK : Color.WHITE);
-    graphics.fillRoundRect(button.x(), button.y(), button.width(), button.height(), 4.0, 4.0);
-    graphics.setStroke(Color.BLACK);
-    graphics.setLineWidth(1.0);
-    graphics.strokeRoundRect(button.x(), button.y(), button.width(), button.height(), 4.0, 4.0);
+    graphics.setFill(autoscaleActive ? style.primary() : style.background());
+    graphics.fillRoundRect(
+      button.x(),
+      button.y(),
+      button.width(),
+      button.height(),
+      style.controlRadius(),
+      style.controlRadius()
+    );
+    graphics.setStroke(style.primary());
+    graphics.setLineWidth(style.gridLineWidth());
+    graphics.strokeRoundRect(
+      button.x(),
+      button.y(),
+      button.width(),
+      button.height(),
+      style.controlRadius(),
+      style.controlRadius()
+    );
 
-    graphics.setFill(autoscaleActive ? Color.WHITE : Color.BLACK);
-    graphics.setFont(Font.font("System", 13));
+    graphics.setFill(autoscaleActive ? style.primaryForeground() : style.primary());
+    graphics.setFont(style.badgeFont());
     graphics.setTextAlign(TextAlignment.CENTER);
     graphics.setTextBaseline(VPos.CENTER);
     graphics.fillText("A", button.x() + button.width() / 2.0, button.y() + button.height() / 2.0);
@@ -414,10 +640,11 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     GraphicsContext graphics,
     ChartBounds bounds,
     PriceRange priceRange,
-    List<Double> ticks
+    List<Double> ticks,
+    ChartRenderStyle style
   ) {
-    graphics.setStroke(Color.rgb(223, 228, 236));
-    graphics.setLineWidth(1.0);
+    graphics.setStroke(style.grid());
+    graphics.setLineWidth(style.gridLineWidth());
 
     for (double price : ticks) {
       double y = yForPrice(price, bounds, priceRange);
@@ -425,13 +652,19 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     }
   }
 
-  private void drawYAxisTicks(GraphicsContext graphics, ChartBounds bounds, PriceRange priceRange, List<Double> ticks) {
-    graphics.setFont(Font.font("System", 12));
+  private void drawYAxisTicks(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    List<Double> ticks,
+    ChartRenderStyle style
+  ) {
+    graphics.setFont(style.axisFont());
     graphics.setTextAlign(TextAlignment.LEFT);
     graphics.setTextBaseline(VPos.CENTER);
-    graphics.setStroke(Color.rgb(40, 44, 52));
-    graphics.setLineWidth(1.0);
-    graphics.setFill(Color.rgb(74, 82, 94));
+    graphics.setStroke(style.axis());
+    graphics.setLineWidth(style.gridLineWidth());
+    graphics.setFill(style.mutedForeground());
 
     for (double price : ticks) {
       double y = yForPrice(price, bounds, priceRange);
@@ -444,7 +677,8 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     GraphicsContext graphics,
     ChartBounds bounds,
     PriceRange priceRange,
-    List<PricePoint> visiblePoints
+    List<PricePoint> visiblePoints,
+    ChartRenderStyle style
   ) {
     double currentPrice = visiblePoints.get(visiblePoints.size() - 1).price();
     double y = yForPrice(currentPrice, bounds, priceRange);
@@ -453,13 +687,13 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     }
 
     double badgeWidth = getWidth() - bounds.right();
-    double badgeTop = y - CURRENT_PRICE_BADGE_HEIGHT / 2.0;
+    double badgeTop = y - style.badgeHeight() / 2.0;
 
-    graphics.setFill(Color.BLACK);
-    graphics.fillRect(bounds.right(), badgeTop, badgeWidth, CURRENT_PRICE_BADGE_HEIGHT);
+    graphics.setFill(style.primary());
+    graphics.fillRect(bounds.right(), badgeTop, badgeWidth, style.badgeHeight());
 
-    graphics.setFill(Color.WHITE);
-    graphics.setFont(Font.font("System", 12));
+    graphics.setFill(style.primaryForeground());
+    graphics.setFont(style.badgeFont());
     graphics.setTextAlign(TextAlignment.LEFT);
     graphics.setTextBaseline(VPos.CENTER);
     graphics.fillText(String.format(Locale.US, "%.2f", currentPrice), bounds.right() + CURRENT_PRICE_TEXT_OFFSET, y);
@@ -469,7 +703,8 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     GraphicsContext graphics,
     ChartBounds bounds,
     PriceRange priceRange,
-    VisibleWindow visibleWindow
+    VisibleWindow visibleWindow,
+    ChartRenderStyle style
   ) {
     if (crosshairX == null || crosshairY == null) {
       return;
@@ -490,13 +725,19 @@ final class ChartCanvas extends Canvas implements RefreshableView {
       x,
       y,
       price,
-      date
+      date,
+      style
     );
   }
 
-  private void drawVerticalGridLines(GraphicsContext graphics, ChartBounds bounds, List<XAxisTick> ticks) {
-    graphics.setStroke(Color.rgb(223, 228, 236));
-    graphics.setLineWidth(1.0);
+  private void drawVerticalGridLines(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    List<XAxisTick> ticks,
+    ChartRenderStyle style
+  ) {
+    graphics.setStroke(style.grid());
+    graphics.setLineWidth(style.gridLineWidth());
 
     for (XAxisTick tick : ticks) {
       double x = xForSlot(tick.slotIndex(), visiblePricePointCount, bounds);
@@ -504,19 +745,24 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     }
   }
 
-  private void drawXAxisTicks(GraphicsContext graphics, ChartBounds bounds, List<XAxisTick> ticks) {
-    graphics.setFont(Font.font("System", 12));
+  private void drawXAxisTicks(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    List<XAxisTick> ticks,
+    ChartRenderStyle style
+  ) {
+    graphics.setFont(style.axisFont());
     graphics.setTextAlign(TextAlignment.CENTER);
     graphics.setTextBaseline(VPos.TOP);
 
     for (XAxisTick tick : ticks) {
       double x = xForSlot(tick.slotIndex(), visiblePricePointCount, bounds);
 
-      graphics.setStroke(Color.rgb(40, 44, 52));
-      graphics.setLineWidth(1.0);
+      graphics.setStroke(style.axis());
+      graphics.setLineWidth(style.gridLineWidth());
       graphics.strokeLine(x, bounds.bottom(), x, bounds.bottom() + 5.0);
 
-      graphics.setFill(Color.rgb(74, 82, 94));
+      graphics.setFill(style.mutedForeground());
       graphics.fillText(tick.label(), x, bounds.bottom() + 10.0);
     }
   }
@@ -535,10 +781,11 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     GraphicsContext graphics,
     ChartBounds bounds,
     PriceRange priceRange,
-    List<PricePoint> visiblePoints
+    List<PricePoint> visiblePoints,
+    ChartRenderStyle style
   ) {
-    graphics.setStroke(Color.rgb(26, 115, 232));
-    graphics.setLineWidth(2.2);
+    graphics.setStroke(style.series());
+    graphics.setLineWidth(style.seriesLineWidth());
     graphics.save();
     graphics.beginPath();
     graphics.rect(bounds.left(), bounds.top(), bounds.width(), bounds.height());

@@ -1,0 +1,47 @@
+.chart {
+  -fx-background-color: -app-background;
+}
+
+.chart-menu {
+  -fx-alignment: center;
+  -fx-spacing: 2px;
+  -fx-padding: 4px;
+  -fx-background-color: -app-card;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-border;
+  -fx-border-radius: 8px;
+}
+
+.chart-status-line {
+  -fx-alignment: center-left;
+  -fx-spacing: 12px;
+}
+
+.chart-status-label {
+  -fx-text-fill: -app-foreground;
+  -fx-font-size: 14px;
+}
+
+.chart-symbol-button {
+  -fx-font-size: 14px;
+}
+
+.chart-canvas {
+  -chart-background: -app-background;
+  -chart-axis: -app-foreground;
+  -chart-grid: -app-border;
+  -chart-muted-foreground: -app-muted-foreground;
+  -chart-series: -app-chart-1;
+  -chart-crosshair: -app-ring;
+  -chart-badge-background: -app-secondary;
+  -chart-badge-foreground: -app-secondary-foreground;
+  -chart-primary: -app-primary;
+  -chart-primary-foreground: -app-primary-foreground;
+  -chart-axis-font: 12px "System";
+  -chart-badge-font: 12px "System";
+  -chart-axis-line-width: 1.4px;
+  -chart-grid-line-width: 1px;
+  -chart-series-line-width: 2.2px;
+  -chart-badge-height: 24px;
+  -chart-control-radius: 4px;
+}

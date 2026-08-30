@@ -1,0 +1,50 @@
+.surface {
+  -fx-background-color: -app-card;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-border;
+  -fx-border-radius: 8px;
+}
+
+:root .label {
+  -fx-text-fill: -app-foreground;
+}
+
+.icon-button,
+.link-button {
+  -fx-cursor: hand;
+  -fx-focus-color: -app-ring;
+  -fx-faint-focus-color: transparent;
+}
+
+.icon-button {
+  -fx-min-width: 32px;
+  -fx-pref-width: 32px;
+  -fx-max-width: 32px;
+  -fx-min-height: 32px;
+  -fx-pref-height: 32px;
+  -fx-max-height: 32px;
+  -fx-padding: 0;
+  -fx-background-color: transparent;
+  -fx-background-radius: 5px;
+  -fx-text-fill: -app-card-foreground;
+  -fx-font-size: 13px;
+  -fx-font-weight: 600;
+}
+
+.icon-button:hover,
+.icon-button:focused {
+  -fx-background-color: -app-accent;
+  -fx-text-fill: -app-accent-foreground;
+}
+
+.link-button {
+  -fx-padding: 0;
+  -fx-background-color: transparent;
+  -fx-text-fill: -app-chart-1;
+  -fx-underline: false;
+}
+
+.link-button:hover,
+.link-button:focused {
+  -fx-underline: true;
+}

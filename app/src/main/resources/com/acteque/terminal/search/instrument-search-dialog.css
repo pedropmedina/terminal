@@ -1,28 +1,35 @@
 .instrument-search-dialog {
   -fx-alignment: center;
-  -fx-background-color: rgba(45, 48, 55, 0.24);
+  -fx-background-color: -app-overlay;
 }
 
 .instrument-search-card {
   -fx-pref-width: 640px;
   -fx-spacing: 16px;
   -fx-padding: 24px;
-  -fx-background-color: rgb(242, 243, 245);
+  -fx-background-color: -app-card;
   -fx-background-radius: 8px;
+  -fx-border-color: -app-border;
+  -fx-border-radius: 8px;
 }
 
 .instrument-search-title {
   -fx-font-family: "System";
   -fx-font-size: 18px;
   -fx-font-weight: 600;
+  -fx-text-fill: -app-card-foreground;
 }
 
 .instrument-search-field {
-  -fx-background-color: rgb(242, 243, 245);
+  -fx-background-color: -app-background;
   -fx-background-radius: 8px;
-  -fx-border-color: rgb(220, 223, 229);
+  -fx-border-color: -app-input;
   -fx-border-radius: 8px;
   -fx-border-width: 1px;
+  -fx-text-fill: -app-foreground;
+  -fx-prompt-text-fill: -app-muted-foreground;
+  -fx-focus-color: -app-ring;
+  -fx-faint-focus-color: transparent;
 }
 
 .instrument-list {
@@ -38,12 +45,12 @@
 }
 
 .instrument-cell:filled {
-  -fx-border-color: transparent transparent rgb(220, 223, 229) transparent;
+  -fx-border-color: transparent transparent -app-border transparent;
   -fx-border-width: 0 0 1px 0;
 }
 
 .instrument-cell:filled:hover {
-  -fx-background-color: rgb(229, 231, 235);
+  -fx-background-color: -app-accent;
 }
 
 .instrument-list:gliding .instrument-cell:filled:hover {
@@ -61,17 +68,17 @@
   -fx-font-family: "System";
   -fx-font-size: 13px;
   -fx-font-weight: 600;
-  -fx-text-fill: black;
+  -fx-text-fill: -app-foreground;
 }
 
 .instrument-description {
-  -fx-text-fill: black;
+  -fx-text-fill: -app-muted-foreground;
 }
 
 .instrument-exchange {
   -fx-min-width: 100px;
   -fx-alignment: center-right;
-  -fx-text-fill: black;
+  -fx-text-fill: -app-muted-foreground;
 }
 
 .instrument-list > .virtual-flow > .scroll-bar:vertical {
@@ -90,17 +97,17 @@
 }
 
 .instrument-list > .virtual-flow > .scroll-bar:vertical > .thumb {
-  -fx-background-color: rgba(60, 60, 67, 0.36);
+  -fx-background-color: -app-muted-foreground;
   -fx-background-insets: 2px;
   -fx-background-radius: 999px;
 }
 
 .instrument-list > .virtual-flow > .scroll-bar:vertical > .thumb:hover {
-  -fx-background-color: rgba(60, 60, 67, 0.5);
+  -fx-background-color: -app-foreground;
 }
 
 .instrument-list > .virtual-flow > .scroll-bar:vertical > .thumb:pressed {
-  -fx-background-color: rgba(60, 60, 67, 0.6);
+  -fx-background-color: -app-primary;
 }
 
 .instrument-list > .virtual-flow > .scroll-bar:vertical > .increment-button,

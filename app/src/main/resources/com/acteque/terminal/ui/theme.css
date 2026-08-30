@@ -1,0 +1,60 @@
+:root,
+:root.theme-light {
+  -app-background: #ffffff;
+  -app-foreground: #0a0a0a;
+  -app-card: #ffffff;
+  -app-card-foreground: #0a0a0a;
+  -app-popover: #ffffff;
+  -app-popover-foreground: #0a0a0a;
+  -app-primary: #171717;
+  -app-primary-foreground: #fafafa;
+  -app-secondary: #f5f5f5;
+  -app-secondary-foreground: #171717;
+  -app-muted: #f5f5f5;
+  -app-muted-foreground: #737373;
+  -app-accent: #f5f5f5;
+  -app-accent-foreground: #171717;
+  -app-destructive: #e7000b;
+  -app-border: #e5e5e5;
+  -app-input: #e5e5e5;
+  -app-ring: #a1a1a1;
+  -app-overlay: rgba(10, 10, 10, 0.28);
+  -app-chart-1: #e76e00;
+  -app-chart-2: #009689;
+  -app-chart-3: #104e64;
+  -app-chart-4: #f5a524;
+  -app-chart-5: #f59e0b;
+}
+
+:root.theme-dark {
+  -app-background: #0a0a0a;
+  -app-foreground: #fafafa;
+  -app-card: #171717;
+  -app-card-foreground: #fafafa;
+  -app-popover: #171717;
+  -app-popover-foreground: #fafafa;
+  -app-primary: #e5e5e5;
+  -app-primary-foreground: #171717;
+  -app-secondary: #262626;
+  -app-secondary-foreground: #fafafa;
+  -app-muted: #262626;
+  -app-muted-foreground: #a1a1a1;
+  -app-accent: #262626;
+  -app-accent-foreground: #fafafa;
+  -app-destructive: #ff6467;
+  -app-border: rgba(255, 255, 255, 0.1);
+  -app-input: rgba(255, 255, 255, 0.15);
+  -app-ring: #737373;
+  -app-overlay: rgba(0, 0, 0, 0.56);
+  -app-chart-1: #7c3aed;
+  -app-chart-2: #10b981;
+  -app-chart-3: #f59e0b;
+  -app-chart-4: #a855f7;
+  -app-chart-5: #f43f5e;
+}
+
+:root {
+  -fx-background-color: -app-background;
+  -fx-font-family: "System";
+  -fx-font-size: 13px;
+}

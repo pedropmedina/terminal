@@ -31,11 +31,6 @@ public final class InstrumentSearchDialog extends StackPane implements Refreshab
   private static final double MAX_VIEWPORT_WIDTH_RATIO = 0.70;
   private static final double MAX_VIEWPORT_HEIGHT_RATIO = 0.70;
   private static final PseudoClass GLIDING_PSEUDO_CLASS = PseudoClass.getPseudoClass("gliding");
-  private static final String STYLESHEET = Objects.requireNonNull(
-    InstrumentSearchDialog.class.getResource("instrument-search-dialog.css"),
-    "instrument-search-dialog.css"
-  ).toExternalForm();
-
   private final TextField symbolField = new TextField();
   private final KineticListView<TiingoSupportedTicker> instruments = new KineticListView<>();
   private final ObservableList<TiingoSupportedTicker> catalogInstruments = FXCollections.observableArrayList();
@@ -55,7 +50,6 @@ public final class InstrumentSearchDialog extends StackPane implements Refreshab
     this.tickerCatalog = Objects.requireNonNull(tickerCatalog, "tickerCatalog");
 
     getStyleClass().add("instrument-search-dialog");
-    getStylesheets().add(STYLESHEET);
     symbolField.getStyleClass().add("instrument-search-field");
     configureInstrumentList();
 
@@ -101,17 +95,8 @@ public final class InstrumentSearchDialog extends StackPane implements Refreshab
     getChildren().setAll(card);
   }
 
-  @Override
-  public void refreshStylesheets() {
-    getStylesheets().remove(STYLESHEET);
-    getStylesheets().add(STYLESHEET);
-    instruments.getStylesheets().remove(STYLESHEET);
-    instruments.getStylesheets().add(STYLESHEET);
-  }
-
   private void configureInstrumentList() {
     instruments.getStyleClass().add("instrument-list");
-    instruments.getStylesheets().add(STYLESHEET);
     instruments.setItems(filteredInstruments);
     instruments.setCellFactory(ignored -> new InstrumentCell());
     instruments

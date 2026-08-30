@@ -1,9 +1,9 @@
 package com.acteque.terminal.chart;
 
-import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
-import com.acteque.terminal.search.InstrumentSearchDialog;
 import java.util.List;
 import java.util.Objects;
+import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
+import com.acteque.terminal.search.InstrumentSearchDialog;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.layout.StackPane;
@@ -23,6 +23,7 @@ public final class Chart extends StackPane {
     Objects.requireNonNull(stockSymbol, "stockSymbol");
     Objects.requireNonNull(interval, "interval");
     Objects.requireNonNull(tickerCatalog, "tickerCatalog");
+    getStyleClass().add("chart");
 
     InstrumentSearchDialog instrumentSearchDialog = new InstrumentSearchDialog(
       stockSymbol,

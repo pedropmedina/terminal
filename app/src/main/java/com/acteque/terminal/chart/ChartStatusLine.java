@@ -1,36 +1,32 @@
 package com.acteque.terminal.chart;
 
-import com.acteque.terminal.ui.ChartReloadHooks;
-import com.acteque.terminal.ui.RefreshableView;
 import java.util.Locale;
 import java.util.Objects;
+import com.acteque.terminal.ui.ChartReloadHooks;
+import com.acteque.terminal.ui.RefreshableView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 
 /** Displays the chart's OHLCV status for the selected price point. */
 final class ChartStatusLine extends HBox implements RefreshableView {
 
   private static final double LEFT_MARGIN = 12.0;
   private static final double BOTTOM_MARGIN = 38.0;
-  private static final double SECTION_SPACING = 12.0;
-  private static final Font FONT = Font.font("System", 14.0);
-
   private final String stockSymbol;
   private final ChartInterval interval;
 
   private PricePoint pricePoint;
   private Runnable instrumentClickHandler = () -> {};
-  private Text ohlcv;
+  private Label ohlcv;
 
   ChartStatusLine(String stockSymbol, ChartInterval interval) {
     this.stockSymbol = Objects.requireNonNull(stockSymbol, "stockSymbol");
     this.interval = Objects.requireNonNull(interval, "interval");
+    getStyleClass().add("chart-status-line");
 
     refreshView();
     ChartReloadHooks.register(this);
@@ -57,42 +53,26 @@ final class ChartStatusLine extends HBox implements RefreshableView {
 
   @Override
   public void refreshView() {
-    Text symbol = new Text(stockSymbol);
-    symbol.setFill(Color.rgb(26, 115, 232));
-    symbol.setFont(FONT);
-
-    StackPane symbolSection = createSection(symbol);
-    symbolSection.setCursor(Cursor.HAND);
+    Button symbolSection = new Button(stockSymbol);
+    symbolSection.getStyleClass().addAll("link-button", "chart-symbol-button");
     symbolSection.setAccessibleText("Select symbol or instrument");
-    symbolSection.setOnMouseClicked(ignored -> instrumentClickHandler.run());
+    symbolSection.setOnAction(ignored -> instrumentClickHandler.run());
 
-    Text intervalLabel = new Text(interval.displayName());
-    intervalLabel.setFill(Color.rgb(28, 32, 38));
-    intervalLabel.setFont(FONT);
-    StackPane intervalSection = createSection(intervalLabel);
+    Label intervalSection = new Label(interval.displayName());
+    intervalSection.getStyleClass().add("chart-status-label");
     intervalSection.setAccessibleText("Interval " + interval.displayName());
     intervalSection.setMouseTransparent(true);
 
-    ohlcv = new Text(pricePoint == null ? "" : ohlcvText(pricePoint));
-    ohlcv.setFill(Color.rgb(28, 32, 38));
-    ohlcv.setFont(FONT);
-    StackPane ohlcvSection = createSection(ohlcv);
-    ohlcvSection.setAccessibleText("Open, high, low, close, and volume");
-    ohlcvSection.setMouseTransparent(true);
+    ohlcv = new Label(pricePoint == null ? "" : ohlcvText(pricePoint));
+    ohlcv.getStyleClass().add("chart-status-label");
+    ohlcv.setAccessibleText("Open, high, low, close, and volume");
+    ohlcv.setMouseTransparent(true);
 
-    setSpacing(SECTION_SPACING);
-    setAlignment(Pos.CENTER_LEFT);
     setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
     setPickOnBounds(false);
     StackPane.setAlignment(this, Pos.BOTTOM_LEFT);
     StackPane.setMargin(this, new Insets(0.0, 0.0, BOTTOM_MARGIN, LEFT_MARGIN));
-    getChildren().setAll(symbolSection, intervalSection, ohlcvSection);
-  }
-
-  private static StackPane createSection(Text content) {
-    StackPane section = new StackPane(content);
-    section.setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
-    return section;
+    getChildren().setAll(symbolSection, intervalSection, ohlcv);
   }
 
   private String ohlcvText(PricePoint point) {
