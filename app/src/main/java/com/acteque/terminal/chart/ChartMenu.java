@@ -2,9 +2,11 @@ package com.acteque.terminal.chart;
 
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.RefreshableView;
+import com.acteque.terminal.ui.core.Button;
+import com.acteque.terminal.ui.core.Button.Size;
+import com.acteque.terminal.ui.core.Button.Variant;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 
@@ -32,8 +34,7 @@ final class ChartMenu extends HBox implements RefreshableView {
   }
 
   private static Button createItem(String label, String description) {
-    Button item = new Button(label);
-    item.getStyleClass().add("icon-button");
+    Button item = new Button(label, Variant.GHOST, Size.ICON);
     item.setAccessibleText(description);
     item.setFocusTraversable(true);
     return item;

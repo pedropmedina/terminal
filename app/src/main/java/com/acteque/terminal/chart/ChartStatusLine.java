@@ -4,9 +4,11 @@ import java.util.Locale;
 import java.util.Objects;
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.RefreshableView;
+import com.acteque.terminal.ui.core.Button;
+import com.acteque.terminal.ui.core.Button.Size;
+import com.acteque.terminal.ui.core.Button.Variant;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -53,8 +55,8 @@ final class ChartStatusLine extends HBox implements RefreshableView {
 
   @Override
   public void refreshView() {
-    Button symbolSection = new Button(stockSymbol);
-    symbolSection.getStyleClass().addAll("link-button", "chart-symbol-button");
+    Button symbolSection = new Button(stockSymbol, Variant.GHOST, Size.DEFAULT);
+    symbolSection.getStyleClass().add("chart-symbol-button");
     symbolSection.setAccessibleText("Select symbol or instrument");
     symbolSection.setOnAction(ignored -> instrumentClickHandler.run());
 

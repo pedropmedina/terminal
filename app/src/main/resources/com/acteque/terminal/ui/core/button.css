@@ -1,0 +1,194 @@
+.core-button {
+  -fx-alignment: center;
+  -fx-background-insets: 0;
+  -fx-border-insets: 0;
+  -fx-border-width: 1px;
+  -fx-content-display: left;
+  -fx-cursor: hand;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+  -fx-font-size: 13px;
+  -fx-font-weight: 600;
+  transition-property:
+    -fx-background-color,
+    -fx-border-color,
+    -fx-text-fill,
+    -fx-opacity,
+    -fx-translate-y;
+  transition-duration: 100ms;
+}
+
+.core-button:focus-visible {
+  -fx-border-color: -app-ring;
+  -fx-effect: dropshadow(gaussian, -app-button-focus-ring, 6, 0, 0, 0);
+}
+
+.core-button:pressed {
+  -fx-translate-y: 1px;
+}
+
+.core-button:disabled {
+  -fx-cursor: default;
+  -fx-opacity: 0.5;
+}
+
+.core-button.button-variant-default {
+  -fx-background-color: -app-primary;
+  -fx-border-color: transparent;
+  -fx-text-fill: -app-primary-foreground;
+}
+
+.core-button.button-variant-default:hover {
+  -fx-background-color: -app-button-primary-hover;
+}
+
+.core-button.button-variant-outline {
+  -fx-background-color: -app-button-outline-background;
+  -fx-border-color: -app-button-outline-border;
+  -fx-text-fill: -app-foreground;
+}
+
+.core-button.button-variant-outline:hover {
+  -fx-background-color: -app-button-outline-hover;
+}
+
+.core-button.button-variant-secondary {
+  -fx-background-color: -app-secondary;
+  -fx-border-color: transparent;
+  -fx-text-fill: -app-secondary-foreground;
+}
+
+.core-button.button-variant-secondary:hover {
+  -fx-background-color: -app-button-secondary-hover;
+}
+
+.core-button.button-variant-ghost {
+  -fx-background-color: transparent;
+  -fx-border-color: transparent;
+  -fx-text-fill: -app-foreground;
+}
+
+.core-button.button-variant-ghost:hover {
+  -fx-background-color: -app-button-ghost-hover;
+}
+
+.core-button.button-variant-destructive {
+  -fx-background-color: -app-button-destructive-background;
+  -fx-border-color: transparent;
+  -fx-text-fill: -app-destructive;
+}
+
+.core-button.button-variant-destructive:hover {
+  -fx-background-color: -app-button-destructive-hover;
+}
+
+.core-button.button-variant-destructive:focus-visible {
+  -fx-border-color: -app-button-destructive-border;
+  -fx-effect: dropshadow(gaussian, -app-button-destructive-ring, 6, 0, 0, 0);
+}
+
+.core-button.button-variant-link {
+  -fx-background-color: transparent;
+  -fx-border-color: transparent;
+  -fx-text-fill: -app-primary;
+  -fx-underline: false;
+}
+
+.core-button.button-variant-link:hover {
+  -fx-underline: true;
+}
+
+.core-button.button-size-default,
+.core-button.button-size-lg,
+.core-button.button-size-icon,
+.core-button.button-size-icon-lg {
+  -fx-background-radius: 8px;
+  -fx-border-radius: 8px;
+}
+
+.core-button.button-size-xs,
+.core-button.button-size-sm,
+.core-button.button-size-icon-xs,
+.core-button.button-size-icon-sm {
+  -fx-background-radius: 6px;
+  -fx-border-radius: 6px;
+}
+
+.core-button.button-size-default {
+  -fx-min-height: 32px;
+  -fx-pref-height: 32px;
+  -fx-max-height: 32px;
+  -fx-graphic-text-gap: 6px;
+  -fx-padding: 0 10px;
+}
+
+.core-button.button-size-xs {
+  -fx-min-height: 24px;
+  -fx-pref-height: 24px;
+  -fx-max-height: 24px;
+  -fx-font-size: 11px;
+  -fx-graphic-text-gap: 4px;
+  -fx-padding: 0 8px;
+}
+
+.core-button.button-size-sm {
+  -fx-min-height: 28px;
+  -fx-pref-height: 28px;
+  -fx-max-height: 28px;
+  -fx-font-size: 12px;
+  -fx-graphic-text-gap: 4px;
+  -fx-padding: 0 10px;
+}
+
+.core-button.button-size-lg {
+  -fx-min-height: 36px;
+  -fx-pref-height: 36px;
+  -fx-max-height: 36px;
+  -fx-graphic-text-gap: 6px;
+  -fx-padding: 0 10px;
+}
+
+.core-button.button-size-icon,
+.core-button.button-size-icon-xs,
+.core-button.button-size-icon-sm,
+.core-button.button-size-icon-lg {
+  -fx-padding: 0;
+}
+
+.core-button.button-size-icon {
+  -fx-min-width: 32px;
+  -fx-pref-width: 32px;
+  -fx-max-width: 32px;
+  -fx-min-height: 32px;
+  -fx-pref-height: 32px;
+  -fx-max-height: 32px;
+}
+
+.core-button.button-size-icon-xs {
+  -fx-min-width: 24px;
+  -fx-pref-width: 24px;
+  -fx-max-width: 24px;
+  -fx-min-height: 24px;
+  -fx-pref-height: 24px;
+  -fx-max-height: 24px;
+  -fx-font-size: 11px;
+}
+
+.core-button.button-size-icon-sm {
+  -fx-min-width: 28px;
+  -fx-pref-width: 28px;
+  -fx-max-width: 28px;
+  -fx-min-height: 28px;
+  -fx-pref-height: 28px;
+  -fx-max-height: 28px;
+  -fx-font-size: 12px;
+}
+
+.core-button.button-size-icon-lg {
+  -fx-min-width: 36px;
+  -fx-pref-width: 36px;
+  -fx-max-width: 36px;
+  -fx-min-height: 36px;
+  -fx-pref-height: 36px;
+  -fx-max-height: 36px;
+}

@@ -6,8 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicBoolean;
 import com.acteque.terminal.test.FxTestSupport;
+import com.acteque.terminal.ui.core.Button;
+import com.acteque.terminal.ui.core.Button.Size;
+import com.acteque.terminal.ui.core.Button.Variant;
 import org.junit.jupiter.api.Test;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
 class ChartStatusLineTest {
@@ -36,7 +38,10 @@ class ChartStatusLineTest {
       statusLine.setPricePoint(PRICE_POINT);
 
       assertEquals(3, statusLine.getChildren().size());
-      assertEquals("ACME", assertInstanceOf(Button.class, statusLine.getChildren().get(0)).getText());
+      Button symbolButton = assertInstanceOf(Button.class, statusLine.getChildren().get(0));
+      assertEquals("ACME", symbolButton.getText());
+      assertEquals(Variant.LINK, symbolButton.getVariant());
+      assertEquals(Size.DEFAULT, symbolButton.getSize());
       assertEquals("1D", assertInstanceOf(Label.class, statusLine.getChildren().get(1)).getText());
       assertEquals(
         "O104.00  H108.25  L103.50  C107.75  Vol2.50 M",
