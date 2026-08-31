@@ -10,7 +10,6 @@
   -fx-font-size: 13px;
   -fx-font-weight: 600;
   transition-property:
-    -fx-background-color,
     -fx-border-color,
     -fx-text-fill,
     -fx-opacity,

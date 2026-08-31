@@ -11,8 +11,12 @@ import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.core.Button.Size;
 import com.acteque.terminal.ui.core.Button.Variant;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
@@ -127,6 +131,17 @@ class ButtonTest {
       assertEquals(Color.web("#171717"), resolvedBackground(AppTheme.LIGHT));
       assertEquals(Color.web("#e5e5e5"), resolvedBackground(AppTheme.DARK));
     });
+  }
+
+  @Test
+  void doesNotTransitionTheHoverBackground() throws IOException {
+    String stylesheet;
+    try (var input = Objects.requireNonNull(Button.class.getResourceAsStream("button.css"))) {
+      stylesheet = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    Pattern backgroundTransition = Pattern.compile("transition-property\\s*:[^;]*-fx-background-color", Pattern.DOTALL);
+    assertFalse(backgroundTransition.matcher(stylesheet).find());
   }
 
   @Test
