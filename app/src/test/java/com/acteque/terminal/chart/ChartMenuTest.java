@@ -7,6 +7,7 @@ import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Button.Size;
 import com.acteque.terminal.ui.core.Button.Variant;
+import com.acteque.terminal.ui.core.ButtonGroup;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -17,10 +18,12 @@ class ChartMenuTest {
     FxTestSupport.runAndWait(() -> {
       ChartMenu menu = new ChartMenu();
       List<String> descriptions = List.of("Symbol or instrument", "Interval", "Chart type");
+      ButtonGroup group = assertInstanceOf(ButtonGroup.class, menu.getChildren().getFirst());
 
-      assertEquals(3, menu.getChildren().size());
-      for (int index = 0; index < menu.getChildren().size(); index++) {
-        Button button = assertInstanceOf(Button.class, menu.getChildren().get(index));
+      assertEquals(1, menu.getChildren().size());
+      assertEquals(3, group.getChildren().size());
+      for (int index = 0; index < group.getChildren().size(); index++) {
+        Button button = assertInstanceOf(Button.class, group.getChildren().get(index));
         assertEquals(Variant.GHOST, button.getVariant());
         assertEquals(Size.ICON, button.getSize());
         assertEquals(descriptions.get(index), button.getAccessibleText());

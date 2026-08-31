@@ -1,0 +1,105 @@
+.core-button-group.button-group-nested {
+  -fx-spacing: 8px;
+}
+
+.core-button-group-text {
+  -fx-alignment: center;
+  -fx-background-color: -app-muted;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-border;
+  -fx-border-radius: 8px;
+  -fx-border-width: 1px;
+  -fx-font-size: 13px;
+  -fx-font-weight: 600;
+  -fx-padding: 0 10px;
+  -fx-spacing: 8px;
+}
+
+.core-button-group-text > .label {
+  -fx-text-fill: -app-foreground;
+}
+
+.core-button-group-separator {
+  -fx-padding: 0;
+}
+
+.core-button-group-separator:vertical {
+  -fx-padding: 1px 0;
+  -fx-pref-width: 1px;
+}
+
+.core-button-group-separator:horizontal {
+  -fx-padding: 0 1px;
+  -fx-pref-height: 1px;
+}
+
+.core-button-group-separator > .line {
+  -fx-background-color: -app-input;
+  -fx-border-color: transparent;
+}
+
+.button-group-horizontal > .button-group-item.button-group-first,
+.button-group-horizontal > .button-group-item.button-group-middle {
+  -fx-background-radius: 8px 0 0 8px;
+  -fx-border-radius: 8px 0 0 8px;
+  -fx-border-width: 1px 0 1px 1px;
+}
+
+.button-group-horizontal > .button-group-item.button-group-middle {
+  -fx-background-radius: 0;
+  -fx-border-radius: 0;
+}
+
+.button-group-horizontal > .button-group-item.button-group-last {
+  -fx-background-radius: 0 8px 8px 0;
+  -fx-border-radius: 0 8px 8px 0;
+}
+
+.button-group-vertical > .button-group-item.button-group-first,
+.button-group-vertical > .button-group-item.button-group-middle {
+  -fx-background-radius: 8px 8px 0 0;
+  -fx-border-radius: 8px 8px 0 0;
+  -fx-border-width: 1px 1px 0 1px;
+}
+
+.button-group-vertical > .button-group-item.button-group-middle {
+  -fx-background-radius: 0;
+  -fx-border-radius: 0;
+}
+
+.button-group-vertical > .button-group-item.button-group-last {
+  -fx-background-radius: 0 0 8px 8px;
+  -fx-border-radius: 0 0 8px 8px;
+}
+
+.button-group-horizontal > .core-button.button-size-xs.button-group-first,
+.button-group-horizontal > .core-button.button-size-sm.button-group-first,
+.button-group-horizontal > .core-button.button-size-icon-xs.button-group-first,
+.button-group-horizontal > .core-button.button-size-icon-sm.button-group-first {
+  -fx-background-radius: 6px 0 0 6px;
+  -fx-border-radius: 6px 0 0 6px;
+}
+
+.button-group-horizontal > .core-button.button-size-xs.button-group-last,
+.button-group-horizontal > .core-button.button-size-sm.button-group-last,
+.button-group-horizontal > .core-button.button-size-icon-xs.button-group-last,
+.button-group-horizontal > .core-button.button-size-icon-sm.button-group-last {
+  -fx-background-radius: 0 6px 6px 0;
+  -fx-border-radius: 0 6px 6px 0;
+}
+
+.button-group-vertical > .core-button.button-size-xs.button-group-first,
+.button-group-vertical > .core-button.button-size-sm.button-group-first,
+.button-group-vertical > .core-button.button-size-icon-xs.button-group-first,
+.button-group-vertical > .core-button.button-size-icon-sm.button-group-first {
+  -fx-background-radius: 6px 6px 0 0;
+  -fx-border-radius: 6px 6px 0 0;
+}
+
+.button-group-vertical > .core-button.button-size-xs.button-group-last,
+.button-group-vertical > .core-button.button-size-sm.button-group-last,
+.button-group-vertical > .core-button.button-size-icon-xs.button-group-last,
+.button-group-vertical > .core-button.button-size-icon-sm.button-group-last {
+  -fx-background-radius: 0 0 6px 6px;
+  -fx-border-radius: 0 0 6px 6px;
+}

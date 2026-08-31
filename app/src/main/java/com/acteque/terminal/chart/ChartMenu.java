@@ -5,6 +5,7 @@ import com.acteque.terminal.ui.RefreshableView;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Button.Size;
 import com.acteque.terminal.ui.core.Button.Variant;
+import com.acteque.terminal.ui.core.ButtonGroup;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
@@ -27,9 +28,11 @@ final class ChartMenu extends HBox implements RefreshableView {
     StackPane.setAlignment(this, Pos.TOP_CENTER);
     StackPane.setMargin(this, new Insets(TOP_MARGIN, 0.0, 0.0, 0.0));
     getChildren().setAll(
-      createItem("S", "Symbol or instrument"),
-      createItem("I", "Interval"),
-      createItem("C", "Chart type")
+      new ButtonGroup(
+        createItem("S", "Symbol or instrument"),
+        createItem("I", "Interval"),
+        createItem("C", "Chart type")
+      )
     );
   }
 
