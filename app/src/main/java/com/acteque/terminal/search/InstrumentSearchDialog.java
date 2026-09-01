@@ -9,6 +9,7 @@ import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTicke
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.KineticListView;
 import com.acteque.terminal.ui.RefreshableView;
+import com.acteque.terminal.ui.core.Input;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.collections.FXCollections;
@@ -17,7 +18,6 @@ import javafx.collections.transformation.FilteredList;
 import javafx.css.PseudoClass;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
-import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -31,7 +31,7 @@ public final class InstrumentSearchDialog extends StackPane implements Refreshab
   private static final double MAX_VIEWPORT_WIDTH_RATIO = 0.70;
   private static final double MAX_VIEWPORT_HEIGHT_RATIO = 0.70;
   private static final PseudoClass GLIDING_PSEUDO_CLASS = PseudoClass.getPseudoClass("gliding");
-  private final TextField symbolField = new TextField();
+  private final Input symbolField = new Input();
   private final KineticListView<TiingoSupportedTicker> instruments = new KineticListView<>();
   private final ObservableList<TiingoSupportedTicker> catalogInstruments = FXCollections.observableArrayList();
   private final FilteredList<TiingoSupportedTicker> filteredInstruments = new FilteredList<>(catalogInstruments);
@@ -50,7 +50,6 @@ public final class InstrumentSearchDialog extends StackPane implements Refreshab
     this.tickerCatalog = Objects.requireNonNull(tickerCatalog, "tickerCatalog");
 
     getStyleClass().add("instrument-search-dialog");
-    symbolField.getStyleClass().add("instrument-search-field");
     configureInstrumentList();
 
     visibleProperty().bind(open);

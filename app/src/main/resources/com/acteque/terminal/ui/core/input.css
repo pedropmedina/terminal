@@ -1,0 +1,50 @@
+.core-input {
+  -fx-alignment: center-left;
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-input;
+  -fx-border-insets: 0;
+  -fx-border-radius: 8px;
+  -fx-border-width: 1px;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+  -fx-font-size: 14px;
+  -fx-min-height: 32px;
+  -fx-pref-height: 32px;
+  -fx-max-height: 32px;
+  -fx-min-width: 0;
+  -fx-padding: 4px 10px;
+  -fx-prompt-text-fill: -app-muted-foreground;
+  -fx-text-fill: -app-foreground;
+  transition-property:
+    -fx-background-color,
+    -fx-border-color,
+    -fx-text-fill,
+    -fx-opacity;
+  transition-duration: 100ms;
+}
+
+.core-input:focus-visible {
+  -fx-border-color: -app-ring;
+  -fx-effect: dropshadow(gaussian, -app-input-focus-ring, 6, 0, 0, 0);
+}
+
+.core-input:disabled {
+  -fx-background-color: -app-input-disabled-background;
+  -fx-cursor: default;
+  -fx-opacity: 0.5;
+}
+
+.core-input:invalid {
+  -fx-border-color: -app-input-invalid-border;
+  -fx-effect: dropshadow(gaussian, -app-input-invalid-ring, 6, 0, 0, 0);
+}
+
+:root.theme-dark .core-input {
+  -fx-background-color: -app-input-background;
+}
+
+:root.theme-dark .core-input:disabled {
+  -fx-background-color: -app-input-disabled-background;
+}

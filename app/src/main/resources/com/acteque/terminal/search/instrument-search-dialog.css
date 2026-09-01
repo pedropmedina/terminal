@@ -20,18 +20,6 @@
   -fx-text-fill: -app-card-foreground;
 }
 
-.instrument-search-field {
-  -fx-background-color: -app-background;
-  -fx-background-radius: 8px;
-  -fx-border-color: -app-input;
-  -fx-border-radius: 8px;
-  -fx-border-width: 1px;
-  -fx-text-fill: -app-foreground;
-  -fx-prompt-text-fill: -app-muted-foreground;
-  -fx-focus-color: -app-ring;
-  -fx-faint-focus-color: transparent;
-}
-
 .instrument-list {
   -fx-pref-height: 360px;
   -fx-background-color: transparent;
