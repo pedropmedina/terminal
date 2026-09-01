@@ -6,7 +6,7 @@ import javafx.beans.property.ObjectPropertyBase;
 import javafx.scene.Node;
 
 /** A theme-aware button with design-system variants and sizes. */
-public final class Button extends javafx.scene.control.Button {
+public class Button extends javafx.scene.control.Button {
 
   private static final String ROOT_STYLE_CLASS = "core-button";
 

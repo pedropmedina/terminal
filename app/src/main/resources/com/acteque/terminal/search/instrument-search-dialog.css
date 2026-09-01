@@ -1,5 +1,8 @@
 .instrument-search-dialog {
   -fx-alignment: center;
+}
+
+.instrument-search-dialog > .core-dialog-portal > .core-dialog-overlay {
   -fx-background-color: -app-overlay;
 }
 

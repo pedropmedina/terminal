@@ -1,9 +1,9 @@
 package com.acteque.terminal.chart;
 
-import java.util.List;
-import java.util.Objects;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
 import com.acteque.terminal.search.InstrumentSearchDialog;
+import java.util.List;
+import java.util.Objects;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.layout.StackPane;
@@ -30,7 +30,6 @@ public final class Chart extends StackPane {
       instrumentSearchOpen,
       tickerCatalog
     );
-    instrumentSearchDialog.onOverlayClick(() -> instrumentSearchOpen.set(false));
     instrumentSearchDialog.onRequestClose(() -> instrumentSearchOpen.set(false));
 
     ChartStatusLine statusLine = new ChartStatusLine(stockSymbol, interval);

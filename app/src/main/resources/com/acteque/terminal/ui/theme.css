@@ -34,6 +34,9 @@
   -app-button-destructive-hover: rgba(231, 0, 11, 0.2);
   -app-button-destructive-border: rgba(231, 0, 11, 0.4);
   -app-button-destructive-ring: rgba(231, 0, 11, 0.2);
+  -app-dialog-overlay: rgba(0, 0, 0, 0.1);
+  -app-dialog-ring: rgba(10, 10, 10, 0.1);
+  -app-dialog-footer-background: rgba(245, 245, 245, 0.5);
   -app-overlay: rgba(10, 10, 10, 0.28);
   -app-chart-1: #e76e00;
   -app-chart-2: #009689;
@@ -77,6 +80,9 @@
   -app-button-destructive-hover: rgba(255, 100, 103, 0.3);
   -app-button-destructive-border: rgba(255, 100, 103, 0.5);
   -app-button-destructive-ring: rgba(255, 100, 103, 0.4);
+  -app-dialog-overlay: rgba(0, 0, 0, 0.1);
+  -app-dialog-ring: rgba(250, 250, 250, 0.1);
+  -app-dialog-footer-background: rgba(38, 38, 38, 0.5);
   -app-overlay: rgba(0, 0, 0, 0.56);
   -app-chart-1: #7c3aed;
   -app-chart-2: #10b981;

@@ -10,6 +10,9 @@ import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.KineticListView;
 import com.acteque.terminal.ui.RefreshableView;
 import com.acteque.terminal.ui.core.Input;
+import com.acteque.terminal.ui.core.dialog.Dialog;
+import com.acteque.terminal.ui.core.dialog.DialogContent;
+import com.acteque.terminal.ui.core.dialog.DialogTitle;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.collections.FXCollections;
@@ -18,15 +21,11 @@ import javafx.collections.transformation.FilteredList;
 import javafx.css.PseudoClass;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 
 /** A transient symbol picker. Selection is intentionally not applied to market data yet. */
-public final class InstrumentSearchDialog extends StackPane implements RefreshableView {
+public final class InstrumentSearchDialog extends Dialog implements RefreshableView {
 
   private static final double MAX_VIEWPORT_WIDTH_RATIO = 0.70;
   private static final double MAX_VIEWPORT_HEIGHT_RATIO = 0.70;
@@ -36,7 +35,6 @@ public final class InstrumentSearchDialog extends StackPane implements Refreshab
   private final ObservableList<TiingoSupportedTicker> catalogInstruments = FXCollections.observableArrayList();
   private final FilteredList<TiingoSupportedTicker> filteredInstruments = new FilteredList<>(catalogInstruments);
   private final TiingoTickerCatalogApi tickerCatalog;
-  private Runnable overlayClickHandler = () -> {};
   private Runnable closeRequestHandler = () -> {};
   private boolean catalogLoadStarted;
 
@@ -52,21 +50,20 @@ public final class InstrumentSearchDialog extends StackPane implements Refreshab
     getStyleClass().add("instrument-search-dialog");
     configureInstrumentList();
 
-    visibleProperty().bind(open);
-    managedProperty().bind(open);
     open.addListener((ignored, wasOpen, isOpen) -> {
+      setOpen(isOpen);
       if (isOpen) {
         symbolField.selectAll();
         symbolField.requestFocus();
         loadCatalog();
       }
     });
-    addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-      if (event.getCode() == KeyCode.ESCAPE) {
+    openProperty().addListener((ignored, wasOpen, isOpen) -> {
+      if (!isOpen && open.get()) {
         closeRequestHandler.run();
-        event.consume();
       }
     });
+    setOpen(open.get());
 
     refreshView();
     ChartReloadHooks.register(this);
@@ -74,24 +71,19 @@ public final class InstrumentSearchDialog extends StackPane implements Refreshab
 
   @Override
   public void refreshView() {
-    setPickOnBounds(true);
-    setOnMouseClicked(event -> overlayClickHandler.run());
-
-    Label title = new Label("Instrument search");
+    DialogTitle title = new DialogTitle("Instrument search");
     title.getStyleClass().add("instrument-search-title");
 
     symbolField.setPromptText("Symbol");
     symbolField.setAccessibleText("Stock symbol");
 
-    getChildren().clear();
-    VBox card = new VBox(title, symbolField, instruments);
+    DialogContent card = new DialogContent(title, symbolField, instruments);
     card.getStyleClass().add("instrument-search-card");
     card.maxWidthProperty().bind(widthProperty().multiply(MAX_VIEWPORT_WIDTH_RATIO));
     card.maxHeightProperty().bind(heightProperty().multiply(MAX_VIEWPORT_HEIGHT_RATIO));
-    card.setOnMouseClicked(event -> event.consume());
-    VBox.setVgrow(instruments, Priority.ALWAYS);
+    DialogContent.setVgrow(instruments, Priority.ALWAYS);
 
-    getChildren().setAll(card);
+    setContent(card);
   }
 
   private void configureInstrumentList() {
@@ -172,10 +164,6 @@ public final class InstrumentSearchDialog extends StackPane implements Refreshab
       exchange.setText(instrument.exchange());
       setGraphic(row);
     }
-  }
-
-  public void onOverlayClick(Runnable callback) {
-    overlayClickHandler = Objects.requireNonNull(callback, "callback");
   }
 
   public void onRequestClose(Runnable callback) {
