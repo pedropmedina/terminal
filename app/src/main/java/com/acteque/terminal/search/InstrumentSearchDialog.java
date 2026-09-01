@@ -1,5 +1,10 @@
 package com.acteque.terminal.search;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoSupportedTicker;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
 import com.acteque.terminal.ui.ChartReloadHooks;
@@ -9,11 +14,6 @@ import com.acteque.terminal.ui.core.Input;
 import com.acteque.terminal.ui.core.dialog.Dialog;
 import com.acteque.terminal.ui.core.dialog.DialogContent;
 import com.acteque.terminal.ui.core.dialog.DialogTitle;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.collections.FXCollections;

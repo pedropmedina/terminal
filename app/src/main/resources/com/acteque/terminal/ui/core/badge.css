@@ -1,0 +1,109 @@
+.core-badge {
+  -fx-alignment: center;
+  -fx-background-insets: 0;
+  -fx-background-radius: 32px;
+  -fx-border-color: transparent;
+  -fx-border-insets: 0;
+  -fx-border-radius: 32px;
+  -fx-border-width: 1px;
+  -fx-content-display: left;
+  -fx-font-size: 12px;
+  -fx-font-weight: 500;
+  -fx-graphic-text-gap: 4px;
+  -fx-min-height: 20px;
+  -fx-pref-height: 20px;
+  -fx-max-height: 20px;
+  -fx-padding: 2px 8px;
+  -fx-text-overrun: clip;
+  -fx-wrap-text: false;
+  transition-property:
+    -fx-background-color,
+    -fx-border-color,
+    -fx-effect,
+    -fx-text-fill;
+  transition-duration: 100ms;
+}
+
+.core-badge:icon-inline-start {
+  -fx-padding: 2px 8px 2px 6px;
+}
+
+.core-badge:icon-inline-end {
+  -fx-padding: 2px 6px 2px 8px;
+}
+
+.core-badge:interactive {
+  -fx-cursor: hand;
+}
+
+.core-badge:focus-visible {
+  -fx-border-color: -app-ring;
+  -fx-effect: dropshadow(gaussian, -app-badge-focus-ring, 6, 0, 0, 0);
+}
+
+.core-badge.badge-variant-default {
+  -fx-background-color: -app-primary;
+  -fx-text-fill: -app-primary-foreground;
+}
+
+.core-badge:interactive.badge-variant-default:hover {
+  -fx-background-color: -app-badge-primary-hover;
+}
+
+.core-badge.badge-variant-secondary {
+  -fx-background-color: -app-secondary;
+  -fx-text-fill: -app-secondary-foreground;
+}
+
+.core-badge:interactive.badge-variant-secondary:hover {
+  -fx-background-color: -app-badge-secondary-hover;
+}
+
+.core-badge.badge-variant-destructive {
+  -fx-background-color: -app-badge-destructive-background;
+  -fx-text-fill: -app-destructive;
+}
+
+.core-badge.badge-variant-destructive:focus-visible {
+  -fx-effect: dropshadow(gaussian, -app-badge-destructive-ring, 6, 0, 0, 0);
+}
+
+.core-badge:interactive.badge-variant-destructive:hover {
+  -fx-background-color: -app-badge-destructive-hover;
+}
+
+.core-badge.badge-variant-outline {
+  -fx-background-color: transparent;
+  -fx-border-color: -app-border;
+  -fx-text-fill: -app-foreground;
+}
+
+.core-badge:interactive.badge-variant-outline:hover {
+  -fx-background-color: -app-muted;
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-badge.badge-variant-ghost {
+  -fx-background-color: transparent;
+  -fx-text-fill: -app-foreground;
+}
+
+.core-badge.badge-variant-ghost:hover {
+  -fx-background-color: -app-badge-ghost-hover;
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-badge.badge-variant-link {
+  -fx-background-color: transparent;
+  -fx-text-fill: -app-primary;
+  -fx-underline: false;
+}
+
+.core-badge.badge-variant-link:hover {
+  -fx-underline: true;
+}
+
+.core-badge:invalid {
+  -fx-border-color: -app-badge-invalid-border;
+  -fx-effect: dropshadow(gaussian, -app-badge-invalid-ring, 6, 0, 0, 0);
+}

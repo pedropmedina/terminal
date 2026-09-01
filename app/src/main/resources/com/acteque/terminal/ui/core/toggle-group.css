@@ -1,0 +1,83 @@
+.core-toggle-group {
+  -fx-background-radius: 8px;
+  -fx-spacing: 8px;
+}
+
+.core-toggle-group.toggle-group-vertical > .toggle-group-item {
+  -fx-max-width: infinity;
+}
+
+.core-toggle-group.toggle-group-spacing-zero > .toggle-group-item {
+  -fx-background-radius: 0;
+  -fx-border-radius: 0;
+  -fx-padding: 0 8px;
+}
+
+.core-toggle-group.toggle-group-horizontal.toggle-group-spacing-zero > .toggle-group-first {
+  -fx-background-radius: 8px 0 0 8px;
+  -fx-border-radius: 8px 0 0 8px;
+}
+
+.core-toggle-group.toggle-group-horizontal.toggle-group-spacing-zero > .toggle-group-last {
+  -fx-background-radius: 0 8px 8px 0;
+  -fx-border-radius: 0 8px 8px 0;
+}
+
+.core-toggle-group.toggle-group-vertical.toggle-group-spacing-zero > .toggle-group-first {
+  -fx-background-radius: 8px 8px 0 0;
+  -fx-border-radius: 8px 8px 0 0;
+}
+
+.core-toggle-group.toggle-group-vertical.toggle-group-spacing-zero > .toggle-group-last {
+  -fx-background-radius: 0 0 8px 8px;
+  -fx-border-radius: 0 0 8px 8px;
+}
+
+.core-toggle-group.toggle-group-horizontal.toggle-group-spacing-zero > .toggle-group-item.toggle-variant-outline {
+  -fx-border-width: 1px 1px 1px 0;
+}
+
+.core-toggle-group.toggle-group-horizontal.toggle-group-spacing-zero > .toggle-group-first.toggle-variant-outline {
+  -fx-border-width: 1px;
+}
+
+.core-toggle-group.toggle-group-vertical.toggle-group-spacing-zero > .toggle-group-item.toggle-variant-outline {
+  -fx-border-width: 0 1px 1px 1px;
+}
+
+.core-toggle-group.toggle-group-vertical.toggle-group-spacing-zero > .toggle-group-first.toggle-variant-outline {
+  -fx-border-width: 1px;
+}
+
+.core-toggle-group.toggle-group-spacing-zero > .toggle-group-only,
+.core-toggle-group.toggle-group-horizontal.toggle-group-spacing-zero > .toggle-group-only,
+.core-toggle-group.toggle-group-vertical.toggle-group-spacing-zero > .toggle-group-only {
+  -fx-background-radius: 8px;
+  -fx-border-radius: 8px;
+  -fx-border-width: 1px;
+}
+
+.core-toggle-group.toggle-group-spacing-zero > .toggle-group-item.toggle-size-sm {
+  -fx-background-radius: 0;
+  -fx-border-radius: 0;
+}
+
+.core-toggle-group.toggle-group-horizontal.toggle-group-spacing-zero > .toggle-group-first.toggle-size-sm {
+  -fx-background-radius: 6px 0 0 6px;
+  -fx-border-radius: 6px 0 0 6px;
+}
+
+.core-toggle-group.toggle-group-horizontal.toggle-group-spacing-zero > .toggle-group-last.toggle-size-sm {
+  -fx-background-radius: 0 6px 6px 0;
+  -fx-border-radius: 0 6px 6px 0;
+}
+
+.core-toggle-group.toggle-group-vertical.toggle-group-spacing-zero > .toggle-group-first.toggle-size-sm {
+  -fx-background-radius: 6px 6px 0 0;
+  -fx-border-radius: 6px 6px 0 0;
+}
+
+.core-toggle-group.toggle-group-vertical.toggle-group-spacing-zero > .toggle-group-last.toggle-size-sm {
+  -fx-background-radius: 0 0 6px 6px;
+  -fx-border-radius: 0 0 6px 6px;
+}

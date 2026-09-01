@@ -1,10 +1,14 @@
+@import "core/badge.css";
 @import "core/button.css";
 @import "core/button-group.css";
 @import "core/dialog.css";
 @import "core/field.css";
 @import "core/input.css";
 @import "core/label.css";
+@import "core/popover.css";
 @import "core/separator.css";
+@import "core/toggle.css";
+@import "core/toggle-group.css";
 
 .surface {
   -fx-background-color: -app-card;

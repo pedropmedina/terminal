@@ -1,0 +1,80 @@
+.core-toggle {
+  -fx-alignment: center;
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 8px;
+  -fx-border-color: transparent;
+  -fx-border-insets: 0;
+  -fx-border-radius: 8px;
+  -fx-border-width: 1px;
+  -fx-content-display: left;
+  -fx-cursor: hand;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+  -fx-font-size: 14px;
+  -fx-font-weight: 500;
+  -fx-graphic-text-gap: 4px;
+  -fx-text-fill: -app-foreground;
+  transition-property:
+    -fx-border-color,
+    -fx-text-fill,
+    -fx-opacity,
+    -fx-translate-y;
+  transition-duration: 100ms;
+}
+
+.core-toggle:hover,
+.core-toggle:selected {
+  -fx-background-color: -app-muted;
+  -fx-text-fill: -app-foreground;
+}
+
+.core-toggle:focus-visible {
+  -fx-border-color: -app-ring;
+  -fx-effect: dropshadow(gaussian, -app-button-focus-ring, 6, 0, 0, 0);
+}
+
+.core-toggle:pressed {
+  -fx-translate-y: 1px;
+}
+
+.core-toggle:disabled {
+  -fx-cursor: default;
+  -fx-opacity: 0.5;
+}
+
+.core-toggle:invalid {
+  -fx-border-color: -app-input-invalid-border;
+  -fx-effect: dropshadow(gaussian, -app-input-invalid-ring, 6, 0, 0, 0);
+}
+
+.core-toggle.toggle-variant-outline {
+  -fx-border-color: -app-input;
+}
+
+.core-toggle.toggle-size-default {
+  -fx-min-width: 32px;
+  -fx-min-height: 32px;
+  -fx-pref-height: 32px;
+  -fx-max-height: 32px;
+  -fx-padding: 0 10px;
+}
+
+.core-toggle.toggle-size-sm {
+  -fx-background-radius: 6px;
+  -fx-border-radius: 6px;
+  -fx-font-size: 12.8px;
+  -fx-min-width: 28px;
+  -fx-min-height: 28px;
+  -fx-pref-height: 28px;
+  -fx-max-height: 28px;
+  -fx-padding: 0 10px;
+}
+
+.core-toggle.toggle-size-lg {
+  -fx-min-width: 36px;
+  -fx-min-height: 36px;
+  -fx-pref-height: 36px;
+  -fx-max-height: 36px;
+  -fx-padding: 0 10px;
+}
