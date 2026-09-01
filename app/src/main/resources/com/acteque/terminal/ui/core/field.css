@@ -1,0 +1,87 @@
+.core-field-set {
+  -fx-spacing: 16px;
+}
+
+.core-field-legend {
+  -fx-font-weight: 500;
+  -fx-padding: 0 0 6px 0;
+}
+
+.core-field-legend.field-legend-variant-label {
+  -fx-font-size: 14px;
+}
+
+.core-field-legend.field-legend-variant-legend {
+  -fx-font-size: 16px;
+}
+
+.core-field-group {
+  -fx-spacing: 20px;
+}
+
+.core-field-group > .core-field-group {
+  -fx-spacing: 16px;
+}
+
+.core-field {
+  -fx-spacing: 8px;
+}
+
+.core-field:invalid > .core-field-label,
+.core-field:invalid > .core-field-title,
+.core-field:invalid > .core-field-content > .core-field-label,
+.core-field:invalid > .core-field-content > .core-field-title {
+  -fx-text-fill: -app-destructive;
+}
+
+.core-field-content {
+  -fx-spacing: 2px;
+}
+
+.core-field-label {
+  -fx-alignment: top-left;
+}
+
+.core-field-title {
+  -fx-alignment: center-left;
+  -fx-content-display: left;
+  -fx-font-size: 14px;
+  -fx-font-weight: 500;
+  -fx-graphic-text-gap: 8px;
+  -fx-text-fill: -app-foreground;
+}
+
+.core-field-title:disabled {
+  -fx-opacity: 0.5;
+}
+
+.core-field-description {
+  -fx-font-size: 14px;
+  -fx-font-weight: 400;
+  -fx-line-spacing: 1px;
+  -fx-text-alignment: left;
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-field-separator {
+  -fx-min-height: 20px;
+  -fx-pref-height: 20px;
+  -fx-max-height: 20px;
+}
+
+.core-field-separator > .field-separator-content {
+  -fx-background-color: -app-background;
+  -fx-padding: 0 8px;
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-field-error {
+  -fx-spacing: 4px;
+}
+
+.core-field-error .label,
+.core-field-error .field-error-item {
+  -fx-font-size: 14px;
+  -fx-font-weight: 400;
+  -fx-text-fill: -app-destructive;
+}

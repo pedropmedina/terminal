@@ -1,0 +1,15 @@
+.core-label {
+  -fx-alignment: center-left;
+  -fx-content-display: left;
+  -fx-font-size: 14px;
+  -fx-font-weight: 500;
+  -fx-graphic-text-gap: 8px;
+  -fx-line-spacing: 0;
+  -fx-text-fill: -app-foreground;
+}
+
+.core-label:disabled,
+.core-label:label-for-disabled {
+  -fx-cursor: default;
+  -fx-opacity: 0.5;
+}

@@ -40,7 +40,7 @@ class ChartStatusLineTest {
       assertEquals(3, statusLine.getChildren().size());
       Button symbolButton = assertInstanceOf(Button.class, statusLine.getChildren().get(0));
       assertEquals("ACME", symbolButton.getText());
-      assertEquals(Variant.LINK, symbolButton.getVariant());
+      assertEquals(Variant.GHOST, symbolButton.getVariant());
       assertEquals(Size.DEFAULT, symbolButton.getSize());
       assertEquals("1D", assertInstanceOf(Label.class, statusLine.getChildren().get(1)).getText());
       assertEquals(

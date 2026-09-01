@@ -1,0 +1,21 @@
+.core-separator {
+  -fx-padding: 0;
+}
+
+.core-separator:horizontal {
+  -fx-min-height: 1px;
+  -fx-pref-height: 1px;
+  -fx-max-height: 1px;
+}
+
+.core-separator:vertical {
+  -fx-min-width: 1px;
+  -fx-pref-width: 1px;
+  -fx-max-width: 1px;
+}
+
+.core-separator > .line {
+  -fx-background-color: -app-border;
+  -fx-background-insets: 0;
+  -fx-border-color: transparent;
+}
