@@ -4,9 +4,11 @@ import com.acteque.terminal.chart.PricePoint;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -19,13 +21,14 @@ public final class MarketDataController implements AutoCloseable {
   private static final long HISTORY_PAGE_MONTHS = 6;
 
   private final MarketDataClient client;
-  private final String symbol;
+  private String symbol;
   private final Clock clock;
   private final ExecutorService executor;
   private final NavigableMap<LocalDate, PricePoint> pointsByDate = new TreeMap<>();
 
   private boolean earlierHistoryLoadInProgress;
   private boolean allEarlierHistoryLoaded;
+  private long instrumentLoadGeneration;
 
   public MarketDataController(MarketDataClient client, String symbol) {
     this(client, symbol, Clock.systemDefaultZone(), Executors.newVirtualThreadPerTaskExecutor());
@@ -49,6 +52,8 @@ public final class MarketDataController implements AutoCloseable {
 
   public CompletionStage<List<PricePoint>> loadEarlier() {
     LocalDate oldestAvailableDate;
+    String requestedSymbol;
+    long generation;
     synchronized (this) {
       if (earlierHistoryLoadInProgress || allEarlierHistoryLoaded || pointsByDate.isEmpty()) {
         return CompletableFuture.completedFuture(snapshot());
@@ -56,28 +61,33 @@ public final class MarketDataController implements AutoCloseable {
 
       earlierHistoryLoadInProgress = true;
       oldestAvailableDate = pointsByDate.firstKey();
+      requestedSymbol = symbol;
+      generation = instrumentLoadGeneration;
     }
 
     LocalDate startDate = oldestAvailableDate.minusMonths(HISTORY_PAGE_MONTHS);
     LocalDate endDate = oldestAvailableDate.minusDays(1);
     try {
-      return CompletableFuture.supplyAsync(() -> loadPage(startDate, endDate), executor).handle((page, failure) -> {
-        synchronized (this) {
-          earlierHistoryLoadInProgress = false;
-          if (failure != null) {
-            throw failure instanceof CompletionException completionException
-              ? completionException
-              : new CompletionException(failure);
-          }
+      return CompletableFuture.supplyAsync(() -> loadPage(requestedSymbol, startDate, endDate), executor).handle(
+        (page, failure) -> {
+          synchronized (this) {
+            if (generation != instrumentLoadGeneration) {
+              return snapshot();
+            }
+            earlierHistoryLoadInProgress = false;
+            if (failure != null) {
+              throw asCompletionException(failure);
+            }
 
-          int previousSize = pointsByDate.size();
-          addPoints(page);
-          if (pointsByDate.size() == previousSize) {
-            allEarlierHistoryLoaded = true;
+            int previousSize = pointsByDate.size();
+            addPoints(page);
+            if (pointsByDate.size() == previousSize) {
+              allEarlierHistoryLoaded = true;
+            }
+            return snapshot();
           }
-          return snapshot();
         }
-      });
+      );
     } catch (RuntimeException exception) {
       synchronized (this) {
         earlierHistoryLoadInProgress = false;
@@ -86,17 +96,66 @@ public final class MarketDataController implements AutoCloseable {
     }
   }
 
+  public CompletionStage<List<PricePoint>> loadInstrument(String symbol) {
+    String requestedSymbol = normalizeSymbol(symbol);
+    long generation;
+    synchronized (this) {
+      generation = ++instrumentLoadGeneration;
+    }
+
+    LocalDate endDate = LocalDate.now(clock);
+    LocalDate startDate = endDate.minusMonths(HISTORY_PAGE_MONTHS);
+    return CompletableFuture.supplyAsync(() -> loadPage(requestedSymbol, startDate, endDate), executor).handle(
+      (page, failure) -> {
+        synchronized (this) {
+          if (generation != instrumentLoadGeneration) {
+            throw new CancellationException("A newer instrument was selected");
+          }
+          earlierHistoryLoadInProgress = false;
+          if (failure != null) {
+            throw asCompletionException(failure);
+          }
+
+          this.symbol = requestedSymbol;
+          pointsByDate.clear();
+          allEarlierHistoryLoaded = false;
+          addPoints(page);
+          return snapshot();
+        }
+      }
+    );
+  }
+
   @Override
   public void close() {
     executor.close();
   }
 
   private List<PricePoint> loadPage(LocalDate startDate, LocalDate endDate) {
+    return loadPage(symbol, startDate, endDate);
+  }
+
+  private List<PricePoint> loadPage(String symbol, LocalDate startDate, LocalDate endDate) {
     return client
       .getDailyBars(new DailyBarRequest(symbol, startDate, endDate))
       .stream()
       .map(MarketDataController::toPricePoint)
       .toList();
+  }
+
+  private static String normalizeSymbol(String symbol) {
+    Objects.requireNonNull(symbol, "symbol");
+    String normalized = symbol.strip().toUpperCase(Locale.ROOT);
+    if (normalized.isEmpty()) {
+      throw new IllegalArgumentException("symbol must not be blank");
+    }
+    return normalized;
+  }
+
+  private static CompletionException asCompletionException(Throwable failure) {
+    return failure instanceof CompletionException completionException
+      ? completionException
+      : new CompletionException(failure);
   }
 
   private void addPoints(List<PricePoint> points) {

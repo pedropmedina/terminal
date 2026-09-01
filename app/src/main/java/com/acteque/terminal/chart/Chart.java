@@ -2,6 +2,7 @@ package com.acteque.terminal.chart;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
 import com.acteque.terminal.search.InstrumentSearchDialog;
 import javafx.beans.property.BooleanProperty;
@@ -14,6 +15,7 @@ public final class Chart extends StackPane {
   private final BooleanProperty instrumentSearchOpen = new SimpleBooleanProperty(false);
   private final InstrumentSearchDialog instrumentSearchDialog;
   private final ChartCanvas canvas;
+  private final ChartStatusLine statusLine;
 
   public Chart(
     List<PricePoint> pricePoints,
@@ -29,7 +31,7 @@ public final class Chart extends StackPane {
     instrumentSearchDialog = new InstrumentSearchDialog(stockSymbol, instrumentSearchOpen, tickerCatalog);
     instrumentSearchDialog.onRequestClose(() -> instrumentSearchOpen.set(false));
 
-    ChartStatusLine statusLine = new ChartStatusLine(stockSymbol, interval);
+    statusLine = new ChartStatusLine(stockSymbol, interval);
     statusLine.onInstrumentClick(() -> instrumentSearchOpen.set(true));
 
     ChartMenu menu = new ChartMenu();
@@ -44,6 +46,17 @@ public final class Chart extends StackPane {
 
   public void setOnEarlierHistoryRequested(Runnable callback) {
     canvas.setOnEarlierHistoryRequested(callback);
+  }
+
+  public void setOnInstrumentSelected(Consumer<String> callback) {
+    instrumentSearchDialog.onInstrumentSelected(callback);
+  }
+
+  public void setInstrument(String symbol, List<PricePoint> pricePoints) {
+    Objects.requireNonNull(symbol, "symbol");
+    statusLine.setStockSymbol(symbol);
+    instrumentSearchDialog.setCurrentSymbol(symbol);
+    canvas.setInstrumentPricePoints(pricePoints);
   }
 
   public void setPricePoints(List<PricePoint> pricePoints) {

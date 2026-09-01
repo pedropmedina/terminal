@@ -1,6 +1,5 @@
 package com.acteque.terminal;
 
-import java.util.List;
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.PricePoint;
@@ -8,6 +7,8 @@ import com.acteque.terminal.marketdata.MarketDataController;
 import com.acteque.terminal.marketdata.provider.tiingo.TiingoMarketDataClient;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
+import java.util.List;
+import java.util.concurrent.CancellationException;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -49,6 +50,18 @@ public class App extends Application {
         }
       })
     );
+    chartView.setOnInstrumentSelected(symbol ->
+      marketData.loadInstrument(symbol).whenComplete((updatedPoints, failure) -> {
+        if (failure != null && !(failure instanceof CancellationException)) {
+          reportInstrumentLoadFailure(symbol, failure);
+        } else if (failure == null) {
+          Platform.runLater(() -> {
+            chartView.setInstrument(symbol, updatedPoints);
+            stage.setTitle(symbol);
+          });
+        }
+      })
+    );
 
     Scene scene = new Scene(chartView, MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT);
     themeManager = new ThemeManager(scene, AppTheme.LIGHT);
@@ -72,5 +85,10 @@ public class App extends Application {
   private static void reportEarlierHistoryLoadFailure(Throwable failure) {
     Throwable cause = failure.getCause() == null ? failure : failure.getCause();
     System.err.println("Unable to load earlier price history: " + cause.getMessage());
+  }
+
+  private static void reportInstrumentLoadFailure(String symbol, Throwable failure) {
+    Throwable cause = failure.getCause() == null ? failure : failure.getCause();
+    System.err.println("Unable to load " + symbol + ": " + cause.getMessage());
   }
 }

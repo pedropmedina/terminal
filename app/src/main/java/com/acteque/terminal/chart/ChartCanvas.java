@@ -1,13 +1,13 @@
 package com.acteque.terminal.chart;
 
+import com.acteque.terminal.chart.XAxisTickCalculator.XAxisTick;
+import com.acteque.terminal.ui.ChartReloadHooks;
+import com.acteque.terminal.ui.RefreshableView;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
-import com.acteque.terminal.chart.XAxisTickCalculator.XAxisTick;
-import com.acteque.terminal.ui.ChartReloadHooks;
-import com.acteque.terminal.ui.RefreshableView;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.css.CssMetaData;
@@ -258,6 +258,22 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     drawChart();
   }
 
+  void setInstrumentPricePoints(List<PricePoint> updatedPoints) {
+    pricePoints = List.copyOf(updatedPoints);
+    visiblePricePointCount = pricePoints.size();
+    visiblePricePointOffset = 0;
+    yZoomScale = 1.0;
+    lockedPriceRange = null;
+    hoveredVisiblePointIndex = null;
+    crosshairX = null;
+    crosshairY = null;
+    dragMode = DragMode.NONE;
+    priceAxisHovered = false;
+    autoscaleButtonPressed = false;
+    statusLine.clearPricePoint();
+    drawChart();
+  }
+
   void drawChart() {
     double width = getWidth();
     double height = getHeight();
@@ -424,6 +440,12 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     });
 
     setOnMousePressed(event -> {
+      if (pricePoints.isEmpty()) {
+        dragMode = DragMode.NONE;
+        autoscaleButtonPressed = false;
+        return;
+      }
+
       ChartBounds bounds = chartBounds();
       autoscaleButtonPressed = isOverAutoscaleButton(event.getX(), event.getY(), bounds);
 
@@ -453,6 +475,10 @@ final class ChartCanvas extends Canvas implements RefreshableView {
     });
 
     setOnMouseDragged(event -> {
+      if (pricePoints.isEmpty()) {
+        return;
+      }
+
       if (dragMode == DragMode.ZOOM_DATE) {
         handleXAxisZoom(event.getX());
       } else if (dragMode == DragMode.ZOOM_PRICE) {
@@ -872,6 +898,10 @@ final class ChartCanvas extends Canvas implements RefreshableView {
   }
 
   private VisibleWindow visibleWindow() {
+    if (pricePoints.isEmpty()) {
+      return new VisibleWindow(List.of(), 0);
+    }
+
     int clampedPointCount = clampVisiblePointCount(visiblePricePointCount);
     int clampedOffset = clampVisiblePointOffset(visiblePricePointOffset);
     int lastVisibleIndexExclusive = Math.min(pricePoints.size(), pricePoints.size() - clampedOffset);
@@ -886,6 +916,10 @@ final class ChartCanvas extends Canvas implements RefreshableView {
   }
 
   private int clampVisiblePointOffset(int requestedOffset) {
+    if (pricePoints.isEmpty()) {
+      return 0;
+    }
+
     int minimumOffset = -(visiblePricePointCount - 1);
     int maximumOffset = pricePoints.size() - visiblePricePointCount;
     return Math.max(minimumOffset, Math.min(maximumOffset, requestedOffset));
@@ -913,6 +947,14 @@ final class ChartCanvas extends Canvas implements RefreshableView {
   }
 
   private void updateStatusLinePoint(double x, double y) {
+    if (pricePoints.isEmpty()) {
+      hoveredVisiblePointIndex = null;
+      crosshairX = null;
+      crosshairY = null;
+      statusLine.clearPricePoint();
+      return;
+    }
+
     ChartBounds bounds = chartBounds();
     Integer pointIndex = null;
     Double nextCrosshairX = null;

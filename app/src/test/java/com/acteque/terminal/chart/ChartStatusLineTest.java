@@ -3,14 +3,15 @@ package com.acteque.terminal.chart;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.time.LocalDate;
-import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Button.Size;
 import com.acteque.terminal.ui.core.Button.Variant;
-import org.junit.jupiter.api.Test;
+import java.time.LocalDate;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.scene.control.Label;
+import org.junit.jupiter.api.Test;
 
 class ChartStatusLineTest {
 
@@ -60,6 +61,19 @@ class ChartStatusLineTest {
       assertInstanceOf(Button.class, statusLine.getChildren().get(0)).fire();
 
       assertTrue(clicked.get());
+    });
+  }
+
+  @Test
+  void updatesTheDisplayedInstrument() {
+    FxTestSupport.runAndWait(() -> {
+      ChartStatusLine statusLine = new ChartStatusLine("ACME", ChartInterval.DAILY);
+
+      statusLine.setStockSymbol("WIDGET");
+
+      Button symbolButton = assertInstanceOf(Button.class, statusLine.getChildren().get(0));
+      assertEquals("WIDGET", symbolButton.getText());
+      assertEquals("WIDGET  1D   O104.00  H108.25  L103.50  C107.75  Vol2.50 M", statusLine.text(PRICE_POINT));
     });
   }
 }

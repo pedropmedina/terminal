@@ -1,9 +1,5 @@
 package com.acteque.terminal.search;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoSupportedTicker;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
 import com.acteque.terminal.ui.ChartReloadHooks;
@@ -13,6 +9,11 @@ import com.acteque.terminal.ui.core.Input;
 import com.acteque.terminal.ui.core.dialog.Dialog;
 import com.acteque.terminal.ui.core.dialog.DialogContent;
 import com.acteque.terminal.ui.core.dialog.DialogTitle;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.collections.FXCollections;
@@ -21,10 +22,11 @@ import javafx.collections.transformation.FilteredList;
 import javafx.css.PseudoClass;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 
-/** A transient symbol picker. Selection is intentionally not applied to market data yet. */
+/** A transient symbol picker. */
 public final class InstrumentSearchDialog extends Dialog implements RefreshableView {
 
   private static final double MAX_VIEWPORT_WIDTH_RATIO = 0.70;
@@ -36,6 +38,7 @@ public final class InstrumentSearchDialog extends Dialog implements RefreshableV
   private final FilteredList<TiingoSupportedTicker> filteredInstruments = new FilteredList<>(catalogInstruments);
   private final TiingoTickerCatalogApi tickerCatalog;
   private Runnable closeRequestHandler = () -> {};
+  private Consumer<String> instrumentSelectedHandler = ignored -> {};
   private boolean catalogLoadStarted;
 
   public InstrumentSearchDialog(
@@ -133,7 +136,15 @@ public final class InstrumentSearchDialog extends Dialog implements RefreshableV
     );
   }
 
-  private static final class InstrumentCell extends ListCell<TiingoSupportedTicker> {
+  public void setCurrentSymbol(String symbol) {
+    symbolField.setText(Objects.requireNonNull(symbol, "symbol"));
+  }
+
+  public void onInstrumentSelected(Consumer<String> callback) {
+    instrumentSelectedHandler = Objects.requireNonNull(callback, "callback");
+  }
+
+  private final class InstrumentCell extends ListCell<TiingoSupportedTicker> {
 
     private final Label ticker = new Label();
     private final Label description = new Label();
@@ -142,12 +153,22 @@ public final class InstrumentSearchDialog extends Dialog implements RefreshableV
 
     private InstrumentCell() {
       getStyleClass().add("instrument-cell");
-      ticker.getStyleClass().add("instrument-ticker");
-      description.getStyleClass().add("instrument-description");
-      exchange.getStyleClass().add("instrument-exchange");
       row.getStyleClass().add("instrument-row");
+      ticker.getStyleClass().add("instrument-ticker");
+      exchange.getStyleClass().add("instrument-exchange");
+      description.getStyleClass().add("instrument-description");
+
       description.setMaxWidth(Double.MAX_VALUE);
       HBox.setHgrow(description, Priority.ALWAYS);
+
+      setOnMouseClicked(event -> {
+        if (event.getButton() == MouseButton.PRIMARY && !isEmpty() && getItem() != null && !instruments.isGliding()) {
+          String selectedSymbol = getItem().ticker();
+          close();
+          instrumentSelectedHandler.accept(selectedSymbol);
+          event.consume();
+        }
+      });
     }
 
     @Override

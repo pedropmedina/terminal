@@ -73,6 +73,34 @@ class MarketDataControllerTest {
     }
   }
 
+  @Test
+  void loadsASelectedInstrumentAndReplacesThePreviousHistory() {
+    StubMarketDataClient client = new StubMarketDataClient(
+      List.of(bar("IBM", "2026-08-20", "102")),
+      List.of(bar("AAPL", "2026-08-19", "201"), bar("AAPL", "2026-08-20", "202"))
+    );
+    try (
+      MarketDataController controller = new MarketDataController(
+        client,
+        "IBM",
+        CLOCK,
+        Executors.newVirtualThreadPerTaskExecutor()
+      )
+    ) {
+      controller.loadInitial();
+      List<PricePoint> selected = controller.loadInstrument("aapl").toCompletableFuture().join();
+
+      assertEquals(List.of(date("2026-08-19"), date("2026-08-20")), dates(selected));
+      assertEquals(
+        List.of(
+          new DailyBarRequest("IBM", date("2026-02-21"), date("2026-08-21")),
+          new DailyBarRequest("AAPL", date("2026-02-21"), date("2026-08-21"))
+        ),
+        client.requests
+      );
+    }
+  }
+
   private static List<LocalDate> dates(List<PricePoint> points) {
     return points.stream().map(PricePoint::date).toList();
   }
@@ -82,9 +110,13 @@ class MarketDataControllerTest {
   }
 
   private static DailyBar bar(String date, String close) {
+    return bar("IBM", date, close);
+  }
+
+  private static DailyBar bar(String symbol, String date, String close) {
     BigDecimal price = new BigDecimal(close);
     Ohlcv prices = new Ohlcv(price, price, price, price, new BigDecimal("1000"));
-    return new DailyBar("IBM", LocalDate.parse(date), prices, Optional.empty(), Optional.empty(), Optional.empty());
+    return new DailyBar(symbol, LocalDate.parse(date), prices, Optional.empty(), Optional.empty(), Optional.empty());
   }
 
   private static final class StubMarketDataClient implements MarketDataClient {
