@@ -11,6 +11,8 @@ import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.core.Button;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
@@ -36,6 +38,24 @@ class DialogTest {
       assertTrue(content.getStyleClass().contains("core-dialog-content"));
       assertTrue(content.getChildren().contains(content.getCloseButton()));
       assertEquals("Close", content.getCloseButton().getAccessibleText());
+    });
+  }
+
+  @Test
+  void stretchesTheOverlayToEveryPortalEdge() {
+    FxTestSupport.runAndWait(() -> {
+      Dialog dialog = new Dialog(new DialogContent());
+      StackPane root = new StackPane(dialog);
+      new Scene(root, 800.0, 600.0);
+
+      dialog.show();
+      root.applyCss();
+      root.layout();
+
+      assertEquals(0.0, dialog.getOverlay().getBoundsInParent().getMinX());
+      assertEquals(0.0, dialog.getOverlay().getBoundsInParent().getMinY());
+      assertEquals(dialog.getPortal().getWidth(), dialog.getOverlay().getWidth());
+      assertEquals(dialog.getPortal().getHeight(), dialog.getOverlay().getHeight());
     });
   }
 
@@ -80,6 +100,28 @@ class DialogTest {
 
       assertFalse(content.getChildren().contains(content.getCloseButton()));
       assertFalse(footer.getChildren().contains(footer.getCloseButton()));
+    });
+  }
+
+  @Test
+  void blursTheConfiguredBackdropWhileOpenAndRestoresItsEffectWhenClosed() {
+    FxTestSupport.runAndWait(() -> {
+      StackPane backdrop = new StackPane();
+      ColorAdjust existingEffect = new ColorAdjust();
+      backdrop.setEffect(existingEffect);
+      Dialog dialog = new Dialog();
+      dialog.setBackdrop(backdrop);
+
+      dialog.show();
+
+      assertTrue(backdrop.getEffect() instanceof GaussianBlur);
+      GaussianBlur blur = (GaussianBlur) backdrop.getEffect();
+      assertEquals(4.0, blur.getRadius());
+      assertSame(existingEffect, blur.getInput());
+
+      dialog.close();
+
+      assertSame(existingEffect, backdrop.getEffect());
     });
   }
 

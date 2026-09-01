@@ -11,6 +11,8 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.effect.Effect;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
@@ -20,11 +22,14 @@ public class Dialog extends StackPane {
 
   private static final PseudoClass OPEN_PSEUDO_CLASS = PseudoClass.getPseudoClass("open");
   private static final PseudoClass CLOSED_PSEUDO_CLASS = PseudoClass.getPseudoClass("closed");
+  private static final double BACKDROP_BLUR_RADIUS = 4.0;
 
   private final DialogPortal portal = new DialogPortal();
   private final DialogOverlay overlay = new DialogOverlay();
+  private final GaussianBlur backdropBlur = new GaussianBlur(BACKDROP_BLUR_RADIUS);
   private final BooleanProperty open = new SimpleBooleanProperty(this, "open", false);
   private final BooleanProperty dismissible = new SimpleBooleanProperty(this, "dismissible", true);
+  private final ObjectProperty<Node> backdrop = new SimpleObjectProperty<>(this, "backdrop");
   private final ObjectProperty<DialogContent> content = new SimpleObjectProperty<>(this, "content") {
     @Override
     protected void invalidated() {
@@ -32,6 +37,7 @@ public class Dialog extends StackPane {
     }
   };
   private Node focusOwnerBeforeOpen;
+  private Effect previousBackdropEffect;
 
   public Dialog() {
     this(null);
@@ -41,6 +47,8 @@ public class Dialog extends StackPane {
     getStyleClass().add("core-dialog");
     setFocusTraversable(true);
 
+    overlay.widthProperty().bind(portal.widthProperty());
+    overlay.heightProperty().bind(portal.heightProperty());
     overlay.setOnMouseClicked(event -> {
       if (isDismissible()) {
         close();
@@ -52,6 +60,7 @@ public class Dialog extends StackPane {
 
     addEventFilter(KeyEvent.KEY_PRESSED, this::handleKeyPressed);
     open.addListener((ignored, wasOpen, isOpen) -> applyOpenState(isOpen));
+    backdrop.addListener((ignored, previous, next) -> replaceBackdrop(previous, next));
     applyOpenState(false);
     setContent(content);
   }
@@ -78,6 +87,19 @@ public class Dialog extends StackPane {
 
   public final BooleanProperty dismissibleProperty() {
     return dismissible;
+  }
+
+  public final Node getBackdrop() {
+    return backdrop.get();
+  }
+
+  /** Sets the content layer that is visually behind this dialog. */
+  public final void setBackdrop(Node value) {
+    backdrop.set(value);
+  }
+
+  public final ObjectProperty<Node> backdropProperty() {
+    return backdrop;
   }
 
   public final DialogContent getContent() {
@@ -131,6 +153,7 @@ public class Dialog extends StackPane {
       getContent().pseudoClassStateChanged(OPEN_PSEUDO_CLASS, isOpen);
       getContent().pseudoClassStateChanged(CLOSED_PSEUDO_CLASS, !isOpen);
     }
+    setBackdropBlurred(isOpen);
 
     setVisible(isOpen);
     setManaged(isOpen);
@@ -142,6 +165,39 @@ public class Dialog extends StackPane {
       focusOwnerBeforeOpen = null;
       Platform.runLater(previousFocusOwner::requestFocus);
     }
+  }
+
+  private void replaceBackdrop(Node previous, Node next) {
+    if (!isOpen()) {
+      return;
+    }
+    restoreBackdropEffect(previous);
+    applyBackdropEffect(next);
+  }
+
+  private void setBackdropBlurred(boolean blurred) {
+    if (blurred) {
+      applyBackdropEffect(getBackdrop());
+    } else {
+      restoreBackdropEffect(getBackdrop());
+    }
+  }
+
+  private void applyBackdropEffect(Node target) {
+    if (target == null) {
+      return;
+    }
+    previousBackdropEffect = target.getEffect();
+    backdropBlur.setInput(previousBackdropEffect);
+    target.setEffect(backdropBlur);
+  }
+
+  private void restoreBackdropEffect(Node target) {
+    if (target != null && target.getEffect() == backdropBlur) {
+      target.setEffect(previousBackdropEffect);
+    }
+    backdropBlur.setInput(null);
+    previousBackdropEffect = null;
   }
 
   private void handleKeyPressed(KeyEvent event) {

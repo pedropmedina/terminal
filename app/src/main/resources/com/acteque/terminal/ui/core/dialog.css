@@ -4,7 +4,7 @@
 }
 
 .core-dialog-overlay {
-  -fx-background-color: -app-dialog-overlay;
+  -fx-fill: -app-dialog-overlay;
   -fx-opacity: 1;
   transition-property: -fx-opacity;
   transition-duration: 100ms;

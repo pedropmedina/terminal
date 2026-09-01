@@ -3,7 +3,7 @@
 }
 
 .instrument-search-dialog > .core-dialog-portal > .core-dialog-overlay {
-  -fx-background-color: -app-overlay;
+  -fx-fill: -app-overlay;
 }
 
 .instrument-search-card {
