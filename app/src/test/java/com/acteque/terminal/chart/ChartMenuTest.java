@@ -7,7 +7,7 @@ import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Button.Size;
 import com.acteque.terminal.ui.core.Button.Variant;
-import com.acteque.terminal.ui.core.ButtonGroup;
+import com.acteque.terminal.ui.core.buttongroup.ButtonGroup;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

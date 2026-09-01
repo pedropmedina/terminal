@@ -1,4 +1,4 @@
-package com.acteque.terminal.ui.core;
+package com.acteque.terminal.ui.core.field;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -25,15 +25,15 @@ class FieldTest {
   private static final PseudoClass INVALID = PseudoClass.getPseudoClass("invalid");
 
   @Test
-  void exposesTheShadcnComponentsByTheirPostfixNames() {
+  void composesTheFieldComponentFamily() {
     FxTestSupport.runAndWait(() -> {
-      Field.Label label = new Field.Label("Symbol");
+      FieldLabel label = new FieldLabel("Symbol");
       TextField input = new TextField();
       label.setLabelFor(input);
-      Field.Content content = new Field.Content(label, new Field.Description("Ticker symbol"));
+      FieldContent content = new FieldContent(label, new FieldDescription("Ticker symbol"));
       Field field = new Field(content, input);
-      Field.Group group = new Field.Group(field, new Field.Separator("or"));
-      Field.Set set = new Field.Set(new Field.Legend("Instrument"), group);
+      FieldGroup group = new FieldGroup(field, new FieldSeparator("or"));
+      FieldSet set = new FieldSet(new FieldLegend("Instrument"), group);
 
       assertSame(input, label.getLabelFor());
       assertEquals(List.of(content, input), field.getChildren());
@@ -49,10 +49,10 @@ class FieldTest {
     FxTestSupport.runAndWait(() -> {
       Field field = new Field();
 
-      field.setOrientation(Field.Orientation.HORIZONTAL);
+      field.setOrientation(FieldOrientation.HORIZONTAL);
       field.setInvalid(true);
 
-      assertEquals(Field.Orientation.HORIZONTAL, field.getOrientation());
+      assertEquals(FieldOrientation.HORIZONTAL, field.getOrientation());
       assertTrue(field.getStyleClass().contains("field-orientation-horizontal"));
       assertFalse(field.getStyleClass().contains("field-orientation-vertical"));
       assertTrue(field.getPseudoClassStates().contains(INVALID));
@@ -63,7 +63,7 @@ class FieldTest {
   @Test
   void laysOutVerticalHorizontalAndResponsiveFields() {
     FxTestSupport.runAndWait(() -> {
-      Field.Title title = new Field.Title("Name");
+      FieldTitle title = new FieldTitle("Name");
       TextField input = new TextField();
       Field field = new Field(title, input);
       StackPane root = themedRoot(field, 600.0, 180.0);
@@ -72,11 +72,11 @@ class FieldTest {
       root.layout();
       assertTrue(input.getLayoutY() >= title.getLayoutY() + title.getHeight() + 7.5);
 
-      field.setOrientation(Field.Orientation.HORIZONTAL);
+      field.setOrientation(FieldOrientation.HORIZONTAL);
       root.layout();
       assertTrue(input.getLayoutX() >= title.getLayoutX() + title.getWidth() + 7.5);
 
-      field.setOrientation(Field.Orientation.RESPONSIVE);
+      field.setOrientation(FieldOrientation.RESPONSIVE);
       root.resize(400.0, 180.0);
       root.layout();
       assertTrue(input.getLayoutY() >= title.getLayoutY() + title.getHeight() + 7.5);
@@ -90,11 +90,11 @@ class FieldTest {
   @Test
   void mapsTypographySpacingAndDestructiveStateFromCss() {
     FxTestSupport.runAndWait(() -> {
-      Field.Legend legend = new Field.Legend("Profile");
-      Field.Description description = new Field.Description("Shown publicly");
-      Field.Error error = new Field.Error("Required");
+      FieldLegend legend = new FieldLegend("Profile");
+      FieldDescription description = new FieldDescription("Shown publicly");
+      FieldError error = new FieldError("Required");
       Field field = new Field(description, error);
-      Field.Set set = new Field.Set(legend, field);
+      FieldSet set = new FieldSet(legend, field);
       StackPane root = themedRoot(set, 320.0, 200.0);
 
       root.applyCss();
@@ -113,10 +113,10 @@ class FieldTest {
   @Test
   void updatesLegendVariantAndSeparatorContent() {
     FxTestSupport.runAndWait(() -> {
-      Field.Legend legend = new Field.Legend("Contact", Field.LegendVariant.LABEL);
+      FieldLegend legend = new FieldLegend("Contact", FieldLegendVariant.LABEL);
       javafx.scene.control.Label content = new javafx.scene.control.Label("or");
-      Field.Separator separator = new Field.Separator(content);
-      StackPane root = themedRoot(new Field.Set(legend, separator), 320.0, 100.0);
+      FieldSeparator separator = new FieldSeparator(content);
+      StackPane root = themedRoot(new FieldSet(legend, separator), 320.0, 100.0);
 
       root.applyCss();
 
@@ -133,7 +133,7 @@ class FieldTest {
   @Test
   void deduplicatesErrorsAndLetsExplicitContentTakePrecedence() {
     FxTestSupport.runAndWait(() -> {
-      Field.Error error = new Field.Error(List.of("Required", "Required", "Too short"));
+      FieldError error = new FieldError(List.of("Required", "Required", "Too short"));
 
       assertEquals(2, error.getChildren().size());
       assertEquals("\u2022 Required", ((javafx.scene.control.Label) error.getChildren().getFirst()).getText());

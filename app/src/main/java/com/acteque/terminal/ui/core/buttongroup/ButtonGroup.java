@@ -1,4 +1,4 @@
-package com.acteque.terminal.ui.core;
+package com.acteque.terminal.ui.core.buttongroup;
 
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -14,10 +14,7 @@ import javafx.css.Styleable;
 import javafx.css.StyleableProperty;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 
 /** A compact container that visually joins related controls. */
@@ -47,41 +44,6 @@ public final class ButtonGroup extends Pane {
     group -> group.spacing,
     0.0
   );
-
-  /** Text or supporting content displayed as an item in a button group. */
-  public static final class Text extends HBox {
-
-    private static final String ROOT_STYLE_CLASS = "core-button-group-text";
-
-    public Text() {
-      this(new Node[0]);
-    }
-
-    public Text(String text) {
-      this(new Label(text));
-    }
-
-    public Text(Node... children) {
-      setAlignment(Pos.CENTER);
-      getStyleClass().add(ROOT_STYLE_CLASS);
-      getChildren().addAll(children);
-    }
-  }
-
-  /** A separator sized and colored for use inside a button group. */
-  public static final class Separator extends javafx.scene.control.Separator {
-
-    private static final String ROOT_STYLE_CLASS = "core-button-group-separator";
-
-    public Separator() {
-      this(Orientation.VERTICAL);
-    }
-
-    public Separator(Orientation orientation) {
-      super(Objects.requireNonNull(orientation, "orientation"));
-      getStyleClass().add(ROOT_STYLE_CLASS);
-    }
-  }
 
   private final ObjectProperty<Orientation> orientation = new ObjectPropertyBase<>(Orientation.HORIZONTAL) {
     @Override

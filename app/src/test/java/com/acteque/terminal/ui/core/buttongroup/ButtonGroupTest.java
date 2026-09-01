@@ -1,4 +1,4 @@
-package com.acteque.terminal.ui.core;
+package com.acteque.terminal.ui.core.buttongroup;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,8 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
-import com.acteque.terminal.ui.core.ButtonGroup.Separator;
-import com.acteque.terminal.ui.core.ButtonGroup.Text;
+import com.acteque.terminal.ui.core.Button;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
@@ -162,8 +161,8 @@ class ButtonGroupTest {
   @Test
   void providesThemeAwareTextAndSeparatorItems() {
     FxTestSupport.runAndWait(() -> {
-      Text text = new Text("More");
-      Separator separator = new Separator();
+      ButtonGroupText text = new ButtonGroupText("More");
+      ButtonGroupSeparator separator = new ButtonGroupSeparator();
       ButtonGroup group = new ButtonGroup(text, separator);
       StackPane root = new StackPane(group);
       new ThemeManager(new Scene(root), AppTheme.LIGHT);

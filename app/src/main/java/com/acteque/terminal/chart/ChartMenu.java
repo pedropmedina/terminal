@@ -5,7 +5,7 @@ import com.acteque.terminal.ui.RefreshableView;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Button.Size;
 import com.acteque.terminal.ui.core.Button.Variant;
-import com.acteque.terminal.ui.core.ButtonGroup;
+import com.acteque.terminal.ui.core.buttongroup.ButtonGroup;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
