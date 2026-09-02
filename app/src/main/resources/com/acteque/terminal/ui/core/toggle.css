@@ -29,11 +29,6 @@
   -fx-text-fill: -app-foreground;
 }
 
-.core-toggle:focus-visible {
-  -fx-border-color: -app-ring;
-  -fx-effect: dropshadow(gaussian, -app-button-focus-ring, 6, 0, 0, 0);
-}
-
 .core-toggle:pressed {
   -fx-translate-y: 1px;
 }
@@ -50,6 +45,18 @@
 
 .core-toggle.toggle-variant-outline {
   -fx-border-color: -app-input;
+}
+
+.core-toggle:focused,
+.core-toggle.toggle-variant-outline:focused {
+  -fx-border-color:
+    -app-ring,
+    -app-input-focus-ring;
+  -fx-border-insets:
+    0,
+    -3px;
+  -fx-border-radius: 8px, 11px;
+  -fx-border-width: 1px, 3px;
 }
 
 .core-toggle.toggle-size-default {

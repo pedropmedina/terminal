@@ -1,13 +1,5 @@
 package com.acteque.terminal.chart;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Consumer;
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.RefreshableView;
 import com.acteque.terminal.ui.core.Input;
@@ -18,9 +10,20 @@ import com.acteque.terminal.ui.core.dialog.Dialog;
 import com.acteque.terminal.ui.core.dialog.DialogContent;
 import com.acteque.terminal.ui.core.togglegroup.ToggleGroup;
 import com.acteque.terminal.ui.core.togglegroup.ToggleGroupItem;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 
 /** A transient, searchable picker for chart intervals. */
@@ -30,6 +33,7 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
   private final Input intervalField = new Input();
   private final VBox categories = new VBox();
   private final Label noMatches = new Label("No matching intervals");
+  private final Map<ChartInterval, ToggleGroupItem> intervalItems = new EnumMap<>(ChartInterval.class);
   private ChartInterval currentInterval;
   private Runnable closeRequestHandler = () -> {};
   private Consumer<ChartInterval> intervalSelectedHandler = ignored -> {};
@@ -99,6 +103,7 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
         matchingByCategory.computeIfAbsent(interval.category(), ignored -> new ArrayList<>()).add(interval)
       );
 
+    intervalItems.clear();
     categories.getChildren().setAll(
       matchingByCategory
         .entrySet()
@@ -140,12 +145,20 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
   private ToggleGroupItem createIntervalItem(ChartInterval interval) {
     ToggleGroupItem item = new ToggleGroupItem(interval.displayName());
     item.getStyleClass().add("chart-interval-button");
+    item.setFocusTraversable(true);
     item.setAccessibleText(interval.description());
     item.setSelected(interval == currentInterval);
+    intervalItems.put(interval, item);
     Tooltip tooltip = new Tooltip(interval.description());
     tooltip.setSide(Side.RIGHT);
     tooltip.install(item);
 
+    item.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+      if (event.getCode() == KeyCode.ENTER) {
+        item.fire();
+        event.consume();
+      }
+    });
     item.setOnAction(ignored -> select(interval));
     return item;
   }
@@ -162,6 +175,7 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
 
   private void select(ChartInterval interval) {
     currentInterval = interval;
+    intervalItems.forEach((candidate, item) -> item.setSelected(candidate == interval));
     close();
     intervalSelectedHandler.accept(interval);
   }

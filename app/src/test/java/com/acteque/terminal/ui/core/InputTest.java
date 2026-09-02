@@ -2,6 +2,7 @@ package com.acteque.terminal.ui.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.test.FxTestSupport;
@@ -86,6 +87,25 @@ class InputTest {
       darkInput.setDisable(true);
       darkRoot.applyCss();
       assertEquals(Color.web("rgba(255, 255, 255, 0.12)"), background(darkInput));
+    });
+  }
+
+  @Test
+  void rendersShadcnRingWheneverTheInputIsFocused() {
+    FxTestSupport.runAndWait(() -> {
+      Input input = new Input();
+      StackPane root = themedRoot(input, AppTheme.LIGHT);
+      input.pseudoClassStateChanged(PseudoClass.getPseudoClass("focused"), true);
+
+      root.applyCss();
+
+      assertEquals(2, input.getBorder().getStrokes().size());
+      assertEquals(Color.web("#a1a1a1"), input.getBorder().getStrokes().get(0).getTopStroke());
+      assertEquals(Color.web("rgba(161, 161, 161, 0.5)"), input.getBorder().getStrokes().get(1).getTopStroke());
+      assertEquals(1.0, input.getBorder().getStrokes().get(0).getWidths().getTop());
+      assertEquals(3.0, input.getBorder().getStrokes().get(1).getWidths().getTop());
+      assertEquals(-3.0, input.getBorder().getStrokes().get(1).getInsets().getTop());
+      assertNull(input.getEffect());
     });
   }
 

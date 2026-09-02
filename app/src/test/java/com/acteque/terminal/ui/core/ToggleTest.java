@@ -2,6 +2,7 @@ package com.acteque.terminal.ui.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -130,6 +131,25 @@ class ToggleTest {
       toggle.setSelected(true);
       root.applyCss();
       assertEquals(Color.web("#f5f5f5"), background(toggle));
+    });
+  }
+
+  @Test
+  void rendersTheInputStyleRingWheneverTheToggleIsFocused() {
+    FxTestSupport.runAndWait(() -> {
+      Toggle toggle = new Toggle("B", Variant.OUTLINE, Size.DEFAULT);
+      StackPane root = themedRoot(toggle, AppTheme.LIGHT);
+      toggle.pseudoClassStateChanged(PseudoClass.getPseudoClass("focused"), true);
+
+      root.applyCss();
+
+      assertEquals(2, toggle.getBorder().getStrokes().size());
+      assertEquals(Color.web("#a1a1a1"), toggle.getBorder().getStrokes().get(0).getTopStroke());
+      assertEquals(Color.web("rgba(161, 161, 161, 0.5)"), toggle.getBorder().getStrokes().get(1).getTopStroke());
+      assertEquals(1.0, toggle.getBorder().getStrokes().get(0).getWidths().getTop());
+      assertEquals(3.0, toggle.getBorder().getStrokes().get(1).getWidths().getTop());
+      assertEquals(-3.0, toggle.getBorder().getStrokes().get(1).getInsets().getTop());
+      assertNull(toggle.getEffect());
     });
   }
 

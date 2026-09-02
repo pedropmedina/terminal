@@ -25,9 +25,15 @@
   transition-duration: 100ms;
 }
 
-.core-input:focus-visible {
-  -fx-border-color: -app-ring;
-  -fx-effect: dropshadow(gaussian, -app-input-focus-ring, 6, 0, 0, 0);
+.core-input:focused {
+  -fx-border-color:
+    -app-ring,
+    -app-input-focus-ring;
+  -fx-border-insets:
+    0,
+    -3px;
+  -fx-border-radius: 8px, 11px;
+  -fx-border-width: 1px, 3px;
 }
 
 .core-input:disabled {

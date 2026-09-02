@@ -2,10 +2,9 @@ package com.acteque.terminal.chart;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
+
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
@@ -14,12 +13,19 @@ import com.acteque.terminal.ui.core.Toggle;
 import com.acteque.terminal.ui.core.Tooltip;
 import com.acteque.terminal.ui.core.togglegroup.ToggleGroup;
 import com.acteque.terminal.ui.core.togglegroup.ToggleGroupItem;
-import org.junit.jupiter.api.Test;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+import org.junit.jupiter.api.Test;
 
 class ChartIntervalSelectionDialogTest {
 
@@ -144,7 +150,7 @@ class ChartIntervalSelectionDialogTest {
   }
 
   @Test
-  void closesAndReportsTheSelectedInterval() {
+  void pressingEnterClosesAndReportsTheSelectedInterval() {
     FxTestSupport.runAndWait(() -> {
       SimpleBooleanProperty open = new SimpleBooleanProperty(true);
       ChartIntervalSelectionDialog dialog = new ChartIntervalSelectionDialog(ChartInterval.DAILY, open);
@@ -153,12 +159,96 @@ class ChartIntervalSelectionDialogTest {
       dialog.onIntervalSelected(selected::set);
       dialog.onRequestClose(() -> open.set(false));
 
-      button(dialog, "4H").fire();
+      ToggleGroupItem previous = button(dialog, "1D");
+      ToggleGroupItem latest = button(dialog, "4H");
+      pressEnter(latest);
 
       assertEquals(ChartInterval.FOUR_HOURS, selected.get());
+      assertFalse(previous.isSelected());
+      assertTrue(latest.isSelected());
+      assertEquals(
+        1,
+        dialog
+          .lookupAll(".chart-interval-button")
+          .stream()
+          .map(ToggleGroupItem.class::cast)
+          .filter(ToggleGroupItem::isSelected)
+          .count()
+      );
       assertFalse(dialog.isOpen());
       assertFalse(open.get());
     });
+  }
+
+  @Test
+  void tabsThroughVisibleIntervalsInVisualOrderAndWrapsWithinTheDialog() {
+    AtomicReference<ChartIntervalSelectionDialog> dialogReference = new AtomicReference<>();
+    AtomicReference<Input> inputReference = new AtomicReference<>();
+    AtomicReference<Stage> stageReference = new AtomicReference<>();
+    FxTestSupport.runAndWait(() -> {
+      ChartIntervalSelectionDialog dialog = createDialog();
+      Stage stage = new Stage();
+      stage.setScene(dialog.getScene());
+      Platform.setImplicitExit(false);
+      dialog.show();
+      stage.show();
+      stage.requestFocus();
+      dialogReference.set(dialog);
+      inputReference.set((Input) dialog.lookup(".chart-interval-search-field"));
+      stageReference.set(stage);
+    });
+
+    try {
+      FxTestSupport.runAndWait(() -> inputReference.get().requestFocus());
+      FxTestSupport.runAndWait(() -> {
+        Input input = inputReference.get();
+        pressTab(input, false);
+        assertSame(button(dialogReference.get(), "1T"), input.getScene().getFocusOwner());
+      });
+      FxTestSupport.runAndWait(() -> {
+        ToggleGroupItem first = button(dialogReference.get(), "1T");
+        pressTab(first, false);
+        assertSame(button(dialogReference.get(), "10T"), first.getScene().getFocusOwner());
+      });
+      FxTestSupport.runAndWait(() -> {
+        ToggleGroupItem second = button(dialogReference.get(), "10T");
+        pressTab(second, true);
+        assertSame(button(dialogReference.get(), "1T"), second.getScene().getFocusOwner());
+      });
+      FxTestSupport.runAndWait(() -> {
+        Input input = inputReference.get();
+        input.setText("hour");
+        input.requestFocus();
+        pressTab(input, false);
+        assertSame(button(dialogReference.get(), "1H"), input.getScene().getFocusOwner());
+
+        input.requestFocus();
+        pressTab(input, true);
+        assertSame(button(dialogReference.get(), "4H"), input.getScene().getFocusOwner());
+
+        ToggleGroupItem last = button(dialogReference.get(), "4H");
+        pressTab(last, false);
+        assertSame(input, last.getScene().getFocusOwner());
+      });
+      FxTestSupport.runAndWait(() -> {
+        Input input = inputReference.get();
+        input.setText("1d");
+        input.requestFocus();
+        pressTab(input, false);
+        ToggleGroupItem selected = button(dialogReference.get(), "1D");
+
+        assertSame(selected, input.getScene().getFocusOwner());
+      });
+      FxTestSupport.runAndWait(() -> {
+        ToggleGroupItem selected = button(dialogReference.get(), "1D");
+        selected.getScene().getRoot().applyCss();
+
+        assertEquals(2, selected.getBorder().getStrokes().size());
+      });
+    } finally {
+      FxTestSupport.runAndWait(() -> stageReference.get().close());
+      FxTestSupport.runAndWait(() -> {});
+    }
   }
 
   private static ChartIntervalSelectionDialog createDialog() {
@@ -180,5 +270,13 @@ class ChartIntervalSelectionDialogTest {
       .filter(button -> text.equals(button.getText()))
       .findFirst()
       .orElseThrow();
+  }
+
+  private static void pressTab(Node target, boolean shiftDown) {
+    target.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.TAB, shiftDown, false, false, false));
+  }
+
+  private static void pressEnter(Node target) {
+    target.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER, false, false, false, false));
   }
 }
