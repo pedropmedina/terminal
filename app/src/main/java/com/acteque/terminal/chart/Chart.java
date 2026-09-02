@@ -1,10 +1,10 @@
 package com.acteque.terminal.chart;
 
+import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
+import com.acteque.terminal.search.InstrumentSearchDialog;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
-import com.acteque.terminal.search.InstrumentSearchDialog;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.layout.StackPane;
@@ -13,7 +13,9 @@ import javafx.scene.layout.StackPane;
 public final class Chart extends StackPane {
 
   private final BooleanProperty instrumentSearchOpen = new SimpleBooleanProperty(false);
+  private final BooleanProperty intervalSelectionOpen = new SimpleBooleanProperty(false);
   private final InstrumentSearchDialog instrumentSearchDialog;
+  private final ChartIntervalSelectionDialog intervalSelectionDialog;
   private final ChartCanvas canvas;
   private final ChartStatusLine statusLine;
 
@@ -31,14 +33,19 @@ public final class Chart extends StackPane {
     instrumentSearchDialog = new InstrumentSearchDialog(stockSymbol, instrumentSearchOpen, tickerCatalog);
     instrumentSearchDialog.onRequestClose(() -> instrumentSearchOpen.set(false));
 
+    intervalSelectionDialog = new ChartIntervalSelectionDialog(interval, intervalSelectionOpen);
+    intervalSelectionDialog.onRequestClose(() -> intervalSelectionOpen.set(false));
+
     statusLine = new ChartStatusLine(stockSymbol, interval);
     statusLine.onInstrumentClick(() -> instrumentSearchOpen.set(true));
+    statusLine.onIntervalClick(() -> intervalSelectionOpen.set(true));
+    intervalSelectionDialog.onIntervalSelected(statusLine::setInterval);
 
     ChartMenu menu = new ChartMenu();
 
     canvas = new ChartCanvas(pricePoints, interval, statusLine);
 
-    getChildren().setAll(canvas, menu, statusLine, instrumentSearchDialog);
+    getChildren().setAll(canvas, menu, statusLine, instrumentSearchDialog, intervalSelectionDialog);
 
     canvas.widthProperty().bind(widthProperty());
     canvas.heightProperty().bind(heightProperty());
@@ -50,6 +57,14 @@ public final class Chart extends StackPane {
 
   public void setOnInstrumentSelected(Consumer<String> callback) {
     instrumentSearchDialog.onInstrumentSelected(callback);
+  }
+
+  public void setOnIntervalSelected(Consumer<ChartInterval> callback) {
+    Objects.requireNonNull(callback, "callback");
+    intervalSelectionDialog.onIntervalSelected(interval -> {
+      statusLine.setInterval(interval);
+      callback.accept(interval);
+    });
   }
 
   public void setInstrument(String symbol, List<PricePoint> pricePoints) {
@@ -71,5 +86,6 @@ public final class Chart extends StackPane {
   protected void layoutChildren() {
     super.layoutChildren();
     instrumentSearchDialog.resizeRelocate(0.0, 0.0, getWidth(), getHeight());
+    intervalSelectionDialog.resizeRelocate(0.0, 0.0, getWidth(), getHeight());
   }
 }

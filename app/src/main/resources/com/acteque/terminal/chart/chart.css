@@ -26,6 +26,10 @@
   -fx-font-size: 14px;
 }
 
+.chart-interval-button {
+  -fx-font-size: 14px;
+}
+
 .chart-canvas {
   -chart-background: -app-background;
   -chart-axis: -app-foreground;

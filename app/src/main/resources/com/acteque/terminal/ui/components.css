@@ -9,6 +9,7 @@
 @import "core/separator.css";
 @import "core/toggle.css";
 @import "core/toggle-group.css";
+@import "core/tooltip.css";
 
 .surface {
   -fx-background-color: -app-card;

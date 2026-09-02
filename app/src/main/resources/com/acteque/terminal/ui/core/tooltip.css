@@ -1,0 +1,74 @@
+.tooltip.core-tooltip {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 0;
+  -fx-border-width: 0;
+  -fx-content-display: graphic-only;
+  -fx-effect: null;
+  -fx-graphic-text-gap: 0;
+  -fx-padding: 0;
+}
+
+.core-tooltip-popup {
+  -fx-alignment: center-left;
+  -fx-background-color: -app-foreground;
+  -fx-background-radius: 6px;
+  -fx-font-size: 12px;
+  -fx-max-width: 320px;
+  -fx-padding: 6px 12px;
+  -fx-spacing: 6px;
+  -fx-opacity: 1;
+  -fx-scale-x: 1;
+  -fx-scale-y: 1;
+  -fx-translate-x: 0;
+  -fx-translate-y: 0;
+  transition-property:
+    -fx-opacity,
+    -fx-scale-x,
+    -fx-scale-y,
+    -fx-translate-x,
+    -fx-translate-y;
+  transition-duration: 100ms;
+}
+
+.core-tooltip-popup .label {
+  -fx-text-fill: -app-background;
+}
+
+.core-tooltip-popup .text {
+  -fx-fill: -app-background;
+}
+
+.core-tooltip-popup:closed {
+  -fx-opacity: 0;
+  -fx-scale-x: 0.95;
+  -fx-scale-y: 0.95;
+}
+
+.core-tooltip-content.tooltip-side-bottom .core-tooltip-popup:closed {
+  -fx-translate-y: -8px;
+}
+
+.core-tooltip-content.tooltip-side-top .core-tooltip-popup:closed {
+  -fx-translate-y: 8px;
+}
+
+.core-tooltip-content.tooltip-side-left .core-tooltip-popup:closed {
+  -fx-translate-x: 8px;
+}
+
+.core-tooltip-content.tooltip-side-right .core-tooltip-popup:closed {
+  -fx-translate-x: -8px;
+}
+
+.core-tooltip-arrow {
+  -fx-background-color: -app-foreground;
+  -fx-background-radius: 2px;
+  -fx-pref-height: 10px;
+  -fx-pref-width: 10px;
+  -fx-rotate: 45deg;
+}
+
+.core-tooltip-arrow:closed {
+  -fx-opacity: 0;
+}

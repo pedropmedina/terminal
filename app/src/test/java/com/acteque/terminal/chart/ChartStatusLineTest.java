@@ -43,7 +43,9 @@ class ChartStatusLineTest {
       assertEquals("ACME", symbolButton.getText());
       assertEquals(Variant.GHOST, symbolButton.getVariant());
       assertEquals(Size.DEFAULT, symbolButton.getSize());
-      assertEquals("1D", assertInstanceOf(Label.class, statusLine.getChildren().get(1)).getText());
+      Button intervalButton = assertInstanceOf(Button.class, statusLine.getChildren().get(1));
+      assertEquals("1D", intervalButton.getText());
+      assertEquals(Variant.GHOST, intervalButton.getVariant());
       assertEquals(
         "O104.00  H108.25  L103.50  C107.75  Vol2.50 M",
         assertInstanceOf(Label.class, statusLine.getChildren().get(2)).getText()
@@ -61,6 +63,33 @@ class ChartStatusLineTest {
       assertInstanceOf(Button.class, statusLine.getChildren().get(0)).fire();
 
       assertTrue(clicked.get());
+    });
+  }
+
+  @Test
+  void handlesIntervalClicks() {
+    FxTestSupport.runAndWait(() -> {
+      ChartStatusLine statusLine = new ChartStatusLine("ACME", ChartInterval.DAILY);
+      AtomicBoolean clicked = new AtomicBoolean();
+      statusLine.onIntervalClick(() -> clicked.set(true));
+
+      assertInstanceOf(Button.class, statusLine.getChildren().get(1)).fire();
+
+      assertTrue(clicked.get());
+    });
+  }
+
+  @Test
+  void updatesTheDisplayedInterval() {
+    FxTestSupport.runAndWait(() -> {
+      ChartStatusLine statusLine = new ChartStatusLine("ACME", ChartInterval.DAILY);
+
+      statusLine.setInterval(ChartInterval.FIVE_MINUTES);
+
+      Button intervalButton = assertInstanceOf(Button.class, statusLine.getChildren().get(1));
+      assertEquals("5M", intervalButton.getText());
+      assertEquals("Select interval, currently 5M", intervalButton.getAccessibleText());
+      assertEquals("ACME  5M   O104.00  H108.25  L103.50  C107.75  Vol2.50 M", statusLine.text(PRICE_POINT));
     });
   }
 

@@ -19,11 +19,13 @@ final class ChartStatusLine extends HBox implements RefreshableView {
   private static final double LEFT_MARGIN = 12.0;
   private static final double BOTTOM_MARGIN = 38.0;
   private String stockSymbol;
-  private final ChartInterval interval;
+  private ChartInterval interval;
 
   private PricePoint pricePoint;
   private Runnable instrumentClickHandler = () -> {};
+  private Runnable intervalClickHandler = () -> {};
   private Button symbolSection;
+  private Button intervalSection;
   private Label ohlcv;
 
   ChartStatusLine(String stockSymbol, ChartInterval interval) {
@@ -49,9 +51,19 @@ final class ChartStatusLine extends HBox implements RefreshableView {
     instrumentClickHandler = Objects.requireNonNull(callback, "callback");
   }
 
+  void onIntervalClick(Runnable callback) {
+    intervalClickHandler = Objects.requireNonNull(callback, "callback");
+  }
+
   void setStockSymbol(String stockSymbol) {
     this.stockSymbol = Objects.requireNonNull(stockSymbol, "stockSymbol");
     symbolSection.setText(stockSymbol);
+  }
+
+  void setInterval(ChartInterval interval) {
+    this.interval = Objects.requireNonNull(interval, "interval");
+    intervalSection.setText(interval.displayName());
+    intervalSection.setAccessibleText("Select interval, currently " + interval.displayName());
   }
 
   String text(PricePoint point) {
@@ -66,10 +78,10 @@ final class ChartStatusLine extends HBox implements RefreshableView {
     symbolSection.setAccessibleText("Select symbol or instrument");
     symbolSection.setOnAction(ignored -> instrumentClickHandler.run());
 
-    Label intervalSection = new Label(interval.displayName());
-    intervalSection.getStyleClass().add("chart-status-label");
-    intervalSection.setAccessibleText("Interval " + interval.displayName());
-    intervalSection.setMouseTransparent(true);
+    intervalSection = new Button(interval.displayName(), Variant.GHOST, Size.DEFAULT);
+    intervalSection.getStyleClass().add("chart-interval-button");
+    intervalSection.setAccessibleText("Select interval, currently " + interval.displayName());
+    intervalSection.setOnAction(ignored -> intervalClickHandler.run());
 
     ohlcv = new Label(pricePoint == null ? "" : ohlcvText(pricePoint));
     ohlcv.getStyleClass().add("chart-status-label");

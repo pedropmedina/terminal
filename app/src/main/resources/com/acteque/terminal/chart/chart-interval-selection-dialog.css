@@ -1,0 +1,63 @@
+.chart-interval-selection-dialog {
+  -fx-alignment: center;
+}
+
+.chart-interval-selection-dialog > .core-dialog-portal > .core-dialog-overlay {
+  -fx-fill: -app-overlay;
+}
+
+.chart-interval-selection-card {
+  -fx-pref-width: 400px;
+  -fx-max-width: 400px;
+  -fx-padding: 25px;
+  -fx-spacing: 8px;
+  -fx-background-color: -app-card;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-border;
+  -fx-border-radius: 8px;
+}
+
+.chart-interval-categories {
+  -fx-spacing: 16px;
+  -fx-padding: 8px 0 0 0;
+}
+
+.chart-interval-category {
+  -fx-spacing: 8px;
+}
+
+.chart-interval-category-title {
+  -fx-padding: 0 4px;
+  -fx-font-size: 12px;
+  -fx-font-weight: 600;
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.chart-interval-toggle-rows {
+  -fx-spacing: 4px;
+}
+
+.chart-interval-toggle-group {
+  -fx-spacing: 4px;
+}
+
+.chart-interval-toggle-group > .chart-interval-button {
+  -fx-font-size: 13px;
+  -fx-font-weight: normal;
+  -fx-min-width: 62px;
+  -fx-pref-width: 62px;
+  -fx-max-width: 62px;
+  -fx-padding: 0 6px;
+}
+
+.chart-interval-toggle-group > .chart-interval-button:selected {
+  -fx-background-color: -app-primary;
+  -fx-border-color: -app-primary;
+  -fx-text-fill: -app-primary-foreground;
+}
+
+.chart-interval-no-matches {
+  -fx-alignment: center;
+  -fx-padding: 24px 8px;
+  -fx-text-fill: -app-muted-foreground;
+}
