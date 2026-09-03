@@ -2,6 +2,10 @@ package com.acteque.terminal.ui.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+<<<<<<< HEAD
+=======
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+>>>>>>> 754c827 (h)
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,6 +14,11 @@ import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.core.Select.Size;
+<<<<<<< HEAD
+=======
+import com.acteque.terminal.ui.icons.LucideIcon;
+import com.acteque.terminal.ui.icons.LucideIcons;
+>>>>>>> 754c827 (h)
 import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -191,9 +200,20 @@ class SelectTest {
       root.applyCss();
       assertEquals(0.5, select.getOpacity());
 
+<<<<<<< HEAD
       Node arrow = select.lookup(".open-button .arrow");
       assertEquals(16.0, arrow.prefWidth(-1.0));
       assertEquals(16.0, arrow.prefHeight(-1.0));
+=======
+      LucideIcon downIndicator = assertInstanceOf(LucideIcon.class, select.lookup(".select-indicator-down"));
+      LucideIcon upIndicator = assertInstanceOf(LucideIcon.class, select.lookup(".select-indicator-up"));
+      assertSame(LucideIcons.CHEVRON_DOWN, downIndicator.getGlyph());
+      assertSame(LucideIcons.CHEVRON_UP, upIndicator.getGlyph());
+      assertEquals(16.0, downIndicator.prefWidth(-1.0));
+      assertEquals(16.0, downIndicator.prefHeight(-1.0));
+      assertTrue(downIndicator.isVisible());
+      assertFalse(upIndicator.isVisible());
+>>>>>>> 754c827 (h)
     });
   }
 
@@ -213,6 +233,12 @@ class SelectTest {
         root.layout();
         select.show();
 
+<<<<<<< HEAD
+=======
+        assertFalse(select.lookup(".select-indicator-down").isVisible());
+        assertTrue(select.lookup(".select-indicator-up").isVisible());
+
+>>>>>>> 754c827 (h)
         Window popup = Window.getWindows()
           .stream()
           .filter(window -> window instanceof PopupWindow && window.isShowing())

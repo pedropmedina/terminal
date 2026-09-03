@@ -79,18 +79,29 @@
   -fx-padding: 0 8px 0 0;
 }
 
+<<<<<<< HEAD
 .core-select > .open-button > .arrow {
   -fx-background-color: -app-muted-foreground;
   -fx-background-insets: 0;
+=======
+.core-select > .open-button > .select-indicator {
+>>>>>>> 754c827 (h)
   -fx-min-width: 16px;
   -fx-pref-width: 16px;
   -fx-max-width: 16px;
   -fx-min-height: 16px;
   -fx-pref-height: 16px;
   -fx-max-height: 16px;
+<<<<<<< HEAD
   -fx-padding: 0;
   -fx-scale-shape: true;
   -fx-shape: "M2,5 L8,11 L14,5 L12.5,3.5 L8,8 L3.5,3.5 Z";
+=======
+}
+
+.core-select > .open-button > .select-indicator > .lucide-icon > .lucide-icon-path {
+  -fx-stroke: -app-muted-foreground;
+>>>>>>> 754c827 (h)
 }
 
 :root.theme-dark .core-select {

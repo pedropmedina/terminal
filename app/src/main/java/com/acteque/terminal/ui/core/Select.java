@@ -1,5 +1,10 @@
 package com.acteque.terminal.ui.core;
 
+<<<<<<< HEAD
+=======
+import com.acteque.terminal.ui.icons.LucideIcon;
+import com.acteque.terminal.ui.icons.LucideIcons;
+>>>>>>> 754c827 (h)
 import java.util.Objects;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.BooleanPropertyBase;
@@ -16,6 +21,11 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.skin.ChoiceBoxSkin;
+<<<<<<< HEAD
+=======
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
+>>>>>>> 754c827 (h)
 
 /** A single-choice dropdown styled to match the shadcn/ui Select primitive. */
 public final class Select<T> extends javafx.scene.control.ChoiceBox<T> {
@@ -169,8 +179,18 @@ public final class Select<T> extends javafx.scene.control.ChoiceBox<T> {
 
     private final Select<T> select;
     private final Label placeholder = new Label();
+<<<<<<< HEAD
     private final ChangeListener<Object> placeholderVisibilityListener = (ignored, previous, current) ->
       refreshPlaceholderVisibility();
+=======
+    private final LucideIcon downIndicator = new LucideIcon(LucideIcons.CHEVRON_DOWN);
+    private final LucideIcon upIndicator = new LucideIcon(LucideIcons.CHEVRON_UP);
+    private final StackPane indicator = new StackPane(downIndicator, upIndicator);
+    private final ChangeListener<Object> placeholderVisibilityListener = (ignored, previous, current) ->
+      refreshPlaceholderVisibility();
+    private final ChangeListener<Boolean> indicatorVisibilityListener = (ignored, previous, current) ->
+      refreshIndicatorVisibility();
+>>>>>>> 754c827 (h)
 
     private SelectSkin(Select<T> select) {
       super(select);
@@ -178,9 +198,18 @@ public final class Select<T> extends javafx.scene.control.ChoiceBox<T> {
       placeholder.getStyleClass().setAll("select-placeholder");
       placeholder.setMouseTransparent(true);
       placeholder.textProperty().bind(select.promptTextProperty());
+<<<<<<< HEAD
       select.valueProperty().addListener(placeholderVisibilityListener);
       select.promptTextProperty().addListener(placeholderVisibilityListener);
       refreshPlaceholderVisibility();
+=======
+      configureIndicator();
+      select.valueProperty().addListener(placeholderVisibilityListener);
+      select.promptTextProperty().addListener(placeholderVisibilityListener);
+      select.showingProperty().addListener(indicatorVisibilityListener);
+      refreshPlaceholderVisibility();
+      refreshIndicatorVisibility();
+>>>>>>> 754c827 (h)
       getChildren().add(placeholder);
     }
 
@@ -205,9 +234,34 @@ public final class Select<T> extends javafx.scene.control.ChoiceBox<T> {
       placeholder.textProperty().unbind();
       select.valueProperty().removeListener(placeholderVisibilityListener);
       select.promptTextProperty().removeListener(placeholderVisibilityListener);
+<<<<<<< HEAD
       super.dispose();
     }
 
+=======
+      select.showingProperty().removeListener(indicatorVisibilityListener);
+      super.dispose();
+    }
+
+    private void configureIndicator() {
+      indicator.getStyleClass().setAll("select-indicator");
+      indicator.setMouseTransparent(true);
+      downIndicator.getStyleClass().add("select-indicator-down");
+      upIndicator.getStyleClass().add("select-indicator-up");
+
+      getChildren()
+        .stream()
+        .filter(SelectSkin::isOpenButton)
+        .filter(Pane.class::isInstance)
+        .map(Pane.class::cast)
+        .findFirst()
+        .ifPresent(openButton -> {
+          openButton.getChildren().removeIf(node -> node.getStyleClass().contains("arrow"));
+          openButton.getChildren().add(indicator);
+        });
+    }
+
+>>>>>>> 754c827 (h)
     private void refreshPlaceholderVisibility() {
       String prompt = select.getPromptText();
       boolean visible = select.getValue() == null && prompt != null && !prompt.isEmpty();
@@ -216,6 +270,15 @@ public final class Select<T> extends javafx.scene.control.ChoiceBox<T> {
       select.requestLayout();
     }
 
+<<<<<<< HEAD
+=======
+    private void refreshIndicatorVisibility() {
+      boolean showing = select.isShowing();
+      downIndicator.setVisible(!showing);
+      upIndicator.setVisible(showing);
+    }
+
+>>>>>>> 754c827 (h)
     private static boolean isOpenButton(Node node) {
       return node.getStyleClass().contains("open-button");
     }
