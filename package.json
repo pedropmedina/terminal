@@ -8,6 +8,8 @@
     "lib": "lib"
   },
   "scripts": {
+    "generate-icons": "node tools/generate-lucide-icons.mjs",
+    "generate-icons:check": "node tools/generate-lucide-icons.mjs --check",
     "format": "prettier --write . --ignore-unknown",
     "lint": "eslint"
   },
@@ -15,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@lucide/icons": "1.40.0",
     "eslint": "^10.9.1",
     "prettier": "^3.7.4",
     "prettier-plugin-java": "^2.8.0"

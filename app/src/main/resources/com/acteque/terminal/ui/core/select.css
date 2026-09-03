@@ -1,0 +1,200 @@
+.core-select {
+  -fx-alignment: center-left;
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-input;
+  -fx-border-insets: 0;
+  -fx-border-radius: 8px;
+  -fx-border-width: 1px;
+  -fx-cursor: hand;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+  -fx-font-size: 14px;
+  -fx-min-width: 0;
+  -fx-padding: 0;
+  -fx-text-fill: -app-foreground;
+  transition-property:
+    -fx-background-color,
+    -fx-border-color,
+    -fx-text-fill,
+    -fx-opacity;
+  transition-duration: 100ms;
+}
+
+.core-select.select-size-default {
+  -fx-min-height: 32px;
+  -fx-pref-height: 32px;
+  -fx-max-height: 32px;
+  -fx-background-radius: 8px;
+  -fx-border-radius: 8px;
+}
+
+.core-select.select-size-sm {
+  -fx-min-height: 28px;
+  -fx-pref-height: 28px;
+  -fx-max-height: 28px;
+  -fx-background-radius: 6px;
+  -fx-border-radius: 6px;
+}
+
+.core-select:focus-visible {
+  -fx-border-color:
+    -app-ring,
+    -app-input-focus-ring;
+  -fx-border-insets:
+    0,
+    -3px;
+  -fx-border-radius: 8px, 11px;
+  -fx-border-width: 1px, 3px;
+}
+
+.core-select.select-size-sm:focus-visible {
+  -fx-border-radius: 6px, 9px;
+}
+
+.core-select:invalid {
+  -fx-border-color: -app-input-invalid-border;
+  -fx-effect: dropshadow(gaussian, -app-input-invalid-ring, 6, 0, 0, 0);
+}
+
+.core-select:disabled {
+  -fx-cursor: default;
+  -fx-opacity: 0.5;
+}
+
+.core-select > .label,
+.core-select > .select-placeholder {
+  -fx-alignment: center-left;
+  -fx-padding: 0 8px 0 10px;
+  -fx-text-fill: -app-foreground;
+  -fx-text-overrun: ellipsis;
+}
+
+.core-select > .select-placeholder {
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-select > .open-button {
+  -fx-padding: 0 8px 0 0;
+}
+
+.core-select > .open-button > .arrow {
+  -fx-background-color: -app-muted-foreground;
+  -fx-background-insets: 0;
+  -fx-min-width: 16px;
+  -fx-pref-width: 16px;
+  -fx-max-width: 16px;
+  -fx-min-height: 16px;
+  -fx-pref-height: 16px;
+  -fx-max-height: 16px;
+  -fx-padding: 0;
+  -fx-scale-shape: true;
+  -fx-shape: "M2,5 L8,11 L14,5 L12.5,3.5 L8,8 L3.5,3.5 Z";
+}
+
+:root.theme-dark .core-select {
+  -fx-background-color: -app-input-background;
+}
+
+:root.theme-dark .core-select:hover {
+  -fx-background-color: -app-button-outline-hover;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu {
+  -fx-background-color:
+    -app-dialog-ring,
+    -app-popover;
+  -fx-background-insets: 0, 1px;
+  -fx-background-radius: 8px, 7px;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 12, 0, 0, 4);
+  -fx-padding: 4px;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu .menu-item {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 6px;
+  -fx-padding: 4px 6px;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu .menu-item:focused {
+  -fx-background-color: -app-accent;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu .menu-item > .label {
+  -fx-padding: 0;
+  -fx-text-fill: -app-popover-foreground;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu .menu-item:focused > .label {
+  -fx-text-fill: -app-accent-foreground;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu .menu-item > .left-container {
+  -fx-min-width: 16px;
+  -fx-pref-width: 16px;
+  -fx-padding: 0 6px 0 0;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu .radio-menu-item > .left-container > .radio {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-min-width: 12px;
+  -fx-pref-width: 12px;
+  -fx-max-width: 12px;
+  -fx-min-height: 12px;
+  -fx-pref-height: 12px;
+  -fx-max-height: 12px;
+  -fx-padding: 0;
+  -fx-scale-shape: true;
+  -fx-shape: "M1,6 L4.5,9.5 L11,2.5 L9.5,1 L4.5,6.5 L2.5,4.5 Z";
+}
+
+.core-select > #choice-box-popup-menu > .context-menu .radio-menu-item:checked > .left-container > .radio {
+  -fx-background-color: -app-popover-foreground;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu .radio-menu-item:focused:checked > .left-container > .radio {
+  -fx-background-color: -app-accent-foreground;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu .separator {
+  -fx-padding: 4px 0;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu .separator:horizontal .line {
+  -fx-border-color: -app-border transparent transparent transparent;
+  -fx-border-insets: 0;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu > .scroll-arrow {
+  -fx-background-color: -app-popover;
+  -fx-padding: 4px;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu > .scroll-arrow:hover {
+  -fx-background-color: -app-accent;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu > .scroll-arrow > .menu-up-arrow,
+.core-select > #choice-box-popup-menu > .context-menu > .scroll-arrow > .menu-down-arrow {
+  -fx-background-color: -app-popover-foreground;
+  -fx-background-insets: 0;
+  -fx-min-width: 16px;
+  -fx-pref-width: 16px;
+  -fx-max-width: 16px;
+  -fx-min-height: 16px;
+  -fx-pref-height: 16px;
+  -fx-max-height: 16px;
+  -fx-padding: 0;
+  -fx-scale-shape: true;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu > .scroll-arrow > .menu-up-arrow {
+  -fx-shape: "M2,11 L8,5 L14,11 L12.5,12.5 L8,8 L3.5,12.5 Z";
+}
+
+.core-select > #choice-box-popup-menu > .context-menu > .scroll-arrow > .menu-down-arrow {
+  -fx-shape: "M2,5 L8,11 L14,5 L12.5,3.5 L8,8 L3.5,3.5 Z";
+}

@@ -2,6 +2,7 @@ package com.acteque.terminal.chart;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -9,10 +10,13 @@ import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.core.Input;
+import com.acteque.terminal.ui.core.Select;
 import com.acteque.terminal.ui.core.Toggle;
 import com.acteque.terminal.ui.core.Tooltip;
 import com.acteque.terminal.ui.core.togglegroup.ToggleGroup;
 import com.acteque.terminal.ui.core.togglegroup.ToggleGroupItem;
+import com.acteque.terminal.ui.icons.LucideIcon;
+import com.acteque.terminal.ui.icons.LucideIcons;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -20,6 +24,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -35,6 +40,9 @@ class ChartIntervalSelectionDialogTest {
       ChartIntervalSelectionDialog dialog = createDialog();
       dialog.show();
 
+      Button addInterval = (Button) dialog.lookup(".chart-interval-add-button");
+      LucideIcon addIntervalIcon = assertInstanceOf(LucideIcon.class, addInterval.getGraphic());
+      assertSame(LucideIcons.PLUS, addIntervalIcon.getGlyph());
       assertEquals(27, dialog.lookupAll(".chart-interval-button").size());
       ToggleGroupItem daily = button(dialog, "1D");
       Input input = (Input) dialog.lookup(".chart-interval-search-field");
@@ -203,7 +211,12 @@ class ChartIntervalSelectionDialogTest {
       FxTestSupport.runAndWait(() -> {
         Input input = inputReference.get();
         pressTab(input, false);
-        assertSame(button(dialogReference.get(), "1T"), input.getScene().getFocusOwner());
+        assertSame(dialogReference.get().lookup(".chart-interval-add-button"), input.getScene().getFocusOwner());
+      });
+      FxTestSupport.runAndWait(() -> {
+        Node addButton = dialogReference.get().lookup(".chart-interval-add-button");
+        pressTab(addButton, false);
+        assertSame(button(dialogReference.get(), "1T"), addButton.getScene().getFocusOwner());
       });
       FxTestSupport.runAndWait(() -> {
         ToggleGroupItem first = button(dialogReference.get(), "1T");
@@ -220,6 +233,9 @@ class ChartIntervalSelectionDialogTest {
         input.setText("hour");
         input.requestFocus();
         pressTab(input, false);
+        Node addButton = dialogReference.get().lookup(".chart-interval-add-button");
+        assertSame(addButton, input.getScene().getFocusOwner());
+        pressTab(addButton, false);
         assertSame(button(dialogReference.get(), "1H"), input.getScene().getFocusOwner());
 
         input.requestFocus();
@@ -235,6 +251,7 @@ class ChartIntervalSelectionDialogTest {
         input.setText("1d");
         input.requestFocus();
         pressTab(input, false);
+        pressTab(dialogReference.get().lookup(".chart-interval-add-button"), false);
         ToggleGroupItem selected = button(dialogReference.get(), "1D");
 
         assertSame(selected, input.getScene().getFocusOwner());
@@ -249,6 +266,58 @@ class ChartIntervalSelectionDialogTest {
       FxTestSupport.runAndWait(() -> stageReference.get().close());
       FxTestSupport.runAndWait(() -> {});
     }
+  }
+
+  @Test
+  void addsANumericCustomIntervalToTheInMemoryChoices() {
+    FxTestSupport.runAndWait(() -> {
+      ChartIntervalSelectionDialog dialog = createDialog();
+      AtomicReference<ChartInterval> selected = new AtomicReference<>();
+      dialog.onIntervalSelected(selected::set);
+      dialog.show();
+
+      ((Button) dialog.lookup(".chart-interval-add-button")).fire();
+      Node addDialog = dialog.lookup(".chart-add-interval-dialog");
+      assertTrue(addDialog.isVisible());
+      assertTrue(dialog.getContent().isDisabled());
+
+      @SuppressWarnings("unchecked")
+      Select<ChartInterval.Classification> classification = (Select<ChartInterval.Classification>) dialog.lookup(
+        ".chart-add-interval-classification"
+      );
+      Input amount = (Input) dialog.lookup(".chart-add-interval-amount");
+      Button submit = (Button) dialog.lookup(".chart-add-interval-submit");
+      assertTrue(submit.isDisabled());
+
+      amount.setText("7hours");
+      assertEquals("", amount.getText());
+      classification.setValue(ChartInterval.Classification.HOURS);
+      amount.setText("7");
+      assertFalse(submit.isDisabled());
+      submit.fire();
+
+      assertFalse(addDialog.isVisible());
+      assertFalse(dialog.getContent().isDisabled());
+      assertEquals(28, dialog.lookupAll(".chart-interval-button").size());
+      ToggleGroupItem custom = button(dialog, "7H");
+      custom.fire();
+      assertEquals("7H", selected.get().displayName());
+      assertEquals("Hours", selected.get().category());
+    });
+  }
+
+  @Test
+  void cancellingTheAddDialogLeavesTheIntervalChoicesUnchanged() {
+    FxTestSupport.runAndWait(() -> {
+      ChartIntervalSelectionDialog dialog = createDialog();
+      dialog.show();
+
+      ((Button) dialog.lookup(".chart-interval-add-button")).fire();
+      ((Button) dialog.lookup(".chart-add-interval-cancel")).fire();
+
+      assertEquals(27, dialog.lookupAll(".chart-interval-button").size());
+      assertFalse(dialog.lookup(".chart-add-interval-dialog").isVisible());
+    });
   }
 
   private static ChartIntervalSelectionDialog createDialog() {

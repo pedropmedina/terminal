@@ -1,0 +1,8 @@
+.lucide-icon-path {
+  -fx-fill: transparent;
+  -fx-stroke: -fx-text-fill;
+  -fx-stroke-line-cap: round;
+  -fx-stroke-line-join: round;
+  -fx-stroke-type: centered;
+  -fx-stroke-width: 2px;
+}

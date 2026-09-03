@@ -3,9 +3,11 @@
 @import "core/button-group.css";
 @import "core/dialog.css";
 @import "core/field.css";
+@import "core/icon.css";
 @import "core/input.css";
 @import "core/label.css";
 @import "core/popover.css";
+@import "core/select.css";
 @import "core/separator.css";
 @import "core/toggle.css";
 @import "core/toggle-group.css";
