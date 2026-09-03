@@ -29,7 +29,6 @@ public class App extends Application {
   private static final double MIN_CANVAS_HEIGHT = 460.0;
 
   private MarketDataController marketData;
-  private ThemeManager themeManager;
 
   public static void main(String[] args) {
     launch(args);
@@ -64,7 +63,9 @@ public class App extends Application {
     );
 
     Scene scene = new Scene(chartView, MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT);
-    themeManager = new ThemeManager(scene, AppTheme.LIGHT);
+
+    // This is find for now, but we might want defined up top if we need to access the theme manager later
+    new ThemeManager(scene, AppTheme.LIGHT);
 
     stage.setTitle(STOCK_SYMBOL);
     stage.setMinWidth(MIN_CANVAS_WIDTH);

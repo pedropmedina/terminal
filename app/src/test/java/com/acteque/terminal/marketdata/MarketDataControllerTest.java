@@ -3,12 +3,6 @@ package com.acteque.terminal.marketdata;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.acteque.terminal.chart.PricePoint;
-import com.acteque.terminal.marketdata.DailyBar;
-import com.acteque.terminal.marketdata.DailyBarRequest;
-import com.acteque.terminal.marketdata.IntradayBar;
-import com.acteque.terminal.marketdata.IntradayBarRequest;
-import com.acteque.terminal.marketdata.MarketDataClient;
-import com.acteque.terminal.marketdata.Ohlcv;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
