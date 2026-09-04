@@ -11,12 +11,7 @@ public enum LucideIcons implements LucideGlyph {
 
   PLUS("plus", 24, 24, "M0 0M5 12h14 M0 0M12 5v14"),
 
-  SEARCH(
-    "search",
-    24,
-    24,
-    "M0 0m21 21-4.34-4.34 M3 11A8 8 0 1 0 19 11A8 8 0 1 0 3 11"
-  ),
+  SEARCH("search", 24, 24, "M0 0m21 21-4.34-4.34 M3 11A8 8 0 1 0 19 11A8 8 0 1 0 3 11"),
 
   SETTINGS(
     "settings",

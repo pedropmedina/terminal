@@ -1,10 +1,10 @@
 package com.acteque.terminal.ui.core.togglegroup;
 
+import com.acteque.terminal.ui.core.Toggle;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import com.acteque.terminal.ui.core.Toggle;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;

@@ -1,7 +1,7 @@
 package com.acteque.terminal.ui.core.popover;
 
-import java.util.Objects;
 import com.acteque.terminal.ui.core.Button;
+import java.util.Objects;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;

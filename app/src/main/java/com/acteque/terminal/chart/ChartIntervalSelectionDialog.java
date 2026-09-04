@@ -2,13 +2,14 @@ package com.acteque.terminal.chart;
 
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.RefreshableView;
-import com.acteque.terminal.ui.core.Button;
-import com.acteque.terminal.ui.core.Input;
 import com.acteque.terminal.ui.core.Toggle;
-import com.acteque.terminal.ui.core.Tooltip;
-import com.acteque.terminal.ui.core.Tooltip.Side;
 import com.acteque.terminal.ui.core.dialog.Dialog;
 import com.acteque.terminal.ui.core.dialog.DialogContent;
+import com.acteque.terminal.ui.core.inputgroup.InputGroup;
+import com.acteque.terminal.ui.core.inputgroup.InputGroupAddon;
+import com.acteque.terminal.ui.core.inputgroup.InputGroupAlignment;
+import com.acteque.terminal.ui.core.inputgroup.InputGroupButton;
+import com.acteque.terminal.ui.core.inputgroup.InputGroupInput;
 import com.acteque.terminal.ui.core.togglegroup.ToggleGroup;
 import com.acteque.terminal.ui.core.togglegroup.ToggleGroupItem;
 import com.acteque.terminal.ui.icons.LucideIcon;
@@ -27,20 +28,16 @@ import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 /** A transient, searchable picker for chart intervals. */
 public final class ChartIntervalSelectionDialog extends Dialog implements RefreshableView {
 
   private static final int COLUMN_COUNT = 6;
-  private final Input intervalField = new Input();
-  private final Button addIntervalButton = new Button(
-    null,
-    new LucideIcon(LucideIcons.PLUS),
-    Button.Variant.OUTLINE,
-    Button.Size.ICON
+  private final InputGroupInput intervalField = new InputGroupInput();
+  private final InputGroupButton addIntervalButton = new InputGroupButton(
+    "Add interval",
+    new LucideIcon(LucideIcons.PLUS)
   );
   private final ChartAddIntervalDialog addIntervalDialog = new ChartAddIntervalDialog();
   private final VBox categories = new VBox();
@@ -101,10 +98,11 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
     intervalField.setAccessibleText("Filter chart intervals");
     rebuildCategories(intervalField.getText());
 
-    HBox searchRow = new HBox(intervalField, addIntervalButton);
-    searchRow.getStyleClass().add("chart-interval-search-row");
-    HBox.setHgrow(intervalField, Priority.ALWAYS);
-    DialogContent card = new DialogContent(searchRow, categories, noMatches);
+    InputGroup searchGroup = new InputGroup(
+      intervalField,
+      new InputGroupAddon(InputGroupAlignment.INLINE_END, addIntervalButton)
+    );
+    DialogContent card = new DialogContent(searchGroup, categories, noMatches);
     card.getStyleClass().add("chart-interval-selection-card");
     card.setShowCloseButton(false);
     card.setMaxHeight(USE_PREF_SIZE);
@@ -180,9 +178,6 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
     item.setAccessibleText(interval.description());
     item.setSelected(interval == currentInterval);
     intervalItems.put(interval, item);
-    Tooltip tooltip = new Tooltip(interval.description());
-    tooltip.setSide(Side.RIGHT);
-    tooltip.install(item);
 
     item.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
       if (event.getCode() == KeyCode.ENTER) {

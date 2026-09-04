@@ -1,0 +1,239 @@
+.core-input-group {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-input;
+  -fx-border-insets: 0;
+  -fx-border-radius: 8px;
+  -fx-border-width: 1px;
+  -fx-min-width: 0;
+  transition-property:
+    -fx-background-color,
+    -fx-border-color,
+    -fx-opacity;
+  transition-duration: 100ms;
+}
+
+.core-input-group:control-focus-visible {
+  -fx-border-color:
+    -app-ring,
+    -app-input-focus-ring;
+  -fx-border-insets:
+    0,
+    -3px;
+  -fx-border-radius: 8px, 11px;
+  -fx-border-width: 1px, 3px;
+}
+
+.core-input-group:contains-disabled,
+.core-input-group:disabled {
+  -fx-background-color: -app-input-disabled-background;
+  -fx-opacity: 0.5;
+}
+
+.core-input-group:invalid {
+  -fx-border-color:
+    -app-input-invalid-border,
+    -app-input-invalid-ring;
+  -fx-border-insets:
+    0,
+    -3px;
+  -fx-border-radius: 8px, 11px;
+  -fx-border-width: 1px, 3px;
+}
+
+:root.theme-dark .core-input-group {
+  -fx-background-color: -app-input-background;
+}
+
+:root.theme-dark .core-input-group:contains-disabled,
+:root.theme-dark .core-input-group:disabled {
+  -fx-background-color: -app-input-disabled-background;
+}
+
+.core-input-group > .input-group-control,
+.core-input-group > .input-group-control:focused,
+.core-input-group > .input-group-control:focus-visible,
+.core-input-group > .input-group-control:invalid,
+.core-input-group > .input-group-control:disabled {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 0;
+  -fx-border-color: transparent;
+  -fx-border-insets: 0;
+  -fx-border-radius: 0;
+  -fx-border-width: 0;
+  -fx-effect: null;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+  -fx-min-width: 0;
+  -fx-opacity: 1;
+}
+
+.core-input-group > .input-group-input {
+  -fx-min-height: 30px;
+  -fx-pref-height: 30px;
+  -fx-max-height: 30px;
+}
+
+.core-input-group > .input-group-textarea > .scroll-pane,
+.core-input-group > .input-group-textarea > .scroll-pane > .viewport,
+.core-input-group > .input-group-textarea .content,
+.core-input-group > .input-group-textarea:focused .content {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 0;
+}
+
+.core-input-group-addon {
+  -fx-alignment: center;
+  -fx-cursor: text;
+  -fx-spacing: 8px;
+}
+
+.core-input-group-addon > .label,
+.core-input-group-addon .core-input-group-text > .label {
+  -fx-font-size: 14px;
+  -fx-font-weight: 600;
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-input-group-addon.input-group-addon-inline-start {
+  -fx-padding: 6px 0 6px 8px;
+}
+
+.core-input-group-addon.input-group-addon-inline-end {
+  -fx-padding: 6px 8px 6px 0;
+}
+
+.core-input-group-addon.input-group-addon-block-start {
+  -fx-alignment: center-left;
+  -fx-padding: 8px 10px 6px;
+}
+
+.core-input-group-addon.input-group-addon-block-end {
+  -fx-alignment: center-left;
+  -fx-padding: 6px 10px 8px;
+}
+
+.core-input-group-addon.input-group-addon-inline-start > .core-input-group-button {
+  -fx-translate-x: -4.8px;
+}
+
+.core-input-group-addon.input-group-addon-inline-end > .core-input-group-button {
+  -fx-translate-x: 4.8px;
+}
+
+.core-button.core-input-group-button {
+  -fx-effect: null;
+  -fx-font-size: 14px;
+  -fx-graphic-text-gap: 8px;
+}
+
+.core-button.core-input-group-button.button-variant-ghost {
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-button.core-input-group-button.button-variant-ghost:hover {
+  -fx-text-fill: -app-foreground;
+}
+
+.core-button.core-input-group-button.button-size-xs {
+  -fx-font-size: 14px;
+  -fx-background-radius: 5px;
+  -fx-border-radius: 5px;
+  -fx-graphic-text-gap: 4px;
+  -fx-padding: 0 6px;
+}
+
+.core-button.core-input-group-button.button-size-sm {
+  -fx-font-size: 14px;
+  -fx-min-height: 32px;
+  -fx-pref-height: 32px;
+  -fx-max-height: 32px;
+  -fx-background-radius: 8px;
+  -fx-border-radius: 8px;
+  -fx-graphic-text-gap: 6px;
+  -fx-padding: 0 10px;
+}
+
+.core-button.core-input-group-button.button-size-icon-xs {
+  -fx-background-radius: 5px;
+  -fx-border-radius: 5px;
+}
+
+.core-button.core-input-group-button.button-size-icon-sm {
+  -fx-min-width: 32px;
+  -fx-pref-width: 32px;
+  -fx-max-width: 32px;
+  -fx-min-height: 32px;
+  -fx-pref-height: 32px;
+  -fx-max-height: 32px;
+  -fx-background-radius: 8px;
+  -fx-border-radius: 8px;
+}
+
+.core-input-group-text {
+  -fx-alignment: center;
+  -fx-spacing: 8px;
+}
+
+.core-input-group.has-inline-start > .input-group-input {
+  -fx-padding: 4px 10px 4px 6px;
+}
+
+.core-input-group.has-inline-end > .input-group-input {
+  -fx-padding: 4px 6px 4px 10px;
+}
+
+.core-input-group.has-block-start > .input-group-input {
+  -fx-padding: 4px 10px 12px;
+}
+
+.core-input-group.has-block-end > .input-group-input {
+  -fx-padding: 12px 10px 4px;
+}
+
+.core-input-group.has-inline-start.has-inline-end > .input-group-input {
+  -fx-padding: 4px 6px;
+}
+
+.core-input-group.has-inline-start.has-block-start > .input-group-input {
+  -fx-padding: 4px 10px 12px 6px;
+}
+
+.core-input-group.has-inline-start.has-block-end > .input-group-input {
+  -fx-padding: 12px 10px 4px 6px;
+}
+
+.core-input-group.has-inline-end.has-block-start > .input-group-input {
+  -fx-padding: 4px 6px 12px 10px;
+}
+
+.core-input-group.has-inline-end.has-block-end > .input-group-input {
+  -fx-padding: 12px 6px 4px 10px;
+}
+
+.core-input-group.has-block-start.has-block-end > .input-group-input {
+  -fx-padding: 12px 10px;
+}
+
+.core-input-group.has-inline-start.has-inline-end.has-block-start > .input-group-input {
+  -fx-padding: 4px 6px 12px;
+}
+
+.core-input-group.has-inline-start.has-inline-end.has-block-end > .input-group-input {
+  -fx-padding: 12px 6px 4px;
+}
+
+.core-input-group.has-inline-start.has-block-start.has-block-end > .input-group-input {
+  -fx-padding: 12px 10px 12px 6px;
+}
+
+.core-input-group.has-inline-end.has-block-start.has-block-end > .input-group-input {
+  -fx-padding: 12px 6px 12px 10px;
+}
+
+.core-input-group.has-inline-start.has-inline-end.has-block-start.has-block-end > .input-group-input {
+  -fx-padding: 12px 6px;
+}

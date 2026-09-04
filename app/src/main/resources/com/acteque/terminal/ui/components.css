@@ -9,6 +9,8 @@
 @import "core/popover.css";
 @import "core/select.css";
 @import "core/separator.css";
+@import "core/textarea.css";
+@import "core/input-group.css";
 @import "core/toggle.css";
 @import "core/toggle-group.css";
 @import "core/tooltip.css";

@@ -1,0 +1,80 @@
+.core-textarea {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-input;
+  -fx-border-insets: 0;
+  -fx-border-radius: 8px;
+  -fx-border-width: 1px;
+  -fx-cursor: text;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+  -fx-font-size: 14px;
+  -fx-min-height: 64px;
+  -fx-min-width: 0;
+  -fx-padding: 0;
+  -fx-prompt-text-fill: -app-muted-foreground;
+  -fx-text-fill: -app-foreground;
+  transition-property:
+    -fx-background-color,
+    -fx-border-color,
+    -fx-text-fill,
+    -fx-opacity;
+  transition-duration: 100ms;
+}
+
+.core-textarea > .scroll-pane {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-border-color: transparent;
+  -fx-border-width: 0;
+  -fx-padding: 0;
+}
+
+.core-textarea > .scroll-pane > .viewport,
+.core-textarea .content,
+.core-textarea:focused .content {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 0;
+}
+
+.core-textarea .content {
+  -fx-padding: 8px 10px;
+}
+
+.core-textarea:focus-visible {
+  -fx-border-color:
+    -app-ring,
+    -app-input-focus-ring;
+  -fx-border-insets:
+    0,
+    -3px;
+  -fx-border-radius: 8px, 11px;
+  -fx-border-width: 1px, 3px;
+}
+
+.core-textarea:disabled {
+  -fx-background-color: -app-input-disabled-background;
+  -fx-cursor: default;
+  -fx-opacity: 0.5;
+}
+
+.core-textarea:invalid {
+  -fx-border-color:
+    -app-input-invalid-border,
+    -app-input-invalid-ring;
+  -fx-border-insets:
+    0,
+    -3px;
+  -fx-border-radius: 8px, 11px;
+  -fx-border-width: 1px, 3px;
+}
+
+:root.theme-dark .core-textarea {
+  -fx-background-color: -app-input-background;
+}
+
+:root.theme-dark .core-textarea:disabled {
+  -fx-background-color: -app-input-disabled-background;
+}

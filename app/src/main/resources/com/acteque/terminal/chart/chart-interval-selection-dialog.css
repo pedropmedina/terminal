@@ -17,18 +17,6 @@
   -fx-border-radius: 8px;
 }
 
-.chart-interval-search-row {
-  -fx-alignment: center;
-  -fx-spacing: 8px;
-}
-
-.chart-interval-add-button {
-  -fx-background-radius: 999px;
-  -fx-border-radius: 999px;
-  -fx-font-size: 18px;
-  -fx-font-weight: 400;
-}
-
 .chart-add-interval-card {
   -fx-pref-width: 384px;
   -fx-max-width: 384px;
