@@ -164,14 +164,19 @@ class SelectTest {
       assertEquals(32.0, select.prefHeight(-1.0));
       assertEquals(14.0, ((Label) select.lookup(".label")).getFont().getSize());
       assertEquals(Color.TRANSPARENT, background(select));
+      assertEquals(2, select.getBorder().getStrokes().size());
       assertEquals(Color.web("#e5e5e5"), select.getBorder().getStrokes().getFirst().getTopStroke());
+      assertEquals(Color.TRANSPARENT, select.getBorder().getStrokes().get(1).getTopStroke());
       assertEquals(8.0, select.getBorder().getStrokes().getFirst().getRadii().getTopLeftHorizontalRadius());
+      assertEquals(11.0, select.getBorder().getStrokes().get(1).getRadii().getTopLeftHorizontalRadius());
+      assertEquals(new Insets(-3.0), select.getBorder().getStrokes().get(1).getInsets());
 
       select.setSize(Size.SM);
       root.applyCss();
 
       assertEquals(28.0, select.prefHeight(-1.0));
       assertEquals(6.0, select.getBorder().getStrokes().getFirst().getRadii().getTopLeftHorizontalRadius());
+      assertEquals(9.0, select.getBorder().getStrokes().get(1).getRadii().getTopLeftHorizontalRadius());
 
       Select<String> darkSelect = new Select<>();
       StackPane darkRoot = themedRoot(darkSelect, AppTheme.DARK);
@@ -197,6 +202,7 @@ class SelectTest {
       select.setInvalid(true);
       root.applyCss();
       assertEquals(Color.web("#e7000b"), select.getBorder().getStrokes().getFirst().getTopStroke());
+      assertEquals(Color.TRANSPARENT, select.getBorder().getStrokes().get(1).getTopStroke());
 
       select.setDisable(true);
       root.applyCss();

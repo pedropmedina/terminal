@@ -3,10 +3,12 @@
   -fx-background-color: transparent;
   -fx-background-insets: 0;
   -fx-background-radius: 8px;
-  -fx-border-color: -app-input;
-  -fx-border-insets: 0;
-  -fx-border-radius: 8px;
-  -fx-border-width: 1px;
+  -fx-border-color: -app-input, transparent;
+  -fx-border-insets:
+    0,
+    -3px;
+  -fx-border-radius: 8px, 11px;
+  -fx-border-width: 1px, 3px;
   -fx-cursor: hand;
   -fx-focus-color: transparent;
   -fx-faint-focus-color: transparent;
@@ -17,8 +19,7 @@
   transition-property:
     -fx-background-color,
     -fx-border-color,
-    -fx-text-fill,
-    -fx-opacity;
+    -fx-text-fill;
   transition-duration: 100ms;
 }
 
@@ -27,7 +28,7 @@
   -fx-pref-height: 32px;
   -fx-max-height: 32px;
   -fx-background-radius: 8px;
-  -fx-border-radius: 8px;
+  -fx-border-radius: 8px, 11px;
 }
 
 .core-select.select-size-sm {
@@ -35,26 +36,17 @@
   -fx-pref-height: 28px;
   -fx-max-height: 28px;
   -fx-background-radius: 6px;
-  -fx-border-radius: 6px;
+  -fx-border-radius: 6px, 9px;
 }
 
 .core-select:focus-visible {
   -fx-border-color:
     -app-ring,
     -app-input-focus-ring;
-  -fx-border-insets:
-    0,
-    -3px;
-  -fx-border-radius: 8px, 11px;
-  -fx-border-width: 1px, 3px;
-}
-
-.core-select.select-size-sm:focus-visible {
-  -fx-border-radius: 6px, 9px;
 }
 
 .core-select:invalid {
-  -fx-border-color: -app-input-invalid-border;
+  -fx-border-color: -app-input-invalid-border, transparent;
   -fx-effect: dropshadow(gaussian, -app-input-invalid-ring, 6, 0, 0, 0);
 }
 
