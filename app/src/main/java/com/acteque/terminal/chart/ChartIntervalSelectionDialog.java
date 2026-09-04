@@ -42,7 +42,7 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
     Button.Variant.OUTLINE,
     Button.Size.ICON
   );
-  private final AddChartIntervalDialog addIntervalDialog = new AddChartIntervalDialog();
+  private final ChartAddIntervalDialog addIntervalDialog = new ChartAddIntervalDialog();
   private final VBox categories = new VBox();
   private final Label noMatches = new Label("No matching intervals");
   private final List<ChartInterval> intervals = new ArrayList<>(Arrays.asList(ChartInterval.values()));

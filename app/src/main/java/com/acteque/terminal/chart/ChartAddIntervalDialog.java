@@ -20,7 +20,7 @@ import javafx.collections.FXCollections;
 import javafx.scene.control.TextFormatter;
 
 /** Form dialog for creating a chart interval that lives for the current application session. */
-final class AddChartIntervalDialog extends Dialog {
+final class ChartAddIntervalDialog extends Dialog {
 
   private final Select<Classification> classification = new Select<>(
     FXCollections.observableArrayList(List.of(Classification.values()))
@@ -29,7 +29,7 @@ final class AddChartIntervalDialog extends Dialog {
   private final Button addButton = new Button("Add");
   private Consumer<ChartInterval> intervalAddedHandler = ignored -> {};
 
-  AddChartIntervalDialog() {
+  ChartAddIntervalDialog() {
     getStyleClass().add("chart-add-interval-dialog");
     setFocusTraversable(false);
 
