@@ -100,17 +100,32 @@
   -fx-background-color: -app-button-outline-hover;
 }
 
+:root.core-select-popup-root {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 8px;
+}
+
+.core-select > #choice-box-popup-menu {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 8px;
+  -fx-effect: null;
+  -fx-padding: 0;
+}
+
 .core-select > #choice-box-popup-menu > .context-menu {
   -fx-background-color:
     -app-dialog-ring,
     -app-popover;
   -fx-background-insets: 0, 1px;
   -fx-background-radius: 8px, 7px;
-  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 12, 0, 0, 4);
+  -fx-effect: null;
   -fx-padding: 4px;
 }
 
 .core-select > #choice-box-popup-menu > .context-menu .menu-item {
+  -fx-alignment: center-left;
   -fx-background-color: transparent;
   -fx-background-insets: 0;
   -fx-background-radius: 6px;
@@ -122,40 +137,40 @@
 }
 
 .core-select > #choice-box-popup-menu > .context-menu .menu-item > .label {
+  -fx-alignment: center-left;
   -fx-padding: 0;
   -fx-text-fill: -app-popover-foreground;
+  -fx-text-overrun: ellipsis;
 }
 
 .core-select > #choice-box-popup-menu > .context-menu .menu-item:focused > .label {
   -fx-text-fill: -app-accent-foreground;
 }
 
-.core-select > #choice-box-popup-menu > .context-menu .menu-item > .left-container {
+.core-select > #choice-box-popup-menu > .context-menu .radio-menu-item > .left-container,
+.core-select > #choice-box-popup-menu > .context-menu .radio-menu-item > .left-container > .radio {
+  -fx-min-width: 0;
+  -fx-pref-width: 0;
+  -fx-max-width: 0;
+  -fx-min-height: 0;
+  -fx-pref-height: 0;
+  -fx-max-height: 0;
+  -fx-opacity: 0;
+  -fx-padding: 0;
+}
+
+.core-select > #choice-box-popup-menu > .context-menu .radio-menu-item > .graphic-container {
   -fx-min-width: 16px;
   -fx-pref-width: 16px;
-  -fx-padding: 0 6px 0 0;
+  -fx-padding: 0 0 0 6px;
 }
 
-.core-select > #choice-box-popup-menu > .context-menu .radio-menu-item > .left-container > .radio {
-  -fx-background-color: transparent;
-  -fx-background-insets: 0;
-  -fx-min-width: 12px;
-  -fx-pref-width: 12px;
-  -fx-max-width: 12px;
-  -fx-min-height: 12px;
-  -fx-pref-height: 12px;
-  -fx-max-height: 12px;
-  -fx-padding: 0;
-  -fx-scale-shape: true;
-  -fx-shape: "M1,6 L4.5,9.5 L11,2.5 L9.5,1 L4.5,6.5 L2.5,4.5 Z";
+.core-select > #choice-box-popup-menu > .context-menu .select-item-check > .lucide-icon-path {
+  -fx-stroke: -app-popover-foreground;
 }
 
-.core-select > #choice-box-popup-menu > .context-menu .radio-menu-item:checked > .left-container > .radio {
-  -fx-background-color: -app-popover-foreground;
-}
-
-.core-select > #choice-box-popup-menu > .context-menu .radio-menu-item:focused:checked > .left-container > .radio {
-  -fx-background-color: -app-accent-foreground;
+.core-select > #choice-box-popup-menu > .context-menu .radio-menu-item:focused .select-item-check > .lucide-icon-path {
+  -fx-stroke: -app-accent-foreground;
 }
 
 .core-select > #choice-box-popup-menu > .context-menu .separator {

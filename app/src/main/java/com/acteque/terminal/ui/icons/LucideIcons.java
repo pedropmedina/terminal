@@ -3,13 +3,20 @@ package com.acteque.terminal.ui.icons;
 
 /** Lucide icon geometry included in the application. */
 public enum LucideIcons implements LucideGlyph {
+  CHECK("check", 24, 24, "M0 0M20 6 9 17l-5-5"),
+
   CHEVRON_DOWN("chevron-down", 24, 24, "M0 0m6 9 6 6 6-6"),
 
   CHEVRON_UP("chevron-up", 24, 24, "M0 0m18 15-6-6-6 6"),
 
   PLUS("plus", 24, 24, "M0 0M5 12h14 M0 0M12 5v14"),
 
-  SEARCH("search", 24, 24, "M0 0m21 21-4.34-4.34 M3 11A8 8 0 1 0 19 11A8 8 0 1 0 3 11"),
+  SEARCH(
+    "search",
+    24,
+    24,
+    "M0 0m21 21-4.34-4.34 M3 11A8 8 0 1 0 19 11A8 8 0 1 0 3 11"
+  ),
 
   SETTINGS(
     "settings",
