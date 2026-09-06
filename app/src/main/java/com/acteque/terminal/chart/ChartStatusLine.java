@@ -18,7 +18,7 @@ final class ChartStatusLine extends HBox implements RefreshableView {
 
   private static final double LEFT_MARGIN = 12.0;
   private static final double BOTTOM_MARGIN = 38.0;
-  private String stockSymbol;
+  private String instrumentName;
   private ChartInterval interval;
 
   private PricePoint pricePoint;
@@ -28,8 +28,8 @@ final class ChartStatusLine extends HBox implements RefreshableView {
   private Button intervalSection;
   private Label ohlcv;
 
-  ChartStatusLine(String stockSymbol, ChartInterval interval) {
-    this.stockSymbol = Objects.requireNonNull(stockSymbol, "stockSymbol");
+  ChartStatusLine(String instrumentName, ChartInterval interval) {
+    this.instrumentName = Objects.requireNonNull(instrumentName, "instrumentName");
     this.interval = Objects.requireNonNull(interval, "interval");
     getStyleClass().add("chart-status-line");
 
@@ -55,9 +55,9 @@ final class ChartStatusLine extends HBox implements RefreshableView {
     intervalClickHandler = Objects.requireNonNull(callback, "callback");
   }
 
-  void setStockSymbol(String stockSymbol) {
-    this.stockSymbol = Objects.requireNonNull(stockSymbol, "stockSymbol");
-    symbolSection.setText(stockSymbol);
+  void setInstrumentName(String instrumentName) {
+    this.instrumentName = Objects.requireNonNull(instrumentName, "instrumentName");
+    symbolSection.setText(instrumentName);
   }
 
   void setInterval(ChartInterval interval) {
@@ -68,12 +68,12 @@ final class ChartStatusLine extends HBox implements RefreshableView {
 
   String text(PricePoint point) {
     Objects.requireNonNull(point, "point");
-    return String.format("%s  %s   %s", stockSymbol, interval.displayName(), ohlcvText(point));
+    return String.format("%s  %s   %s", instrumentName, interval.displayName(), ohlcvText(point));
   }
 
   @Override
   public void refreshView() {
-    symbolSection = new Button(stockSymbol, Variant.GHOST, Size.DEFAULT);
+    symbolSection = new Button(instrumentName, Variant.GHOST, Size.DEFAULT);
     symbolSection.getStyleClass().add("chart-symbol-button");
     symbolSection.setAccessibleText("Select symbol or instrument");
     symbolSection.setOnAction(ignored -> instrumentClickHandler.run());

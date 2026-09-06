@@ -1,8 +1,14 @@
 package com.acteque.terminal.marketdata;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.chart.PricePoint;
+import com.acteque.terminal.marketdata.MarketDataController.LoadedInstrument;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -11,7 +17,12 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 class MarketDataControllerTest {
@@ -32,12 +43,13 @@ class MarketDataControllerTest {
         Executors.newVirtualThreadPerTaskExecutor()
       )
     ) {
-      List<PricePoint> initial = controller.loadInitial();
+      LoadedInstrument initial = controller.loadInitial().toCompletableFuture().join();
       List<PricePoint> withEarlierHistory = controller.loadEarlier().toCompletableFuture().join();
 
-      assertEquals(List.of(date("2026-02-23"), date("2026-08-20")), dates(initial));
+      assertEquals(List.of(date("2026-02-23"), date("2026-08-20")), dates(initial.pricePoints()));
       assertEquals(List.of(date("2025-09-02"), date("2026-02-23"), date("2026-08-20")), dates(withEarlierHistory));
       assertEquals(100.0, withEarlierHistory.get(1).close());
+      assertEquals(List.of("IBM"), client.metadataRequests);
       assertEquals(
         List.of(
           new DailyBarRequest("IBM", date("2026-02-21"), date("2026-08-21")),
@@ -59,7 +71,7 @@ class MarketDataControllerTest {
         Executors.newVirtualThreadPerTaskExecutor()
       )
     ) {
-      controller.loadInitial();
+      controller.loadInitial().toCompletableFuture().join();
       controller.loadEarlier().toCompletableFuture().join();
       controller.loadEarlier().toCompletableFuture().join();
 
@@ -81,10 +93,17 @@ class MarketDataControllerTest {
         Executors.newVirtualThreadPerTaskExecutor()
       )
     ) {
-      controller.loadInitial();
-      List<PricePoint> selected = controller.loadInstrument("aapl").toCompletableFuture().join();
+      LoadedInstrument initial = controller.loadInitial().toCompletableFuture().join();
+      LoadedInstrument selected = controller.loadInstrument(" aapl ").toCompletableFuture().join();
 
-      assertEquals(List.of(date("2026-08-19"), date("2026-08-20")), dates(selected));
+      assertEquals("IBM", initial.symbol());
+      assertEquals("IBM name", initial.displayName());
+      assertEquals(List.of(date("2026-08-20")), dates(initial.pricePoints()));
+      assertEquals(102.0, initial.pricePoints().getFirst().close());
+      assertEquals("AAPL", selected.symbol());
+      assertEquals("AAPL name", selected.displayName());
+      assertEquals(List.of("IBM", "AAPL"), client.metadataRequests);
+      assertEquals(List.of(date("2026-08-19"), date("2026-08-20")), dates(selected.pricePoints()));
       assertEquals(
         List.of(
           new DailyBarRequest("IBM", date("2026-02-21"), date("2026-08-21")),
@@ -92,6 +111,144 @@ class MarketDataControllerTest {
         ),
         client.requests
       );
+    }
+  }
+
+  @Test
+  void initialLoadRunsAsynchronouslyOnTheExecutor() throws Exception {
+    StubMarketDataClient client = new StubMarketDataClient(List.of(bar("2026-08-20", "102")));
+    CountDownLatch executorStarted = new CountDownLatch(1);
+    CountDownLatch releaseExecutor = new CountDownLatch(1);
+    var executor = Executors.newSingleThreadExecutor();
+    try (MarketDataController controller = new MarketDataController(client, " ibm ", CLOCK, executor)) {
+      executor.submit(() -> {
+        executorStarted.countDown();
+        await(releaseExecutor);
+      });
+      try {
+        assertTrue(executorStarted.await(5, TimeUnit.SECONDS));
+        var initial = controller.loadInitial().toCompletableFuture();
+        assertFalse(initial.isDone());
+        assertTrue(client.requests.isEmpty());
+        assertTrue(client.metadataRequests.isEmpty());
+        releaseExecutor.countDown();
+        LoadedInstrument loaded = initial.get(5, TimeUnit.SECONDS);
+        assertEquals("IBM", loaded.symbol());
+        assertEquals("IBM name", loaded.displayName());
+        assertEquals(List.of("IBM"), client.metadataRequests);
+      } finally {
+        releaseExecutor.countDown();
+      }
+    }
+  }
+
+  @Test
+  void fallsBackToRequestedSymbolWhenNameIsMissing() {
+    StubMarketDataClient client = new StubMarketDataClient(List.of(bar("2026-08-20", "102")));
+    client.metadata = symbol -> details("provider-symbol", Optional.empty());
+    try (MarketDataController controller = controller(client)) {
+      LoadedInstrument loaded = controller.loadInitial().toCompletableFuture().join();
+      assertEquals("IBM", loaded.symbol());
+      assertEquals("IBM", loaded.displayName());
+      assertEquals(102.0, loaded.pricePoints().getFirst().close());
+      assertEquals(List.of("IBM"), client.metadataRequests);
+    }
+  }
+
+  @Test
+  void fallsBackToSymbolOnMetadataFailureWithoutLosingHistory() {
+    StubMarketDataClient client = new StubMarketDataClient(List.of(bar("2026-08-20", "102")), List.of());
+    client.metadata = symbol -> {
+      throw new MarketDataException(MarketDataException.Code.NETWORK, "Metadata service unavailable");
+    };
+    try (MarketDataController controller = controller(client)) {
+      LoadedInstrument loaded = controller.loadInitial().toCompletableFuture().join();
+      assertEquals("IBM", loaded.displayName());
+      assertEquals(102.0, loaded.pricePoints().getFirst().close());
+      assertEquals(loaded.pricePoints(), controller.loadEarlier().toCompletableFuture().join());
+      assertEquals(List.of("IBM"), client.metadataRequests);
+    }
+  }
+
+  @Test
+  void doesNotHideMetadataProgrammingErrors() {
+    StubMarketDataClient client = new StubMarketDataClient(List.of(bar("2026-08-20", "102")));
+    IllegalStateException failure = new IllegalStateException("Broken metadata implementation");
+    client.metadata = symbol -> {
+      throw failure;
+    };
+    try (MarketDataController controller = controller(client)) {
+      CompletionException thrown = assertThrows(CompletionException.class, () ->
+        controller.loadInitial().toCompletableFuture().join()
+      );
+      assertSame(failure, thrown.getCause());
+      assertTrue(controller.loadEarlier().toCompletableFuture().join().isEmpty());
+    }
+  }
+
+  @Test
+  void cancelsStaleInitialLoadWithoutMixingMetadataOrHistory() throws Exception {
+    StubMarketDataClient client = new StubMarketDataClient(
+      List.of(bar("2026-08-20", "102")),
+      List.of(bar("AAPL", "2026-08-19", "201")),
+      List.of(bar("AAPL", "2026-02-18", "199"))
+    );
+    CountDownLatch metadataStarted = new CountDownLatch(1);
+    CountDownLatch releaseMetadata = new CountDownLatch(1);
+    client.metadata = symbol -> {
+      if (symbol.equals("IBM")) {
+        metadataStarted.countDown();
+        await(releaseMetadata);
+      }
+      return details(symbol, Optional.of(symbol + " name"));
+    };
+    try (MarketDataController controller = controller(client)) {
+      try {
+        var stale = controller.loadInitial().toCompletableFuture();
+        assertTrue(metadataStarted.await(5, TimeUnit.SECONDS));
+        LoadedInstrument selected = controller.loadInstrument("AAPL").toCompletableFuture().get(5, TimeUnit.SECONDS);
+        releaseMetadata.countDown();
+        CompletionException failure = assertThrows(CompletionException.class, stale::join);
+        assertInstanceOf(CancellationException.class, failure.getCause());
+        assertEquals("AAPL", selected.symbol());
+        assertEquals("AAPL name", selected.displayName());
+        assertEquals(List.of(date("2026-08-19")), dates(selected.pricePoints()));
+        assertEquals(201.0, selected.pricePoints().getFirst().close());
+        assertEquals(
+          List.of(date("2026-02-18"), date("2026-08-19")),
+          dates(controller.loadEarlier().toCompletableFuture().get(5, TimeUnit.SECONDS))
+        );
+        assertEquals("AAPL", client.requests.getLast().symbol());
+        assertEquals(List.of("IBM", "AAPL"), client.metadataRequests);
+      } finally {
+        releaseMetadata.countDown();
+      }
+    }
+  }
+
+  @Test
+  void loadedInstrumentDefensivelyCopiesItsPricePoints() {
+    List<PricePoint> points = new ArrayList<>();
+    LoadedInstrument loaded = new LoadedInstrument("IBM", "IBM name", points);
+    points.add(new PricePoint(date("2026-08-20"), 1, 1, 1, 1, 1));
+    assertTrue(loaded.pricePoints().isEmpty());
+    assertThrows(UnsupportedOperationException.class, () -> loaded.pricePoints().add(points.getFirst()));
+  }
+
+  private static MarketDataController controller(StubMarketDataClient client) {
+    return new MarketDataController(client, "IBM", CLOCK, Executors.newVirtualThreadPerTaskExecutor());
+  }
+
+  private static InstrumentDetails details(String symbol, Optional<String> name) {
+    return new InstrumentDetails(symbol, name, Optional.empty(), Optional.empty());
+  }
+
+  private static void await(CountDownLatch latch) {
+    try {
+      assertTrue(latch.await(5, TimeUnit.SECONDS), "Timed out waiting for test coordination");
+    } catch (InterruptedException exception) {
+      Thread.currentThread().interrupt();
+      throw new AssertionError(exception);
     }
   }
 
@@ -113,10 +270,12 @@ class MarketDataControllerTest {
     return new DailyBar(symbol, LocalDate.parse(date), prices, Optional.empty(), Optional.empty(), Optional.empty());
   }
 
-  private static final class StubMarketDataClient implements MarketDataClient {
+  private static final class StubMarketDataClient implements MarketDataClient, HistoricalBarData {
 
     private final List<List<DailyBar>> responses;
-    private final List<DailyBarRequest> requests = new ArrayList<>();
+    private final List<DailyBarRequest> requests = new CopyOnWriteArrayList<>();
+    private final List<String> metadataRequests = new CopyOnWriteArrayList<>();
+    private InstrumentDiscovery metadata = symbol -> details(symbol, Optional.of(symbol + " name"));
     private int responseIndex;
 
     @SafeVarargs
@@ -130,7 +289,20 @@ class MarketDataControllerTest {
     }
 
     @Override
-    public List<DailyBar> getDailyBars(DailyBarRequest request) {
+    public HistoricalBarData historicalBars() {
+      return this;
+    }
+
+    @Override
+    public InstrumentDiscovery discovery() {
+      return symbol -> {
+        metadataRequests.add(symbol);
+        return metadata.getInstrument(symbol);
+      };
+    }
+
+    @Override
+    public synchronized List<DailyBar> getDailyBars(DailyBarRequest request) {
       requests.add(request);
       return responses.get(responseIndex++);
     }

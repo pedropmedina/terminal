@@ -40,16 +40,18 @@ class TiingoMarketDataClientIntradayTest {
       transport
     );
 
-    List<IntradayBar> bars = client.getIntradayBars(
-      new IntradayBarRequest(
-        "aapl",
-        LocalDate.parse("2024-01-02"),
-        LocalDate.parse("2024-01-03"),
-        Duration.ofMinutes(5),
-        true,
-        true
-      )
-    );
+    List<IntradayBar> bars = client
+      .historicalBars()
+      .getIntradayBars(
+        new IntradayBarRequest(
+          "aapl",
+          LocalDate.parse("2024-01-02"),
+          LocalDate.parse("2024-01-03"),
+          Duration.ofMinutes(5),
+          true,
+          true
+        )
+      );
 
     assertEquals("tiingo", client.provider());
     assertEquals(
@@ -82,9 +84,16 @@ class TiingoMarketDataClientIntradayTest {
       transport
     );
 
-    client.getIntradayBars(
-      new IntradayBarRequest("MSFT", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-02"), Duration.ofHours(1))
-    );
+    client
+      .historicalBars()
+      .getIntradayBars(
+        new IntradayBarRequest(
+          "MSFT",
+          LocalDate.parse("2024-01-02"),
+          LocalDate.parse("2024-01-02"),
+          Duration.ofHours(1)
+        )
+      );
 
     assertEquals(
       "https://example.test/iex/MSFT/prices?startDate=2024-01-02&endDate=2024-01-02" +
@@ -104,14 +113,16 @@ class TiingoMarketDataClientIntradayTest {
     );
 
     MarketDataException exception = assertThrows(MarketDataException.class, () ->
-      client.getIntradayBars(
-        new IntradayBarRequest(
-          "AAPL",
-          LocalDate.parse("2024-01-02"),
-          LocalDate.parse("2024-01-03"),
-          Duration.ofMinutes(5)
+      client
+        .historicalBars()
+        .getIntradayBars(
+          new IntradayBarRequest(
+            "AAPL",
+            LocalDate.parse("2024-01-02"),
+            LocalDate.parse("2024-01-03"),
+            Duration.ofMinutes(5)
+          )
         )
-      )
     );
 
     assertEquals(MarketDataException.Code.INVALID_RESPONSE, exception.code());
@@ -134,14 +145,16 @@ class TiingoMarketDataClientIntradayTest {
     );
 
     MarketDataException exception = assertThrows(MarketDataException.class, () ->
-      client.getIntradayBars(
-        new IntradayBarRequest(
-          "AAPL",
-          LocalDate.parse("2024-01-02"),
-          LocalDate.parse("2024-01-03"),
-          Duration.ofMinutes(5)
+      client
+        .historicalBars()
+        .getIntradayBars(
+          new IntradayBarRequest(
+            "AAPL",
+            LocalDate.parse("2024-01-02"),
+            LocalDate.parse("2024-01-03"),
+            Duration.ofMinutes(5)
+          )
         )
-      )
     );
 
     assertEquals(expectedCode, exception.code());

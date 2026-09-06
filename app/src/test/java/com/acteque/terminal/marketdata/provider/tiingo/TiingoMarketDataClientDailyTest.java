@@ -41,9 +41,9 @@ class TiingoMarketDataClientDailyTest {
       transport
     );
 
-    List<DailyBar> bars = client.getDailyBars(
-      new DailyBarRequest("aapl", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-03"))
-    );
+    List<DailyBar> bars = client
+      .historicalBars()
+      .getDailyBars(new DailyBarRequest("aapl", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-03")));
 
     assertEquals("tiingo", client.provider());
     assertEquals(
@@ -109,7 +109,9 @@ class TiingoMarketDataClientDailyTest {
     );
 
     MarketDataException exception = assertThrows(MarketDataException.class, () ->
-      client.getDailyBars(new DailyBarRequest("AAPL", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-03")))
+      client
+        .historicalBars()
+        .getDailyBars(new DailyBarRequest("AAPL", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-03")))
     );
 
     assertEquals(MarketDataException.Code.INVALID_RESPONSE, exception.code());
@@ -124,7 +126,9 @@ class TiingoMarketDataClientDailyTest {
     );
 
     MarketDataException exception = assertThrows(MarketDataException.class, () ->
-      client.getDailyBars(new DailyBarRequest("AAPL", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-03")))
+      client
+        .historicalBars()
+        .getDailyBars(new DailyBarRequest("AAPL", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-03")))
     );
 
     assertEquals(expectedCode, exception.code());

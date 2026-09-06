@@ -2,13 +2,14 @@ package com.acteque.terminal;
 
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
-import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.marketdata.MarketDataController;
+import com.acteque.terminal.marketdata.MarketDataController.LoadedInstrument;
 import com.acteque.terminal.marketdata.provider.tiingo.TiingoMarketDataClient;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletionStage;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -29,6 +30,7 @@ public class App extends Application {
   private static final double MIN_CANVAS_HEIGHT = 460.0;
 
   private MarketDataController marketData;
+  private long instrumentLoadGeneration;
 
   public static void main(String[] args) {
     launch(args);
@@ -38,28 +40,24 @@ public class App extends Application {
   public void start(Stage stage) {
     TiingoMarketDataClient client = TiingoMarketDataClient.create();
     marketData = new MarketDataController(client, STOCK_SYMBOL);
-    List<PricePoint> pricePoints = marketData.loadInitial();
-    Chart chartView = new Chart(pricePoints, STOCK_SYMBOL, DATA_INTERVAL, client.tickerCatalog);
-    chartView.setOnEarlierHistoryRequested(() ->
+    Chart chartView = new Chart(List.of(), STOCK_SYMBOL, DATA_INTERVAL, client.tickerCatalog);
+    chartView.setOnEarlierHistoryRequested(() -> {
+      long generation = instrumentLoadGeneration;
       marketData.loadEarlier().whenComplete((updatedPoints, failure) -> {
-        if (failure != null) {
-          reportEarlierHistoryLoadFailure(failure);
-        } else {
-          Platform.runLater(() -> chartView.setPricePoints(updatedPoints));
-        }
-      })
-    );
+        Platform.runLater(() -> {
+          if (generation != instrumentLoadGeneration) {
+            return;
+          }
+          if (failure != null) {
+            reportEarlierHistoryLoadFailure(failure);
+          } else {
+            chartView.setPricePoints(updatedPoints);
+          }
+        });
+      });
+    });
     chartView.setOnInstrumentSelected(symbol ->
-      marketData.loadInstrument(symbol).whenComplete((updatedPoints, failure) -> {
-        if (failure != null && !(failure instanceof CancellationException)) {
-          reportInstrumentLoadFailure(symbol, failure);
-        } else if (failure == null) {
-          Platform.runLater(() -> {
-            chartView.setInstrument(symbol, updatedPoints);
-            stage.setTitle(symbol);
-          });
-        }
-      })
+      displayInstrumentLoad(symbol, marketData.loadInstrument(symbol), chartView, stage)
     );
 
     Scene scene = new Scene(chartView, MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT);
@@ -74,10 +72,38 @@ public class App extends Application {
     stage.show();
 
     chartView.drawChart();
+    displayInstrumentLoad(STOCK_SYMBOL, marketData.loadInitial(), chartView, stage);
+  }
+
+  private void displayInstrumentLoad(
+    String symbol,
+    CompletionStage<LoadedInstrument> load,
+    Chart chartView,
+    Stage stage
+  ) {
+    long generation = ++instrumentLoadGeneration;
+    load.whenComplete((instrument, failure) ->
+      Platform.runLater(() -> {
+        // A completed background load can still be stale by the time this UI task runs.
+        if (generation != instrumentLoadGeneration) {
+          return;
+        }
+        if (failure != null) {
+          Throwable cause = failure.getCause() == null ? failure : failure.getCause();
+          if (!(cause instanceof CancellationException)) {
+            reportInstrumentLoadFailure(symbol, failure);
+          }
+          return;
+        }
+        chartView.setInstrument(instrument.symbol(), instrument.displayName(), instrument.pricePoints());
+        stage.setTitle(instrument.symbol());
+      })
+    );
   }
 
   @Override
   public void stop() {
+    ++instrumentLoadGeneration;
     if (marketData != null) {
       marketData.close();
     }

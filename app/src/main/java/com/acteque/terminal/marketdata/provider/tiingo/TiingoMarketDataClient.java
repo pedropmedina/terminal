@@ -1,9 +1,7 @@
 package com.acteque.terminal.marketdata.provider.tiingo;
 
-import com.acteque.terminal.marketdata.DailyBar;
-import com.acteque.terminal.marketdata.DailyBarRequest;
-import com.acteque.terminal.marketdata.IntradayBar;
-import com.acteque.terminal.marketdata.IntradayBarRequest;
+import com.acteque.terminal.marketdata.HistoricalBarData;
+import com.acteque.terminal.marketdata.InstrumentDiscovery;
 import com.acteque.terminal.marketdata.MarketDataClient;
 import com.acteque.terminal.marketdata.provider.tiingo.eod.TiingoDailyApi;
 import com.acteque.terminal.marketdata.provider.tiingo.iex.TiingoIexApi;
@@ -30,6 +28,8 @@ public final class TiingoMarketDataClient implements MarketDataClient {
   public final TiingoTickerCatalogApi tickerCatalog;
 
   private final TiingoUtilitiesApi utilities;
+  private final HistoricalBarData historicalBars;
+  private final InstrumentDiscovery discovery;
 
   /** Creates a client for Tiingo's daily and IEX APIs. */
   public TiingoMarketDataClient(String apiKey) {
@@ -41,6 +41,8 @@ public final class TiingoMarketDataClient implements MarketDataClient {
     iex = TiingoIexApi.usingDefaults(requests);
     tickerCatalog = TiingoTickerCatalogApi.usingDefaults(requests);
     utilities = TiingoUtilitiesApi.usingDefaults(requests);
+    historicalBars = new TiingoHistoricalBarData(daily, iex);
+    discovery = new TiingoInstrumentDiscovery(daily);
   }
 
   /** Test-only constructor for injecting a transport and local endpoint base URI. */
@@ -50,6 +52,8 @@ public final class TiingoMarketDataClient implements MarketDataClient {
     iex = new TiingoIexApi(baseUri, requests);
     tickerCatalog = new TiingoTickerCatalogApi(baseUri.resolve("/supported_tickers.zip"), requests);
     utilities = new TiingoUtilitiesApi(baseUri, requests);
+    historicalBars = new TiingoHistoricalBarData(daily, iex);
+    discovery = new TiingoInstrumentDiscovery(daily);
   }
 
   public static TiingoMarketDataClient create() {
@@ -63,13 +67,13 @@ public final class TiingoMarketDataClient implements MarketDataClient {
   }
 
   @Override
-  public List<DailyBar> getDailyBars(DailyBarRequest request) {
-    return daily.getBars(request);
+  public HistoricalBarData historicalBars() {
+    return historicalBars;
   }
 
   @Override
-  public List<IntradayBar> getIntradayBars(IntradayBarRequest request) {
-    return iex.getPrices(request);
+  public InstrumentDiscovery discovery() {
+    return discovery;
   }
 
   /** Searches Tiingo's utilities endpoint by ticker or asset name. */

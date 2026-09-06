@@ -98,11 +98,17 @@ class ChartStatusLineTest {
     FxTestSupport.runAndWait(() -> {
       ChartStatusLine statusLine = new ChartStatusLine("ACME", ChartInterval.DAILY);
 
-      statusLine.setStockSymbol("WIDGET");
+      statusLine.setInstrumentName("Widget Industries");
 
       Button symbolButton = assertInstanceOf(Button.class, statusLine.getChildren().get(0));
-      assertEquals("WIDGET", symbolButton.getText());
-      assertEquals("WIDGET  1D   O104.00  H108.25  L103.50  C107.75  Vol2.50 M", statusLine.text(PRICE_POINT));
+      assertEquals("Widget Industries", symbolButton.getText());
+      assertEquals(
+        "Widget Industries  1D   O104.00  H108.25  L103.50  C107.75  Vol2.50 M",
+        statusLine.text(PRICE_POINT)
+      );
+
+      statusLine.refreshView();
+      assertEquals("Widget Industries", assertInstanceOf(Button.class, statusLine.getChildren().get(0)).getText());
     });
   }
 }

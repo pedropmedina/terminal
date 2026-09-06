@@ -18,7 +18,16 @@ import java.util.concurrent.Executors;
 /** Owns the loaded daily-price history and fetches earlier pages on demand. */
 public final class MarketDataController implements AutoCloseable {
 
+  private static final System.Logger LOGGER = System.getLogger(MarketDataController.class.getName());
   private static final long HISTORY_PAGE_MONTHS = 6;
+
+  public record LoadedInstrument(String symbol, String displayName, List<PricePoint> pricePoints) {
+    public LoadedInstrument {
+      Objects.requireNonNull(symbol, "symbol");
+      Objects.requireNonNull(displayName, "displayName");
+      pricePoints = List.copyOf(pricePoints);
+    }
+  }
 
   private final MarketDataClient client;
   private String symbol;
@@ -41,13 +50,8 @@ public final class MarketDataController implements AutoCloseable {
     this.executor = Objects.requireNonNull(executor, "executor");
   }
 
-  public List<PricePoint> loadInitial() {
-    LocalDate endDate = LocalDate.now(clock);
-    List<PricePoint> initialPoints = loadPage(endDate.minusMonths(HISTORY_PAGE_MONTHS), endDate);
-    synchronized (this) {
-      addPoints(initialPoints);
-      return snapshot();
-    }
+  public synchronized CompletionStage<LoadedInstrument> loadInitial() {
+    return loadInstrument(symbol);
   }
 
   public CompletionStage<List<PricePoint>> loadEarlier() {
@@ -96,7 +100,7 @@ public final class MarketDataController implements AutoCloseable {
     }
   }
 
-  public CompletionStage<List<PricePoint>> loadInstrument(String symbol) {
+  public CompletionStage<LoadedInstrument> loadInstrument(String symbol) {
     String requestedSymbol = normalizeSymbol(symbol);
     long generation;
     synchronized (this) {
@@ -105,25 +109,41 @@ public final class MarketDataController implements AutoCloseable {
 
     LocalDate endDate = LocalDate.now(clock);
     LocalDate startDate = endDate.minusMonths(HISTORY_PAGE_MONTHS);
-    return CompletableFuture.supplyAsync(() -> loadPage(requestedSymbol, startDate, endDate), executor).handle(
-      (page, failure) -> {
-        synchronized (this) {
-          if (generation != instrumentLoadGeneration) {
-            throw new CancellationException("A newer instrument was selected");
-          }
-          earlierHistoryLoadInProgress = false;
-          if (failure != null) {
-            throw asCompletionException(failure);
-          }
-
-          this.symbol = requestedSymbol;
-          pointsByDate.clear();
-          allEarlierHistoryLoaded = false;
-          addPoints(page);
-          return snapshot();
-        }
+    return CompletableFuture.supplyAsync(() -> {
+      List<PricePoint> page = loadPage(requestedSymbol, startDate, endDate);
+      String displayName;
+      try {
+        displayName = client.discovery().getInstrument(requestedSymbol).name().orElse(requestedSymbol);
+      } catch (MarketDataException exception) {
+        LOGGER.log(
+          System.Logger.Level.WARNING,
+          "Could not load metadata for " +
+            requestedSymbol +
+            " (" +
+            exception.code() +
+            "); using the symbol as the display name. Check provider availability, credentials, and symbol support.",
+          exception
+        );
+        displayName = requestedSymbol;
       }
-    );
+      return new LoadedInstrument(requestedSymbol, displayName, page);
+    }, executor).handle((loaded, failure) -> {
+      synchronized (this) {
+        if (generation != instrumentLoadGeneration) {
+          throw new CancellationException("A newer instrument was selected");
+        }
+        earlierHistoryLoadInProgress = false;
+        if (failure != null) {
+          throw asCompletionException(failure);
+        }
+
+        this.symbol = requestedSymbol;
+        pointsByDate.clear();
+        allEarlierHistoryLoaded = false;
+        addPoints(loaded.pricePoints());
+        return new LoadedInstrument(requestedSymbol, loaded.displayName(), snapshot());
+      }
+    });
   }
 
   @Override
@@ -131,12 +151,9 @@ public final class MarketDataController implements AutoCloseable {
     executor.close();
   }
 
-  private List<PricePoint> loadPage(LocalDate startDate, LocalDate endDate) {
-    return loadPage(symbol, startDate, endDate);
-  }
-
   private List<PricePoint> loadPage(String symbol, LocalDate startDate, LocalDate endDate) {
     return client
+      .historicalBars()
       .getDailyBars(new DailyBarRequest(symbol, startDate, endDate))
       .stream()
       .map(MarketDataController::toPricePoint)

@@ -67,9 +67,9 @@ public final class Chart extends StackPane {
     });
   }
 
-  public void setInstrument(String symbol, List<PricePoint> pricePoints) {
+  public void setInstrument(String symbol, String displayName, List<PricePoint> pricePoints) {
     Objects.requireNonNull(symbol, "symbol");
-    statusLine.setStockSymbol(symbol);
+    statusLine.setInstrumentName(displayName);
     instrumentSearchDialog.setCurrentSymbol(symbol);
     canvas.setInstrumentPricePoints(pricePoints);
   }
