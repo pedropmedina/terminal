@@ -172,7 +172,7 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
   }
 
   private ToggleGroupItem createIntervalItem(ChartInterval interval) {
-    ToggleGroupItem item = new ToggleGroupItem(interval.displayName());
+    ToggleGroupItem item = new ToggleGroupItem(interval.name());
     item.getStyleClass().add("chart-interval-button");
     item.setFocusTraversable(true);
     item.setAccessibleText(interval.description());

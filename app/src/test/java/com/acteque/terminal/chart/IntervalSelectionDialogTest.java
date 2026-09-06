@@ -309,7 +309,7 @@ class ChartIntervalSelectionDialogTest {
       assertEquals(28, dialog.lookupAll(".chart-interval-button").size());
       ToggleGroupItem custom = button(dialog, "7H");
       custom.fire();
-      assertEquals("7H", selected.get().displayName());
+      assertEquals("7H", selected.get().name());
       assertEquals("Hours", selected.get().category());
     });
   }

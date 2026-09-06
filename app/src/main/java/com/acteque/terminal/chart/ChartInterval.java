@@ -33,33 +33,33 @@ public final class ChartInterval {
     }
   }
 
-  public static final ChartInterval ONE_TICK = standard("1T", "Ticks", "1 tick interval");
-  public static final ChartInterval TEN_TICKS = standard("10T", "Ticks", "10 tick interval");
-  public static final ChartInterval ONE_HUNDRED_TICKS = standard("100T", "Ticks", "100 tick interval");
-  public static final ChartInterval ONE_THOUSAND_TICKS = standard("1000T", "Ticks", "1000 tick interval");
-  public static final ChartInterval ONE_SECOND = standard("1S", "Seconds", "1 second interval");
-  public static final ChartInterval FIVE_SECONDS = standard("5S", "Seconds", "5 second interval");
-  public static final ChartInterval TEN_SECONDS = standard("10S", "Seconds", "10 second interval");
-  public static final ChartInterval FIFTEEN_SECONDS = standard("15S", "Seconds", "15 second interval");
-  public static final ChartInterval THIRTY_SECONDS = standard("30S", "Seconds", "30 second interval");
-  public static final ChartInterval FORTY_FIVE_SECONDS = standard("45S", "Seconds", "45 second interval");
-  public static final ChartInterval ONE_MINUTE = standard("1M", "Minutes", "1 minute interval");
-  public static final ChartInterval TWO_MINUTES = standard("2M", "Minutes", "2 minute interval");
-  public static final ChartInterval FIVE_MINUTES = standard("5M", "Minutes", "5 minute interval");
-  public static final ChartInterval TEN_MINUTES = standard("10M", "Minutes", "10 minute interval");
-  public static final ChartInterval FIFTEEN_MINUTES = standard("15M", "Minutes", "15 minute interval");
-  public static final ChartInterval THIRTY_MINUTES = standard("30M", "Minutes", "30 minute interval");
-  public static final ChartInterval FORTY_FIVE_MINUTES = standard("45M", "Minutes", "45 minute interval");
-  public static final ChartInterval ONE_HOUR = standard("1H", "Hours", "1 hour interval");
-  public static final ChartInterval TWO_HOURS = standard("2H", "Hours", "2 hour interval");
-  public static final ChartInterval THREE_HOURS = standard("3H", "Hours", "3 hour interval");
-  public static final ChartInterval FOUR_HOURS = standard("4H", "Hours", "4 hour interval");
-  public static final ChartInterval DAILY = standard("1D", "Days", "1 day interval");
-  public static final ChartInterval WEEKLY = standard("1W", "Days", "1 week interval");
-  public static final ChartInterval MONTHLY = standard("1Mo", "Days", "1 month interval");
-  public static final ChartInterval THREE_MONTHS = standard("3Mo", "Days", "3 month interval");
-  public static final ChartInterval SIX_MONTHS = standard("6Mo", "Days", "6 month interval");
-  public static final ChartInterval TWELVE_MONTHS = standard("12Mo", "Days", "12 month interval");
+  public static final ChartInterval ONE_TICK = standard(1, Classification.TICKS);
+  public static final ChartInterval TEN_TICKS = standard(10, Classification.TICKS);
+  public static final ChartInterval ONE_HUNDRED_TICKS = standard(100, Classification.TICKS);
+  public static final ChartInterval ONE_THOUSAND_TICKS = standard(1000, Classification.TICKS);
+  public static final ChartInterval ONE_SECOND = standard(1, Classification.SECONDS);
+  public static final ChartInterval FIVE_SECONDS = standard(5, Classification.SECONDS);
+  public static final ChartInterval TEN_SECONDS = standard(10, Classification.SECONDS);
+  public static final ChartInterval FIFTEEN_SECONDS = standard(15, Classification.SECONDS);
+  public static final ChartInterval THIRTY_SECONDS = standard(30, Classification.SECONDS);
+  public static final ChartInterval FORTY_FIVE_SECONDS = standard(45, Classification.SECONDS);
+  public static final ChartInterval ONE_MINUTE = standard(1, Classification.MINUTES);
+  public static final ChartInterval TWO_MINUTES = standard(2, Classification.MINUTES);
+  public static final ChartInterval FIVE_MINUTES = standard(5, Classification.MINUTES);
+  public static final ChartInterval TEN_MINUTES = standard(10, Classification.MINUTES);
+  public static final ChartInterval FIFTEEN_MINUTES = standard(15, Classification.MINUTES);
+  public static final ChartInterval THIRTY_MINUTES = standard(30, Classification.MINUTES);
+  public static final ChartInterval FORTY_FIVE_MINUTES = standard(45, Classification.MINUTES);
+  public static final ChartInterval ONE_HOUR = standard(1, Classification.HOURS);
+  public static final ChartInterval TWO_HOURS = standard(2, Classification.HOURS);
+  public static final ChartInterval THREE_HOURS = standard(3, Classification.HOURS);
+  public static final ChartInterval FOUR_HOURS = standard(4, Classification.HOURS);
+  public static final ChartInterval DAILY = standard(1, Classification.DAYS);
+  public static final ChartInterval WEEKLY = standard(1, Classification.WEEKS);
+  public static final ChartInterval MONTHLY = standard(1, Classification.MONTHS);
+  public static final ChartInterval THREE_MONTHS = standard(3, Classification.MONTHS);
+  public static final ChartInterval SIX_MONTHS = standard(6, Classification.MONTHS);
+  public static final ChartInterval TWELVE_MONTHS = standard(12, Classification.MONTHS);
 
   private static final ChartInterval[] STANDARD_VALUES = {
     ONE_TICK,
@@ -99,14 +99,18 @@ public final class ChartInterval {
     Locale.US
   );
 
-  private final String displayName;
+  private final int amount;
+  private final Classification classification;
+  private final String name;
   private final String category;
   private final String description;
   private final double minimumLabelSpacing;
 
-  private ChartInterval(String displayName, String category, String description, double minimumLabelSpacing) {
-    this.displayName = displayName;
-    this.category = category;
+  private ChartInterval(int amount, Classification classification, String description, double minimumLabelSpacing) {
+    this.amount = amount;
+    this.classification = classification;
+    this.name = amount + classification.suffix;
+    this.category = classification.category;
     this.description = description;
     this.minimumLabelSpacing = minimumLabelSpacing;
   }
@@ -117,24 +121,31 @@ public final class ChartInterval {
     }
     Classification selectedClassification = java.util.Objects.requireNonNull(classification, "classification");
     String pluralizedUnit = amount == 1 ? selectedClassification.unit : selectedClassification.unit + "s";
-    return new ChartInterval(
-      amount + selectedClassification.suffix,
-      selectedClassification.category,
-      amount + " " + pluralizedUnit + " interval",
-      56.0
-    );
+    return new ChartInterval(amount, selectedClassification, amount + " " + pluralizedUnit + " interval", 56.0);
   }
 
   public static ChartInterval[] values() {
     return STANDARD_VALUES.clone();
   }
 
-  private static ChartInterval standard(String displayName, String category, String description) {
-    return new ChartInterval(displayName, category, description, 56.0);
+  private static ChartInterval standard(int amount, Classification classification) {
+    return new ChartInterval(amount, classification, amount + " " + classification.unit + " interval", 56.0);
+  }
+
+  String name() {
+    return name;
   }
 
   String displayName() {
-    return displayName;
+    if (amount == 1) {
+      return switch (classification) {
+        case DAYS -> "Daily";
+        case WEEKS -> "Weekly";
+        case MONTHS -> "Monthly";
+        default -> "1 " + classification.unit;
+      };
+    }
+    return amount + " " + classification.unit + "s";
   }
 
   String category() {
@@ -148,7 +159,7 @@ public final class ChartInterval {
   boolean matches(String normalizedQuery) {
     return (
       normalizedQuery.isEmpty() ||
-      displayName.toLowerCase(Locale.ROOT).equals(normalizedQuery) ||
+      name.toLowerCase(Locale.ROOT).equals(normalizedQuery) ||
       category.toLowerCase(Locale.ROOT).contains(normalizedQuery) ||
       description.toLowerCase(Locale.ROOT).contains(normalizedQuery)
     );

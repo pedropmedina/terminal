@@ -14,7 +14,7 @@
 
 .chart-status-line {
   -fx-alignment: center-left;
-  -fx-spacing: 12px;
+  -fx-spacing: 2px;
 }
 
 .chart-status-label {
@@ -28,6 +28,14 @@
 
 .chart-interval-button {
   -fx-font-size: 14px;
+}
+
+.chart-status-line > .core-button.chart-symbol-button {
+  -fx-padding: 0 4px 0 4px;
+}
+
+.chart-status-line > .core-button.chart-interval-button {
+  -fx-padding: 0 4px 0 4px;
 }
 
 .chart-canvas {
