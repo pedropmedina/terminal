@@ -1,15 +1,21 @@
 package com.acteque.terminal.chart;
 
+import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.RefreshableView;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Button.Size;
 import com.acteque.terminal.ui.core.Button.Variant;
+import java.net.URI;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 
@@ -27,11 +33,23 @@ final class ChartStatusLine extends HBox implements RefreshableView {
   private Button symbolSection;
   private Button intervalSection;
   private Label ohlcv;
+  private InstrumentLogo logo;
+  private Image logoImage;
+  private final Hyperlink logoAttribution = new Hyperlink();
+  private Consumer<URI> openLink = ignored -> {};
 
   ChartStatusLine(String instrumentName, ChartInterval interval) {
     this.instrumentName = Objects.requireNonNull(instrumentName, "instrumentName");
     this.interval = Objects.requireNonNull(interval, "interval");
     getStyleClass().add("chart-status-line");
+    logoAttribution.getStyleClass().add("chart-logo-attribution");
+    logoAttribution.setMinWidth(USE_PREF_SIZE);
+    logoAttribution.managedProperty().bind(logoAttribution.visibleProperty());
+    logoAttribution.setOnAction(ignored -> {
+      if (logo != null) {
+        openLink.accept(logo.attributionUri());
+      }
+    });
 
     refreshView();
     ChartReloadHooks.register(this);
@@ -58,6 +76,58 @@ final class ChartStatusLine extends HBox implements RefreshableView {
   void setInstrumentName(String instrumentName) {
     this.instrumentName = Objects.requireNonNull(instrumentName, "instrumentName");
     symbolSection.setText(instrumentName);
+    clearInstrumentLogo();
+  }
+
+  Hyperlink logoAttribution() {
+    return logoAttribution;
+  }
+
+  void onOpenLink(Consumer<URI> callback) {
+    openLink = Objects.requireNonNull(callback, "callback");
+  }
+
+  void setInstrumentLogo(InstrumentLogo logo, Image image) {
+    Objects.requireNonNull(logo, "logo");
+    Objects.requireNonNull(image, "image");
+    if (image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0) {
+      clearInstrumentLogo();
+      return;
+    }
+    this.logo = logo;
+    this.logoImage = image;
+    refreshLogo();
+  }
+
+  private void clearInstrumentLogo() {
+    logo = null;
+    logoImage = null;
+    refreshLogo();
+  }
+
+  private void refreshLogo() {
+    StackPane slot = new StackPane();
+    slot.getStyleClass().add("chart-instrument-logo");
+    slot.setMouseTransparent(true);
+    if (logoImage == null) {
+      String name = instrumentName.strip();
+      Label fallback = new Label(
+        name.isEmpty() ? "?" : name.substring(0, name.offsetByCodePoints(0, 1)).toUpperCase(Locale.ROOT)
+      );
+      fallback.getStyleClass().add("chart-instrument-logo-fallback");
+      slot.getChildren().setAll(fallback);
+    } else {
+      ImageView imageView = new ImageView(logoImage);
+      imageView.setPreserveRatio(true);
+      imageView.fitWidthProperty().bind(slot.widthProperty());
+      imageView.fitHeightProperty().bind(slot.heightProperty());
+      slot.getChildren().setAll(imageView);
+    }
+    symbolSection.setGraphic(slot);
+    logoAttribution.setText(logo == null ? "" : logo.attributionText());
+    logoAttribution.setAccessibleText(logo == null ? "" : logo.attributionText() + ", opens in browser");
+    logoAttribution.setVisible(logo != null);
+    logoAttribution.setVisited(false);
   }
 
   void setInterval(ChartInterval interval) {
@@ -77,6 +147,7 @@ final class ChartStatusLine extends HBox implements RefreshableView {
     symbolSection.getStyleClass().add("chart-symbol-button");
     symbolSection.setAccessibleText("Select symbol or instrument");
     symbolSection.setOnAction(ignored -> instrumentClickHandler.run());
+    refreshLogo();
 
     intervalSection = new Button(interval.displayName(), Variant.GHOST, Size.DEFAULT);
     intervalSection.getStyleClass().add("chart-interval-button");

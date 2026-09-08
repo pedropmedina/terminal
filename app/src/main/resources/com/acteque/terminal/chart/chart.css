@@ -12,6 +12,39 @@
   -fx-border-radius: 8px;
 }
 
+.chart-status-overlay {
+  -fx-alignment: bottom-left;
+  -fx-padding: 0 12px 38px 12px;
+}
+
+.chart-instrument-logo {
+  -fx-min-width: 20px;
+  -fx-pref-width: 20px;
+  -fx-max-width: 20px;
+  -fx-min-height: 20px;
+  -fx-pref-height: 20px;
+  -fx-max-height: 20px;
+  -fx-background-color: -app-secondary;
+  -fx-background-radius: 4px;
+}
+
+.chart-instrument-logo-fallback {
+  -fx-text-fill: -app-secondary-foreground;
+  -fx-font-size: 12px;
+  -fx-font-weight: bold;
+}
+
+.chart-logo-attribution {
+  -fx-font-size: 12pt;
+  -fx-text-fill: -app-foreground;
+  -fx-underline: true;
+  -fx-padding: 2px 4px;
+}
+
+.chart-logo-attribution:focused {
+  -fx-border-color: -app-ring;
+}
+
 .chart-status-line {
   -fx-alignment: center-left;
   -fx-spacing: 2px;
@@ -24,6 +57,7 @@
 
 .chart-symbol-button {
   -fx-font-size: 14px;
+  -fx-graphic-text-gap: 6px;
 }
 
 .chart-interval-button {

@@ -2,8 +2,11 @@ package com.acteque.terminal;
 
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.ChartLogoLoader;
+import com.acteque.terminal.marketdata.LogoMarketDataClient;
 import com.acteque.terminal.marketdata.MarketDataController;
 import com.acteque.terminal.marketdata.MarketDataController.LoadedInstrument;
+import com.acteque.terminal.marketdata.provider.elbstream.ElbstreamInstrumentLogos;
 import com.acteque.terminal.marketdata.provider.tiingo.TiingoMarketDataClient;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
@@ -30,6 +33,7 @@ public class App extends Application {
   private static final double MIN_CANVAS_HEIGHT = 460.0;
 
   private MarketDataController marketData;
+  private ChartLogoLoader logoLoader;
   private long instrumentLoadGeneration;
 
   public static void main(String[] args) {
@@ -39,8 +43,13 @@ public class App extends Application {
   @Override
   public void start(Stage stage) {
     TiingoMarketDataClient client = TiingoMarketDataClient.create();
-    marketData = new MarketDataController(client, STOCK_SYMBOL);
+    marketData = new MarketDataController(
+      new LogoMarketDataClient(client, ElbstreamInstrumentLogos.create()),
+      STOCK_SYMBOL
+    );
+    logoLoader = new ChartLogoLoader(marketData::loadLogo, Platform::runLater);
     Chart chartView = new Chart(List.of(), STOCK_SYMBOL, DATA_INTERVAL, client.tickerCatalog);
+    chartView.setOnOpenLink(uri -> getHostServices().showDocument(uri.toString()));
     chartView.setOnEarlierHistoryRequested(() -> {
       long generation = instrumentLoadGeneration;
       marketData.loadEarlier().whenComplete((updatedPoints, failure) -> {
@@ -82,6 +91,8 @@ public class App extends Application {
     Stage stage
   ) {
     long generation = ++instrumentLoadGeneration;
+    logoLoader.cancel();
+    marketData.cancelLogoLoad();
     load.whenComplete((instrument, failure) ->
       Platform.runLater(() -> {
         // A completed background load can still be stale by the time this UI task runs.
@@ -97,6 +108,7 @@ public class App extends Application {
         }
         chartView.setInstrument(instrument.symbol(), instrument.displayName(), instrument.pricePoints());
         stage.setTitle(instrument.symbol());
+        logoLoader.load(instrument.details().logo(), chartView::setInstrumentLogo);
       })
     );
   }
@@ -104,6 +116,9 @@ public class App extends Application {
   @Override
   public void stop() {
     ++instrumentLoadGeneration;
+    if (logoLoader != null) {
+      logoLoader.cancel();
+    }
     if (marketData != null) {
       marketData.close();
     }

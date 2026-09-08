@@ -1,13 +1,17 @@
 package com.acteque.terminal.chart;
 
+import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
 import com.acteque.terminal.search.InstrumentSearchDialog;
+import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 
 /** Composes the price chart canvas with its controls and overlays. */
 public final class Chart extends StackPane {
@@ -45,7 +49,14 @@ public final class Chart extends StackPane {
 
     canvas = new ChartCanvas(pricePoints, interval, statusLine);
 
-    getChildren().setAll(canvas, menu, statusLine, instrumentSearchDialog, intervalSelectionDialog);
+    VBox statusContent = new VBox(statusLine.logoAttribution(), statusLine);
+    statusContent.setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
+    statusContent.setPickOnBounds(false);
+    StackPane statusOverlay = new StackPane(statusContent);
+    statusOverlay.getStyleClass().add("chart-status-overlay");
+    statusOverlay.setPickOnBounds(false);
+
+    getChildren().setAll(canvas, menu, statusOverlay, instrumentSearchDialog, intervalSelectionDialog);
 
     canvas.widthProperty().bind(widthProperty());
     canvas.heightProperty().bind(heightProperty());
@@ -72,6 +83,14 @@ public final class Chart extends StackPane {
     statusLine.setInstrumentName(displayName);
     instrumentSearchDialog.setCurrentSymbol(symbol);
     canvas.setInstrumentPricePoints(pricePoints);
+  }
+
+  public void setInstrumentLogo(InstrumentLogo logo, Image image) {
+    statusLine.setInstrumentLogo(logo, image);
+  }
+
+  public void setOnOpenLink(Consumer<URI> callback) {
+    statusLine.onOpenLink(callback);
   }
 
   public void setPricePoints(List<PricePoint> pricePoints) {

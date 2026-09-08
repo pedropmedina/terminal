@@ -7,13 +7,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NavigableMap;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RejectedExecutionException;
 
 /** Owns the loaded daily-price history and fetches earlier pages on demand. */
 public final class MarketDataController implements AutoCloseable {
@@ -21,8 +25,23 @@ public final class MarketDataController implements AutoCloseable {
   private static final System.Logger LOGGER = System.getLogger(MarketDataController.class.getName());
   private static final long HISTORY_PAGE_MONTHS = 6;
 
-  public record LoadedInstrument(String symbol, String displayName, List<PricePoint> pricePoints) {
+  public record LoadedInstrument(
+    String symbol,
+    String displayName,
+    List<PricePoint> pricePoints,
+    InstrumentDetails details
+  ) {
+    public LoadedInstrument(String symbol, String displayName, List<PricePoint> pricePoints) {
+      this(
+        symbol,
+        displayName,
+        pricePoints,
+        new InstrumentDetails(symbol, Optional.of(displayName), Optional.empty(), Optional.empty())
+      );
+    }
+
     public LoadedInstrument {
+      Objects.requireNonNull(details, "details");
       Objects.requireNonNull(symbol, "symbol");
       Objects.requireNonNull(displayName, "displayName");
       pricePoints = List.copyOf(pricePoints);
@@ -38,6 +57,7 @@ public final class MarketDataController implements AutoCloseable {
   private boolean earlierHistoryLoadInProgress;
   private boolean allEarlierHistoryLoaded;
   private long instrumentLoadGeneration;
+  private FutureTask<Optional<byte[]>> logoTask;
 
   public MarketDataController(MarketDataClient client, String symbol) {
     this(client, symbol, Clock.systemDefaultZone(), Executors.newVirtualThreadPerTaskExecutor());
@@ -111,9 +131,9 @@ public final class MarketDataController implements AutoCloseable {
     LocalDate startDate = endDate.minusMonths(HISTORY_PAGE_MONTHS);
     return CompletableFuture.supplyAsync(() -> {
       List<PricePoint> page = loadPage(requestedSymbol, startDate, endDate);
-      String displayName;
+      InstrumentDetails details;
       try {
-        displayName = client.discovery().getInstrument(requestedSymbol).name().orElse(requestedSymbol);
+        details = client.discovery().getInstrument(requestedSymbol);
       } catch (MarketDataException exception) {
         LOGGER.log(
           System.Logger.Level.WARNING,
@@ -124,9 +144,9 @@ public final class MarketDataController implements AutoCloseable {
             "); using the symbol as the display name. Check provider availability, credentials, and symbol support.",
           exception
         );
-        displayName = requestedSymbol;
+        details = new InstrumentDetails(requestedSymbol, Optional.empty(), Optional.empty(), Optional.empty());
       }
-      return new LoadedInstrument(requestedSymbol, displayName, page);
+      return new LoadedInstrument(requestedSymbol, details.name().orElse(requestedSymbol), page, details);
     }, executor).handle((loaded, failure) -> {
       synchronized (this) {
         if (generation != instrumentLoadGeneration) {
@@ -141,13 +161,62 @@ public final class MarketDataController implements AutoCloseable {
         pointsByDate.clear();
         allEarlierHistoryLoaded = false;
         addPoints(loaded.pricePoints());
-        return new LoadedInstrument(requestedSymbol, loaded.displayName(), snapshot());
+        return new LoadedInstrument(requestedSymbol, loaded.displayName(), snapshot(), loaded.details());
       }
     });
   }
 
+  /** Loads a logo independently of history, interrupting any previous logo request. */
+  public synchronized CompletionStage<Optional<byte[]>> loadLogo(InstrumentLogo logo) {
+    Objects.requireNonNull(logo, "logo");
+    cancelLogoLoad();
+    CompletableFuture<Optional<byte[]>> result = new CompletableFuture<>();
+    FutureTask<Optional<byte[]>> task = new FutureTask<>(() -> client.instrumentLogos().load(logo)) {
+      @Override
+      protected void done() {
+        synchronized (MarketDataController.this) {
+          if (logoTask == this) {
+            logoTask = null;
+          }
+        }
+        try {
+          result.complete(get());
+        } catch (CancellationException exception) {
+          result.cancel(false);
+        } catch (ExecutionException exception) {
+          result.completeExceptionally(exception.getCause());
+        } catch (InterruptedException exception) {
+          Thread.currentThread().interrupt();
+          result.completeExceptionally(exception);
+        }
+      }
+    };
+    logoTask = task;
+    try {
+      executor.execute(task);
+    } catch (RejectedExecutionException exception) {
+      task.cancel(false);
+      throw exception;
+    }
+    return result;
+  }
+
+  /** Interrupts the pending logo task and cancels its returned stage; safe when none is pending. */
+  public synchronized void cancelLogoLoad() {
+    FutureTask<Optional<byte[]>> task = logoTask;
+    logoTask = null;
+    if (task != null) {
+      task.cancel(true);
+    }
+  }
+
   @Override
   public void close() {
+    synchronized (this) {
+      // Reject new submissions before cancellation callbacks can attempt another logo load.
+      executor.shutdown();
+      cancelLogoLoad();
+    }
     executor.close();
   }
 

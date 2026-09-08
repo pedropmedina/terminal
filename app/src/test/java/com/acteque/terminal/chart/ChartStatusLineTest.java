@@ -1,16 +1,28 @@
 package com.acteque.terminal.chart;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.test.FxTestSupport;
+import com.acteque.terminal.ui.AppTheme;
+import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Button.Size;
 import com.acteque.terminal.ui.core.Button.Variant;
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.junit.jupiter.api.Test;
 
 class ChartStatusLineTest {
@@ -23,6 +35,70 @@ class ChartStatusLineTest {
     107.75,
     2_500_000
   );
+
+  private static final InstrumentLogo LOGO = new InstrumentLogo(
+    URI.create("https://images.example.com/ACME.png"),
+    "Logos by Example",
+    URI.create("https://example.com")
+  );
+
+  @Test
+  void displaysAFixedSizeFallbackWithoutAttributionUntilTheLogoArrives() {
+    FxTestSupport.runAndWait(() -> {
+      ChartStatusLine statusLine = new ChartStatusLine("ACME", ChartInterval.DAILY);
+      StackPane root = new StackPane(new VBox(statusLine.logoAttribution(), statusLine));
+      Scene scene = new Scene(root, 800, 500);
+      ThemeManager themes = new ThemeManager(scene, AppTheme.LIGHT);
+      root.applyCss();
+      root.layout();
+      Button symbol = assertInstanceOf(Button.class, statusLine.getChildren().getFirst());
+      StackPane slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
+      assertEquals("A", assertInstanceOf(Label.class, slot.getChildren().getFirst()).getText());
+      assertEquals(20, slot.getWidth());
+      assertEquals(20, slot.getHeight());
+      assertFalse(statusLine.logoAttribution().isVisible());
+      assertFalse(statusLine.logoAttribution().isManaged());
+
+      statusLine.setInstrumentLogo(LOGO, new WritableImage(64, 64));
+      root.applyCss();
+      root.layout();
+      slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
+      assertEquals(20, slot.getWidth());
+      assertEquals(20, slot.getHeight());
+      assertTrue(statusLine.logoAttribution().isVisible());
+      assertTrue(statusLine.logoAttribution().isManaged());
+      assertTrue(statusLine.logoAttribution().getFont().getSize() >= 16, "Attribution must be at least 12pt");
+      themes.setTheme(AppTheme.DARK);
+      root.applyCss();
+      assertTrue(statusLine.logoAttribution().getFont().getSize() >= 16);
+    });
+  }
+
+  @Test
+  void preservesTheLogoAndClickableAttributionAcrossViewRefreshesAndClearsThemOnInstrumentChanges() {
+    FxTestSupport.runAndWait(() -> {
+      ChartStatusLine statusLine = new ChartStatusLine("ACME", ChartInterval.DAILY);
+      WritableImage image = new WritableImage(64, 64);
+      AtomicReference<URI> opened = new AtomicReference<>();
+      statusLine.onOpenLink(opened::set);
+      statusLine.setInstrumentLogo(LOGO, image);
+      statusLine.refreshView();
+
+      Button symbol = assertInstanceOf(Button.class, statusLine.getChildren().getFirst());
+      StackPane slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
+      assertSame(image, assertInstanceOf(ImageView.class, slot.getChildren().getFirst()).getImage());
+      assertEquals(LOGO.attributionText(), statusLine.logoAttribution().getText());
+      statusLine.logoAttribution().fire();
+      assertEquals(LOGO.attributionUri(), opened.get());
+
+      statusLine.setInstrumentName("Widget Industries");
+      slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
+      assertEquals("W", assertInstanceOf(Label.class, slot.getChildren().getFirst()).getText());
+      assertFalse(statusLine.logoAttribution().isVisible());
+      statusLine.refreshView();
+      assertFalse(statusLine.logoAttribution().isVisible());
+    });
+  }
 
   @Test
   void formatsLongIntervalNamesForEveryClassification() {

@@ -10,4 +10,9 @@ public interface MarketDataClient {
 
   /** Returns this client's non-null, reusable instrument-discovery feature. */
   InstrumentDiscovery discovery();
+
+  /** Returns this client's non-null, reusable logo feature (unsupported by default). */
+  default InstrumentLogos instrumentLogos() {
+    return InstrumentLogos.NONE;
+  }
 }
