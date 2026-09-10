@@ -34,15 +34,12 @@
   -fx-font-weight: bold;
 }
 
-.chart-logo-attribution {
-  -fx-font-size: 12pt;
-  -fx-text-fill: -app-foreground;
-  -fx-underline: true;
-  -fx-padding: 2px 4px;
+.chart-symbol-tooltip-content {
+  -fx-spacing: 2px;
 }
 
-.chart-logo-attribution:focused {
-  -fx-border-color: -app-ring;
+.chart-symbol-tooltip-attribution {
+  -fx-font-size: 12pt;
 }
 
 .chart-status-line {

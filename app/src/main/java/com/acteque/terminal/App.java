@@ -49,7 +49,6 @@ public class App extends Application {
     );
     logoLoader = new ChartLogoLoader(marketData::loadLogo, Platform::runLater);
     Chart chartView = new Chart(List.of(), STOCK_SYMBOL, DATA_INTERVAL, client.tickerCatalog);
-    chartView.setOnOpenLink(uri -> getHostServices().showDocument(uri.toString()));
     chartView.setOnEarlierHistoryRequested(() -> {
       long generation = instrumentLoadGeneration;
       marketData.loadEarlier().whenComplete((updatedPoints, failure) -> {

@@ -3,7 +3,6 @@ package com.acteque.terminal.chart;
 import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
 import com.acteque.terminal.search.InstrumentSearchDialog;
-import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -44,14 +43,17 @@ public final class Chart extends StackPane {
     statusLine.onInstrumentClick(() -> instrumentSearchOpen.set(true));
     statusLine.onIntervalClick(() -> intervalSelectionOpen.set(true));
     intervalSelectionDialog.onIntervalSelected(statusLine::setInterval);
+    instrumentSearchOpen.addListener((ignored, wasOpen, isOpen) -> dismissTooltipsWhenModalOpens(isOpen));
+    intervalSelectionOpen.addListener((ignored, wasOpen, isOpen) -> dismissTooltipsWhenModalOpens(isOpen));
 
     ChartMenu menu = new ChartMenu();
 
     canvas = new ChartCanvas(pricePoints, interval, statusLine);
 
-    VBox statusContent = new VBox(statusLine.logoAttribution(), statusLine);
+    VBox statusContent = new VBox(statusLine);
     statusContent.setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
     statusContent.setPickOnBounds(false);
+    statusContent.disableProperty().bind(instrumentSearchOpen.or(intervalSelectionOpen));
     StackPane statusOverlay = new StackPane(statusContent);
     statusOverlay.getStyleClass().add("chart-status-overlay");
     statusOverlay.setPickOnBounds(false);
@@ -89,16 +91,18 @@ public final class Chart extends StackPane {
     statusLine.setInstrumentLogo(logo, image);
   }
 
-  public void setOnOpenLink(Consumer<URI> callback) {
-    statusLine.onOpenLink(callback);
-  }
-
   public void setPricePoints(List<PricePoint> pricePoints) {
     canvas.setPricePoints(pricePoints);
   }
 
   public void drawChart() {
     canvas.drawChart();
+  }
+
+  private void dismissTooltipsWhenModalOpens(boolean isOpen) {
+    if (isOpen) {
+      statusLine.dismissTooltips();
+    }
   }
 
   @Override

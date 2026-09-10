@@ -1,0 +1,123 @@
+package com.acteque.terminal.chart;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.acteque.terminal.marketdata.provider.tiingo.TiingoMarketDataClient;
+import com.acteque.terminal.test.FxTestSupport;
+import com.acteque.terminal.ui.AppTheme;
+import com.acteque.terminal.ui.ThemeManager;
+import com.acteque.terminal.ui.core.Button;
+import com.acteque.terminal.ui.core.Tooltip;
+import com.acteque.terminal.ui.core.dialog.Dialog;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import javafx.application.Platform;
+import javafx.geometry.Bounds;
+import javafx.scene.Scene;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.stage.Stage;
+import org.junit.jupiter.api.Test;
+
+class ChartTest {
+
+  @Test
+  void closingAnIntervalModalDoesNotReshowTheTriggerTooltipWhenFocusReturns() throws InterruptedException {
+    AtomicReference<Button> buttonReference = new AtomicReference<>();
+    AtomicReference<Tooltip> tooltipReference = new AtomicReference<>();
+    AtomicReference<Dialog> dialogReference = new AtomicReference<>();
+    AtomicReference<Stage> stageReference = new AtomicReference<>();
+
+    FxTestSupport.runAndWait(() -> {
+      TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
+      Chart chart = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      Stage stage = new Stage();
+      stage.setX(200.0);
+      stage.setY(200.0);
+      stage.setScene(new Scene(chart, 800.0, 500.0));
+      new ThemeManager(stage.getScene(), AppTheme.LIGHT);
+      Platform.setImplicitExit(false);
+      stage.show();
+      chart.applyCss();
+      chart.layout();
+
+      ChartStatusLine statusLine = (ChartStatusLine) chart.lookup(".chart-status-line");
+      Button intervalButton = (Button) statusLine.getChildren().get(1);
+      Tooltip tooltip = statusLine.intervalTooltip();
+      Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
+      buttonReference.set(intervalButton);
+      tooltipReference.set(tooltip);
+      dialogReference.set(dialog);
+      stageReference.set(stage);
+    });
+
+    try {
+      FxTestSupport.runAndWait(() -> stageReference.get().requestFocus());
+
+      FxTestSupport.runAndWait(() -> {
+        Button intervalButton = buttonReference.get();
+        Tooltip tooltip = tooltipReference.get();
+        Bounds bounds = intervalButton.localToScreen(intervalButton.getBoundsInLocal());
+        tooltip.show(intervalButton, bounds.getMinX(), bounds.getMinY());
+        assertTrue(tooltip.isShowing());
+
+        click(intervalButton, bounds);
+
+        assertTrue(dialogReference.get().isOpen());
+        assertTrue(intervalButton.isDisabled());
+        assertFalse(tooltip.isShowing());
+      });
+
+      FxTestSupport.runAndWait(() -> {
+        assertTrue(buttonReference.get().isDisabled());
+        assertFalse(tooltipReference.get().isShowing());
+        dialogReference.get().close();
+      });
+
+      FxTestSupport.runAndWait(() -> {
+        assertFalse(buttonReference.get().isDisabled());
+        assertTrue(buttonReference.get().isFocused());
+        assertFalse(buttonReference.get().isFocusVisible());
+        assertFalse(tooltipReference.get().isShowing());
+      });
+
+      Thread.sleep(500L);
+      FxTestSupport.runAndWait(() -> assertFalse(tooltipReference.get().isShowing()));
+    } finally {
+      FxTestSupport.runAndWait(() -> stageReference.get().close());
+    }
+  }
+
+  private static void click(Button button, Bounds screenBounds) {
+    button.fireEvent(mouseEvent(MouseEvent.MOUSE_PRESSED, screenBounds, true));
+    button.fireEvent(mouseEvent(MouseEvent.MOUSE_RELEASED, screenBounds, false));
+  }
+
+  private static MouseEvent mouseEvent(
+    javafx.event.EventType<MouseEvent> eventType,
+    Bounds screenBounds,
+    boolean primaryButtonDown
+  ) {
+    return new MouseEvent(
+      eventType,
+      screenBounds.getWidth() / 2.0,
+      screenBounds.getHeight() / 2.0,
+      (screenBounds.getMinX() + screenBounds.getMaxX()) / 2.0,
+      (screenBounds.getMinY() + screenBounds.getMaxY()) / 2.0,
+      MouseButton.PRIMARY,
+      1,
+      false,
+      false,
+      false,
+      false,
+      primaryButtonDown,
+      false,
+      false,
+      false,
+      false,
+      true,
+      null
+    );
+  }
+}

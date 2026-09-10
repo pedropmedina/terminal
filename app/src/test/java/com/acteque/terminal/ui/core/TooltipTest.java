@@ -9,13 +9,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
+import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.TraversalDirection;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -71,6 +76,133 @@ class TooltipTest {
 
       tooltip.uninstall(button);
       assertFalse(button.getProperties().containsValue(tooltip));
+    });
+  }
+
+  @Test
+  void dismissCancelsAPendingKeyboardFocusDisplay() throws InterruptedException {
+    AtomicReference<Tooltip> tooltipReference = new AtomicReference<>();
+    AtomicReference<Stage> stageReference = new AtomicReference<>();
+    FxTestSupport.runAndWait(() -> {
+      Button anchor = new Button("Anchor");
+      Stage stage = new Stage();
+      stage.setScene(new Scene(new StackPane(anchor), 400.0, 300.0));
+      Platform.setImplicitExit(false);
+      stage.show();
+
+      Tooltip tooltip = new Tooltip("Tooltip content");
+      tooltip.setShowDelay(Duration.millis(50.0));
+      tooltip.install(anchor);
+      anchor.requestFocus();
+      tooltip.showFromFocus(anchor);
+      tooltip.dismiss();
+      tooltipReference.set(tooltip);
+      stageReference.set(stage);
+    });
+
+    try {
+      Thread.sleep(150L);
+      FxTestSupport.runAndWait(() -> assertFalse(tooltipReference.get().isShowing()));
+    } finally {
+      FxTestSupport.runAndWait(() -> stageReference.get().close());
+    }
+  }
+
+  @Test
+  void keyboardTraversalStillShowsTheTooltip() throws InterruptedException {
+    AtomicReference<Tooltip> tooltipReference = new AtomicReference<>();
+    AtomicReference<Stage> stageReference = new AtomicReference<>();
+    FxTestSupport.runAndWait(() -> {
+      Button before = new Button("Before");
+      Button anchor = new Button("Anchor");
+      Stage stage = new Stage();
+      stage.setScene(new Scene(new VBox(before, anchor), 400.0, 300.0));
+      Platform.setImplicitExit(false);
+      stage.show();
+
+      Tooltip tooltip = new Tooltip("Tooltip content");
+      tooltip.setShowDelay(Duration.millis(50.0));
+      tooltip.install(anchor);
+      assertTrue(before.requestFocusTraversal(TraversalDirection.NEXT));
+      assertTrue(anchor.isFocused());
+      assertTrue(anchor.isFocusVisible());
+      tooltipReference.set(tooltip);
+      stageReference.set(stage);
+    });
+
+    try {
+      Thread.sleep(150L);
+      FxTestSupport.runAndWait(() -> assertTrue(tooltipReference.get().isShowing()));
+    } finally {
+      FxTestSupport.runAndWait(() -> stageReference.get().close());
+    }
+  }
+
+  @Test
+  void pointerExitDismissesATooltipShownAfterFocusReturns() throws InterruptedException {
+    AtomicReference<Button> anchorReference = new AtomicReference<>();
+    AtomicReference<Tooltip> tooltipReference = new AtomicReference<>();
+    AtomicReference<Stage> stageReference = new AtomicReference<>();
+    FxTestSupport.runAndWait(() -> {
+      Button anchor = new Button("Anchor");
+      Stage stage = new Stage();
+      stage.setX(200.0);
+      stage.setY(200.0);
+      stage.setScene(new Scene(new StackPane(anchor), 400.0, 300.0));
+      Platform.setImplicitExit(false);
+      stage.show();
+
+      Tooltip tooltip = new Tooltip("Tooltip content");
+      tooltip.setShowDelay(Duration.millis(50.0));
+      tooltip.install(anchor);
+      stage.requestFocus();
+      anchor.requestFocus();
+      tooltip.showFromFocus(anchor);
+      anchorReference.set(anchor);
+      tooltipReference.set(tooltip);
+      stageReference.set(stage);
+    });
+
+    try {
+      Thread.sleep(150L);
+      FxTestSupport.runAndWait(() -> {
+        Tooltip tooltip = tooltipReference.get();
+        assertTrue(tooltip.isShowing());
+        anchorReference.get().fireEvent(mouseExited());
+        assertFalse(tooltip.isShowing());
+        assertTrue(anchorReference.get().getProperties().containsValue(tooltip));
+      });
+    } finally {
+      FxTestSupport.runAndWait(() -> stageReference.get().close());
+    }
+  }
+
+  @Test
+  void disablingAnAnchorDismissesItsVisibleTooltip() {
+    FxTestSupport.runAndWait(() -> {
+      Button anchor = new Button("Anchor");
+      StackPane root = new StackPane(anchor);
+      Stage stage = new Stage();
+      stage.setX(200.0);
+      stage.setY(200.0);
+      stage.setScene(new Scene(root, 400.0, 300.0));
+      Platform.setImplicitExit(false);
+      stage.show();
+
+      try {
+        Tooltip tooltip = new Tooltip("Tooltip content");
+        tooltip.install(anchor);
+        Bounds bounds = anchor.localToScreen(anchor.getBoundsInLocal());
+        tooltip.show(anchor, bounds.getMinX(), bounds.getMinY());
+        assertTrue(tooltip.isShowing());
+
+        root.setDisable(true);
+
+        assertTrue(anchor.isDisabled());
+        assertFalse(tooltip.isShowing());
+      } finally {
+        stage.close();
+      }
     });
   }
 
@@ -217,5 +349,28 @@ class TooltipTest {
       case INLINE_START, INLINE_END -> throw new AssertionError("Expected a physical side");
     };
     assertEquals(1.0, overlap, 0.01, message);
+  }
+
+  private static MouseEvent mouseExited() {
+    return new MouseEvent(
+      MouseEvent.MOUSE_EXITED,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      MouseButton.NONE,
+      0,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    );
   }
 }

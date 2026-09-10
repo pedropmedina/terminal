@@ -6,7 +6,7 @@ The chart loads company/instrument logos from [Elbstream](https://elbstream.com/
 
 - An initial-letter fallback occupies the logo slot while loading, when metadata is unavailable, or when a logo is missing or cannot be loaded.
 - The status line displays the logo beside the instrument name. Symbol selection and OHLCV interactions are unchanged.
-- The visible **Logos by Elbstream** link opens Elbstream in the system browser. Attribution is styled at 12pt and is displayed whenever the logo is displayed.
+- The symbol-selection tooltip includes the non-interactive **Logos by Elbstream** attribution at 12pt whenever the logo is displayed.
 - Only selected instruments are requested, not the ticker catalog. Loading prices and earlier history never waits for a logo download.
 - New selections and application shutdown invalidate pending logo updates, including updates already queued on the JavaFX thread.
 - There is no disk cache, self-hosting, or reusable image cache. The current decoded image is retained only for display and view refreshes.
@@ -43,7 +43,7 @@ References checked during implementation:
 
 ## Validation
 
-Provider tests use injected transports and local HTTP fixtures, not live provider endpoints. Tests cover metadata enrichment, error normalization, bounded downloads, async loading, stale completions, decoding failures, fallback display, attribution interaction, theme sizing, and view refreshes.
+Provider tests use injected transports and local HTTP fixtures, not live provider endpoints. Tests cover metadata enrichment, error normalization, bounded downloads, async loading, stale completions, decoding failures, fallback display, tooltip attribution, theme sizing, and view refreshes.
 
 ```sh
 ./gradlew test --tests 'com.acteque.terminal.marketdata.*'

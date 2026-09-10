@@ -16,7 +16,6 @@ import com.acteque.terminal.ui.core.Button.Variant;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
@@ -46,7 +45,7 @@ class ChartStatusLineTest {
   void displaysAFixedSizeFallbackWithoutAttributionUntilTheLogoArrives() {
     FxTestSupport.runAndWait(() -> {
       ChartStatusLine statusLine = new ChartStatusLine("ACME", ChartInterval.DAILY);
-      StackPane root = new StackPane(new VBox(statusLine.logoAttribution(), statusLine));
+      StackPane root = new StackPane(new VBox(statusLine.symbolTooltip().getGraphic(), statusLine));
       Scene scene = new Scene(root, 800, 500);
       ThemeManager themes = new ThemeManager(scene, AppTheme.LIGHT);
       root.applyCss();
@@ -67,6 +66,9 @@ class ChartStatusLineTest {
       assertEquals(20, slot.getHeight());
       assertTrue(statusLine.logoAttribution().isVisible());
       assertTrue(statusLine.logoAttribution().isManaged());
+      assertEquals("Logos by Example", statusLine.logoAttribution().getText());
+      VBox tooltipContent = assertInstanceOf(VBox.class, statusLine.symbolTooltip().getContentNodes().getFirst());
+      assertSame(statusLine.logoAttribution(), tooltipContent.getChildren().get(1));
       assertTrue(statusLine.logoAttribution().getFont().getSize() >= 16, "Attribution must be at least 12pt");
       themes.setTheme(AppTheme.DARK);
       root.applyCss();
@@ -75,12 +77,10 @@ class ChartStatusLineTest {
   }
 
   @Test
-  void preservesTheLogoAndClickableAttributionAcrossViewRefreshesAndClearsThemOnInstrumentChanges() {
+  void preservesTheLogoAndTooltipAttributionAcrossViewRefreshesAndClearsThemOnInstrumentChanges() {
     FxTestSupport.runAndWait(() -> {
       ChartStatusLine statusLine = new ChartStatusLine("ACME", ChartInterval.DAILY);
       WritableImage image = new WritableImage(64, 64);
-      AtomicReference<URI> opened = new AtomicReference<>();
-      statusLine.onOpenLink(opened::set);
       statusLine.setInstrumentLogo(LOGO, image);
       statusLine.refreshView();
 
@@ -88,8 +88,7 @@ class ChartStatusLineTest {
       StackPane slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
       assertSame(image, assertInstanceOf(ImageView.class, slot.getChildren().getFirst()).getImage());
       assertEquals(LOGO.attributionText(), statusLine.logoAttribution().getText());
-      statusLine.logoAttribution().fire();
-      assertEquals(LOGO.attributionUri(), opened.get());
+      assertTrue(symbol.getProperties().containsValue(statusLine.symbolTooltip()));
 
       statusLine.setInstrumentName("Widget Industries");
       slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
@@ -136,10 +135,22 @@ class ChartStatusLineTest {
       assertEquals("ACME", symbolButton.getText());
       assertEquals(Variant.GHOST, symbolButton.getVariant());
       assertEquals(Size.DEFAULT, symbolButton.getSize());
+      assertTrue(symbolButton.getProperties().containsValue(statusLine.symbolTooltip()));
+      VBox symbolTooltipContent = assertInstanceOf(VBox.class, statusLine.symbolTooltip().getContentNodes().getFirst());
+      assertEquals(
+        "Click to select a different symbol",
+        assertInstanceOf(Label.class, symbolTooltipContent.getChildren().getFirst()).getText()
+      );
+      assertSame(statusLine.logoAttribution(), symbolTooltipContent.getChildren().get(1));
       Button intervalButton = assertInstanceOf(Button.class, statusLine.getChildren().get(1));
       assertEquals("Daily", intervalButton.getText());
       assertEquals("Select interval, currently Daily", intervalButton.getAccessibleText());
       assertEquals(Variant.GHOST, intervalButton.getVariant());
+      assertTrue(intervalButton.getProperties().containsValue(statusLine.intervalTooltip()));
+      assertEquals(
+        "Click to select a different interval",
+        assertInstanceOf(Label.class, statusLine.intervalTooltip().getContentNodes().getFirst()).getText()
+      );
       assertEquals(
         "O104.00  H108.25  L103.50  C107.75  Vol2.50 M",
         assertInstanceOf(Label.class, statusLine.getChildren().get(2)).getText()

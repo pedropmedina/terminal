@@ -146,18 +146,32 @@ public final class Tooltip extends javafx.scene.control.Tooltip {
     }
 
     EventHandler<MouseEvent> anchorRecorder = event -> recordAnchor(requiredTarget);
-    ChangeListener<Boolean> focusListener = (ignored, wasFocused, isFocused) -> {
-      if (isFocused) {
+    EventHandler<MouseEvent> exitDismissal = event -> dismiss();
+    ChangeListener<Boolean> disabledListener = (ignored, wasDisabled, isDisabled) -> {
+      if (isDisabled) {
+        dismiss();
+      }
+    };
+    ChangeListener<Boolean> focusVisibleListener = (ignored, wasFocusVisible, isFocusVisible) -> {
+      if (isFocusVisible) {
         showFromFocus(requiredTarget);
       } else if (!requiredTarget.isHover()) {
         hideFromFocus();
       }
     };
-    TriggerRegistration registration = new TriggerRegistration(this, anchorRecorder, focusListener);
+    TriggerRegistration registration = new TriggerRegistration(
+      this,
+      anchorRecorder,
+      exitDismissal,
+      disabledListener,
+      focusVisibleListener
+    );
     requiredTarget.getProperties().put(TRIGGER_REGISTRATION_KEY, registration);
     recordAnchor(requiredTarget);
     requiredTarget.addEventHandler(MouseEvent.MOUSE_ENTERED, anchorRecorder);
-    requiredTarget.focusedProperty().addListener(focusListener);
+    requiredTarget.addEventHandler(MouseEvent.MOUSE_EXITED, exitDismissal);
+    requiredTarget.disabledProperty().addListener(disabledListener);
+    requiredTarget.focusVisibleProperty().addListener(focusVisibleListener);
     javafx.scene.control.Tooltip.install(requiredTarget, this);
   }
 
@@ -172,12 +186,19 @@ public final class Tooltip extends javafx.scene.control.Tooltip {
     requiredTarget.getProperties().remove(TRIGGER_REGISTRATION_KEY);
     javafx.scene.control.Tooltip.uninstall(requiredTarget, this);
     requiredTarget.removeEventHandler(MouseEvent.MOUSE_ENTERED, registration.anchorRecorder());
-    requiredTarget.focusedProperty().removeListener(registration.focusListener());
+    requiredTarget.removeEventHandler(MouseEvent.MOUSE_EXITED, registration.exitDismissal());
+    requiredTarget.disabledProperty().removeListener(registration.disabledListener());
+    requiredTarget.focusVisibleProperty().removeListener(registration.focusVisibleListener());
     if (anchor == requiredTarget) {
-      focusDelay.stop();
-      hide();
+      dismiss();
       anchor = null;
     }
+  }
+
+  /** Cancels a pending keyboard-focus display and hides this tooltip immediately. */
+  public void dismiss() {
+    focusDelay.stop();
+    hide();
   }
 
   void recordAnchor(Node value) {
@@ -193,8 +214,7 @@ public final class Tooltip extends javafx.scene.control.Tooltip {
   }
 
   void hideFromFocus() {
-    focusDelay.stop();
-    hide();
+    dismiss();
   }
 
   void reposition() {
@@ -473,6 +493,8 @@ public final class Tooltip extends javafx.scene.control.Tooltip {
   private record TriggerRegistration(
     Tooltip owner,
     EventHandler<MouseEvent> anchorRecorder,
-    ChangeListener<Boolean> focusListener
+    EventHandler<MouseEvent> exitDismissal,
+    ChangeListener<Boolean> disabledListener,
+    ChangeListener<Boolean> focusVisibleListener
   ) {}
 }

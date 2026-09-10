@@ -6,18 +6,17 @@ import com.acteque.terminal.ui.RefreshableView;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Button.Size;
 import com.acteque.terminal.ui.core.Button.Variant;
-import java.net.URI;
+import com.acteque.terminal.ui.core.Tooltip;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.function.Consumer;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 
 /** Displays the chart's OHLCV status for the selected price point. */
 final class ChartStatusLine extends HBox implements RefreshableView {
@@ -35,21 +34,18 @@ final class ChartStatusLine extends HBox implements RefreshableView {
   private Label ohlcv;
   private InstrumentLogo logo;
   private Image logoImage;
-  private final Hyperlink logoAttribution = new Hyperlink();
-  private Consumer<URI> openLink = ignored -> {};
+  private final Label logoAttribution = new Label();
+  private final VBox symbolTooltipContent = new VBox(new Label("Click to select a different symbol"), logoAttribution);
+  private final Tooltip symbolTooltip = new Tooltip(symbolTooltipContent);
+  private final Tooltip intervalTooltip = new Tooltip("Click to select a different interval");
 
   ChartStatusLine(String instrumentName, ChartInterval interval) {
     this.instrumentName = Objects.requireNonNull(instrumentName, "instrumentName");
     this.interval = Objects.requireNonNull(interval, "interval");
     getStyleClass().add("chart-status-line");
-    logoAttribution.getStyleClass().add("chart-logo-attribution");
-    logoAttribution.setMinWidth(USE_PREF_SIZE);
+    symbolTooltipContent.getStyleClass().add("chart-symbol-tooltip-content");
+    logoAttribution.getStyleClass().add("chart-symbol-tooltip-attribution");
     logoAttribution.managedProperty().bind(logoAttribution.visibleProperty());
-    logoAttribution.setOnAction(ignored -> {
-      if (logo != null) {
-        openLink.accept(logo.attributionUri());
-      }
-    });
 
     refreshView();
     ChartReloadHooks.register(this);
@@ -73,18 +69,27 @@ final class ChartStatusLine extends HBox implements RefreshableView {
     intervalClickHandler = Objects.requireNonNull(callback, "callback");
   }
 
+  void dismissTooltips() {
+    symbolTooltip.dismiss();
+    intervalTooltip.dismiss();
+  }
+
   void setInstrumentName(String instrumentName) {
     this.instrumentName = Objects.requireNonNull(instrumentName, "instrumentName");
     symbolSection.setText(instrumentName);
     clearInstrumentLogo();
   }
 
-  Hyperlink logoAttribution() {
-    return logoAttribution;
+  Tooltip symbolTooltip() {
+    return symbolTooltip;
   }
 
-  void onOpenLink(Consumer<URI> callback) {
-    openLink = Objects.requireNonNull(callback, "callback");
+  Tooltip intervalTooltip() {
+    return intervalTooltip;
+  }
+
+  Label logoAttribution() {
+    return logoAttribution;
   }
 
   void setInstrumentLogo(InstrumentLogo logo, Image image) {
@@ -125,9 +130,7 @@ final class ChartStatusLine extends HBox implements RefreshableView {
     }
     symbolSection.setGraphic(slot);
     logoAttribution.setText(logo == null ? "" : logo.attributionText());
-    logoAttribution.setAccessibleText(logo == null ? "" : logo.attributionText() + ", opens in browser");
     logoAttribution.setVisible(logo != null);
-    logoAttribution.setVisited(false);
   }
 
   void setInterval(ChartInterval interval) {
@@ -143,16 +146,31 @@ final class ChartStatusLine extends HBox implements RefreshableView {
 
   @Override
   public void refreshView() {
+    if (symbolSection != null) {
+      symbolTooltip.uninstall(symbolSection);
+    }
+    if (intervalSection != null) {
+      intervalTooltip.uninstall(intervalSection);
+    }
+
     symbolSection = new Button(instrumentName, Variant.GHOST, Size.DEFAULT);
     symbolSection.getStyleClass().add("chart-symbol-button");
     symbolSection.setAccessibleText("Select symbol or instrument");
-    symbolSection.setOnAction(ignored -> instrumentClickHandler.run());
+    symbolSection.setOnAction(ignored -> {
+      instrumentClickHandler.run();
+      dismissTooltips();
+    });
+    symbolTooltip.install(symbolSection);
     refreshLogo();
 
     intervalSection = new Button(interval.displayName(), Variant.GHOST, Size.DEFAULT);
     intervalSection.getStyleClass().add("chart-interval-button");
     intervalSection.setAccessibleText("Select interval, currently " + interval.displayName());
-    intervalSection.setOnAction(ignored -> intervalClickHandler.run());
+    intervalSection.setOnAction(ignored -> {
+      intervalClickHandler.run();
+      dismissTooltips();
+    });
+    intervalTooltip.install(intervalSection);
 
     ohlcv = new Label(pricePoint == null ? "" : ohlcvText(pricePoint));
     ohlcv.getStyleClass().add("chart-status-label");
