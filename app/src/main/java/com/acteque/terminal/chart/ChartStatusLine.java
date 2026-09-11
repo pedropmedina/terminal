@@ -6,7 +6,9 @@ import com.acteque.terminal.ui.RefreshableView;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Button.Size;
 import com.acteque.terminal.ui.core.Button.Variant;
-import com.acteque.terminal.ui.core.Tooltip;
+import com.acteque.terminal.ui.core.tooltip.Tooltip;
+import com.acteque.terminal.ui.core.tooltip.TooltipContent;
+import com.acteque.terminal.ui.core.tooltip.TooltipTrigger;
 import java.util.Locale;
 import java.util.Objects;
 import javafx.geometry.Insets;
@@ -36,8 +38,8 @@ final class ChartStatusLine extends HBox implements RefreshableView {
   private Image logoImage;
   private final Label logoAttribution = new Label();
   private final VBox symbolTooltipContent = new VBox(new Label("Click to select a different symbol"), logoAttribution);
-  private final Tooltip symbolTooltip = new Tooltip(symbolTooltipContent);
-  private final Tooltip intervalTooltip = new Tooltip("Click to select a different interval");
+  private final Tooltip symbolTooltip;
+  private final Tooltip intervalTooltip;
 
   ChartStatusLine(String instrumentName, ChartInterval interval) {
     this.instrumentName = Objects.requireNonNull(instrumentName, "instrumentName");
@@ -46,6 +48,12 @@ final class ChartStatusLine extends HBox implements RefreshableView {
     symbolTooltipContent.getStyleClass().add("chart-symbol-tooltip-content");
     logoAttribution.getStyleClass().add("chart-symbol-tooltip-attribution");
     logoAttribution.managedProperty().bind(logoAttribution.visibleProperty());
+
+    symbolTooltip = new Tooltip(new TooltipTrigger(new Button()), new TooltipContent(symbolTooltipContent));
+    intervalTooltip = new Tooltip(
+      new TooltipTrigger(new Button()),
+      new TooltipContent("Click to select a different interval")
+    );
 
     refreshView();
     ChartReloadHooks.register(this);
@@ -146,13 +154,6 @@ final class ChartStatusLine extends HBox implements RefreshableView {
 
   @Override
   public void refreshView() {
-    if (symbolSection != null) {
-      symbolTooltip.uninstall(symbolSection);
-    }
-    if (intervalSection != null) {
-      intervalTooltip.uninstall(intervalSection);
-    }
-
     symbolSection = new Button(instrumentName, Variant.GHOST, Size.DEFAULT);
     symbolSection.getStyleClass().add("chart-symbol-button");
     symbolSection.setAccessibleText("Select symbol or instrument");
@@ -160,7 +161,7 @@ final class ChartStatusLine extends HBox implements RefreshableView {
       instrumentClickHandler.run();
       dismissTooltips();
     });
-    symbolTooltip.install(symbolSection);
+    symbolTooltip.getTrigger().setTarget(symbolSection);
     refreshLogo();
 
     intervalSection = new Button(interval.displayName(), Variant.GHOST, Size.DEFAULT);
@@ -170,7 +171,7 @@ final class ChartStatusLine extends HBox implements RefreshableView {
       intervalClickHandler.run();
       dismissTooltips();
     });
-    intervalTooltip.install(intervalSection);
+    intervalTooltip.getTrigger().setTarget(intervalSection);
 
     ohlcv = new Label(pricePoint == null ? "" : ohlcvText(pricePoint));
     ohlcv.getStyleClass().add("chart-status-label");
@@ -181,7 +182,7 @@ final class ChartStatusLine extends HBox implements RefreshableView {
     setPickOnBounds(false);
     StackPane.setAlignment(this, Pos.BOTTOM_LEFT);
     StackPane.setMargin(this, new Insets(0.0, 0.0, BOTTOM_MARGIN, LEFT_MARGIN));
-    getChildren().setAll(symbolSection, intervalSection, ohlcv);
+    getChildren().setAll(symbolTooltip, intervalTooltip, ohlcv);
   }
 
   private String ohlcvText(PricePoint point) {

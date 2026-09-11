@@ -12,7 +12,6 @@ import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.core.Input;
 import com.acteque.terminal.ui.core.Select;
 import com.acteque.terminal.ui.core.Toggle;
-import com.acteque.terminal.ui.core.Tooltip;
 import com.acteque.terminal.ui.core.inputgroup.InputGroup;
 import com.acteque.terminal.ui.core.inputgroup.InputGroupAddon;
 import com.acteque.terminal.ui.core.inputgroup.InputGroupAlignment;
@@ -57,7 +56,6 @@ class ChartIntervalSelectionDialogTest {
       assertTrue(daily.isSelected());
       assertFalse(button(dialog, "5M").isSelected());
       assertEquals(Toggle.Variant.OUTLINE, daily.getVariant());
-      assertTrue(daily.getProperties().values().stream().anyMatch(Tooltip.class::isInstance));
       assertEquals("System", daily.getFont().getFamily());
       assertEquals(13.0, daily.getFont().getSize());
       assertEquals(8.0, searchGroup.getBorder().getStrokes().getFirst().getRadii().getTopLeftHorizontalRadius());

@@ -8,8 +8,8 @@ import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.core.Button;
-import com.acteque.terminal.ui.core.Tooltip;
 import com.acteque.terminal.ui.core.dialog.Dialog;
+import com.acteque.terminal.ui.core.tooltip.Tooltip;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
@@ -43,8 +43,8 @@ class ChartTest {
       chart.layout();
 
       ChartStatusLine statusLine = (ChartStatusLine) chart.lookup(".chart-status-line");
-      Button intervalButton = (Button) statusLine.getChildren().get(1);
       Tooltip tooltip = statusLine.intervalTooltip();
+      Button intervalButton = (Button) tooltip.getTrigger().getTarget();
       Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
       buttonReference.set(intervalButton);
       tooltipReference.set(tooltip);
@@ -59,7 +59,7 @@ class ChartTest {
         Button intervalButton = buttonReference.get();
         Tooltip tooltip = tooltipReference.get();
         Bounds bounds = intervalButton.localToScreen(intervalButton.getBoundsInLocal());
-        tooltip.show(intervalButton, bounds.getMinX(), bounds.getMinY());
+        tooltip.show();
         assertTrue(tooltip.isShowing());
 
         click(intervalButton, bounds);

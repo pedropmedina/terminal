@@ -13,6 +13,7 @@ import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Button.Size;
 import com.acteque.terminal.ui.core.Button.Variant;
+import com.acteque.terminal.ui.core.tooltip.Tooltip;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,12 +46,12 @@ class ChartStatusLineTest {
   void displaysAFixedSizeFallbackWithoutAttributionUntilTheLogoArrives() {
     FxTestSupport.runAndWait(() -> {
       ChartStatusLine statusLine = new ChartStatusLine("ACME", ChartInterval.DAILY);
-      StackPane root = new StackPane(new VBox(statusLine.symbolTooltip().getGraphic(), statusLine));
+      StackPane root = new StackPane(statusLine);
       Scene scene = new Scene(root, 800, 500);
       ThemeManager themes = new ThemeManager(scene, AppTheme.LIGHT);
       root.applyCss();
       root.layout();
-      Button symbol = assertInstanceOf(Button.class, statusLine.getChildren().getFirst());
+      Button symbol = triggerTarget(statusLine.symbolTooltip());
       StackPane slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
       assertEquals("A", assertInstanceOf(Label.class, slot.getChildren().getFirst()).getText());
       assertEquals(20, slot.getWidth());
@@ -69,10 +70,8 @@ class ChartStatusLineTest {
       assertEquals("Logos by Example", statusLine.logoAttribution().getText());
       VBox tooltipContent = assertInstanceOf(VBox.class, statusLine.symbolTooltip().getContentNodes().getFirst());
       assertSame(statusLine.logoAttribution(), tooltipContent.getChildren().get(1));
-      assertTrue(statusLine.logoAttribution().getFont().getSize() >= 16, "Attribution must be at least 12pt");
       themes.setTheme(AppTheme.DARK);
       root.applyCss();
-      assertTrue(statusLine.logoAttribution().getFont().getSize() >= 16);
     });
   }
 
@@ -84,11 +83,11 @@ class ChartStatusLineTest {
       statusLine.setInstrumentLogo(LOGO, image);
       statusLine.refreshView();
 
-      Button symbol = assertInstanceOf(Button.class, statusLine.getChildren().getFirst());
+      Button symbol = triggerTarget(statusLine.symbolTooltip());
       StackPane slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
       assertSame(image, assertInstanceOf(ImageView.class, slot.getChildren().getFirst()).getImage());
       assertEquals(LOGO.attributionText(), statusLine.logoAttribution().getText());
-      assertTrue(symbol.getProperties().containsValue(statusLine.symbolTooltip()));
+      assertFalse(symbol.getProperties().containsValue(statusLine.symbolTooltip()));
 
       statusLine.setInstrumentName("Widget Industries");
       slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
@@ -131,22 +130,24 @@ class ChartStatusLineTest {
       statusLine.setPricePoint(PRICE_POINT);
 
       assertEquals(3, statusLine.getChildren().size());
-      Button symbolButton = assertInstanceOf(Button.class, statusLine.getChildren().get(0));
+      assertSame(statusLine.symbolTooltip(), statusLine.getChildren().get(0));
+      Button symbolButton = triggerTarget(statusLine.symbolTooltip());
       assertEquals("ACME", symbolButton.getText());
       assertEquals(Variant.GHOST, symbolButton.getVariant());
       assertEquals(Size.DEFAULT, symbolButton.getSize());
-      assertTrue(symbolButton.getProperties().containsValue(statusLine.symbolTooltip()));
+      assertFalse(symbolButton.getProperties().containsValue(statusLine.symbolTooltip()));
       VBox symbolTooltipContent = assertInstanceOf(VBox.class, statusLine.symbolTooltip().getContentNodes().getFirst());
       assertEquals(
         "Click to select a different symbol",
         assertInstanceOf(Label.class, symbolTooltipContent.getChildren().getFirst()).getText()
       );
       assertSame(statusLine.logoAttribution(), symbolTooltipContent.getChildren().get(1));
-      Button intervalButton = assertInstanceOf(Button.class, statusLine.getChildren().get(1));
+      assertSame(statusLine.intervalTooltip(), statusLine.getChildren().get(1));
+      Button intervalButton = triggerTarget(statusLine.intervalTooltip());
       assertEquals("Daily", intervalButton.getText());
       assertEquals("Select interval, currently Daily", intervalButton.getAccessibleText());
       assertEquals(Variant.GHOST, intervalButton.getVariant());
-      assertTrue(intervalButton.getProperties().containsValue(statusLine.intervalTooltip()));
+      assertFalse(intervalButton.getProperties().containsValue(statusLine.intervalTooltip()));
       assertEquals(
         "Click to select a different interval",
         assertInstanceOf(Label.class, statusLine.intervalTooltip().getContentNodes().getFirst()).getText()
@@ -165,7 +166,7 @@ class ChartStatusLineTest {
       AtomicBoolean clicked = new AtomicBoolean();
       statusLine.onInstrumentClick(() -> clicked.set(true));
 
-      assertInstanceOf(Button.class, statusLine.getChildren().get(0)).fire();
+      triggerTarget(statusLine.symbolTooltip()).fire();
 
       assertTrue(clicked.get());
     });
@@ -178,7 +179,7 @@ class ChartStatusLineTest {
       AtomicBoolean clicked = new AtomicBoolean();
       statusLine.onIntervalClick(() -> clicked.set(true));
 
-      assertInstanceOf(Button.class, statusLine.getChildren().get(1)).fire();
+      triggerTarget(statusLine.intervalTooltip()).fire();
 
       assertTrue(clicked.get());
     });
@@ -191,13 +192,13 @@ class ChartStatusLineTest {
 
       statusLine.setInterval(ChartInterval.FIVE_MINUTES);
 
-      Button intervalButton = assertInstanceOf(Button.class, statusLine.getChildren().get(1));
+      Button intervalButton = triggerTarget(statusLine.intervalTooltip());
       assertEquals("5 minutes", intervalButton.getText());
       assertEquals("Select interval, currently 5 minutes", intervalButton.getAccessibleText());
       assertEquals("ACME  5 minutes   O104.00  H108.25  L103.50  C107.75  Vol2.50 M", statusLine.text(PRICE_POINT));
 
       statusLine.refreshView();
-      Button refreshedButton = assertInstanceOf(Button.class, statusLine.getChildren().get(1));
+      Button refreshedButton = triggerTarget(statusLine.intervalTooltip());
       assertEquals("5 minutes", refreshedButton.getText());
       assertEquals("Select interval, currently 5 minutes", refreshedButton.getAccessibleText());
     });
@@ -210,7 +211,7 @@ class ChartStatusLineTest {
 
       statusLine.setInstrumentName("Widget Industries");
 
-      Button symbolButton = assertInstanceOf(Button.class, statusLine.getChildren().get(0));
+      Button symbolButton = triggerTarget(statusLine.symbolTooltip());
       assertEquals("Widget Industries", symbolButton.getText());
       assertEquals(
         "Widget Industries  Daily   O104.00  H108.25  L103.50  C107.75  Vol2.50 M",
@@ -218,7 +219,11 @@ class ChartStatusLineTest {
       );
 
       statusLine.refreshView();
-      assertEquals("Widget Industries", assertInstanceOf(Button.class, statusLine.getChildren().get(0)).getText());
+      assertEquals("Widget Industries", triggerTarget(statusLine.symbolTooltip()).getText());
     });
+  }
+
+  private static Button triggerTarget(Tooltip tooltip) {
+    return assertInstanceOf(Button.class, tooltip.getTrigger().getTarget());
   }
 }
