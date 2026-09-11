@@ -1,11 +1,13 @@
 package com.acteque.terminal.chart;
 
+import com.acteque.terminal.chart.statusline.ChartStatusLineController;
 import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
 import com.acteque.terminal.search.InstrumentSearchDialog;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.image.Image;
@@ -31,7 +33,7 @@ public final class Chart extends StackPane {
   private final InstrumentSearchDialog instrumentSearchDialog;
   private final ChartIntervalSelectionDialog intervalSelectionDialog;
   private final ChartCanvas canvas;
-  private final ChartStatusLine statusLine;
+  private final ChartStatusLineController statusLine;
 
   public Chart(
     List<PricePoint> pricePoints,
@@ -50,21 +52,24 @@ public final class Chart extends StackPane {
     intervalSelectionDialog = new ChartIntervalSelectionDialog(interval, intervalSelectionOpen);
     intervalSelectionDialog.onRequestClose(() -> intervalSelectionOpen.set(false));
 
-    statusLine = new ChartStatusLine(stockSymbol, interval);
-    statusLine.onInstrumentClick(this::openInstrumentSearch);
-    statusLine.onIntervalClick(this::openIntervalSelection);
+    BooleanBinding modalOpen = instrumentSearchOpen.or(intervalSelectionOpen);
+    statusLine = new ChartStatusLineController(
+      stockSymbol,
+      interval,
+      modalOpen,
+      this::openInstrumentSearch,
+      this::openIntervalSelection
+    );
     intervalSelectionDialog.onIntervalSelected(statusLine::setInterval);
-    instrumentSearchOpen.addListener((ignored, wasOpen, isOpen) -> dismissTooltipsWhenModalOpens(isOpen));
-    intervalSelectionOpen.addListener((ignored, wasOpen, isOpen) -> dismissTooltipsWhenModalOpens(isOpen));
 
     ChartMenu menu = new ChartMenu();
 
     canvas = new ChartCanvas(pricePoints, interval, statusLine);
 
-    VBox statusContent = new VBox(statusLine);
+    VBox statusContent = new VBox(statusLine.getView());
     statusContent.setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
     statusContent.setPickOnBounds(false);
-    statusContent.disableProperty().bind(instrumentSearchOpen.or(intervalSelectionOpen));
+    statusContent.disableProperty().bind(modalOpen);
     StackPane statusOverlay = new StackPane(statusContent);
     statusOverlay.getStyleClass().add("chart-status-overlay");
     statusOverlay.setPickOnBounds(false);
@@ -109,12 +114,6 @@ public final class Chart extends StackPane {
 
   public void drawChart() {
     canvas.drawChart();
-  }
-
-  private void dismissTooltipsWhenModalOpens(boolean isOpen) {
-    if (isOpen) {
-      statusLine.dismissTooltips();
-    }
   }
 
   private void handleShortcut(KeyEvent event) {

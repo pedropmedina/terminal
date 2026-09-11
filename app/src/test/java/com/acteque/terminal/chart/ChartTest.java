@@ -19,6 +19,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.Test;
 
@@ -56,6 +57,36 @@ class ChartTest {
   }
 
   @Test
+  void dismissesTheStatusTooltipWhenAShortcutOpensAModal() {
+    FxTestSupport.runAndWait(() -> {
+      TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
+      Chart chart = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
+      Stage stage = new Stage();
+      stage.setScene(new Scene(chart, 800.0, 500.0));
+      Platform.setImplicitExit(false);
+      stage.show();
+      chart.applyCss();
+      chart.layout();
+
+      try {
+        HBox statusLine = (HBox) chart.lookup(".chart-status-line");
+        Tooltip tooltip = (Tooltip) statusLine.getChildren().get(1);
+        tooltip.show();
+        assertTrue(tooltip.isShowing());
+
+        chart.fireEvent(shortcutEvent(KeyCode.I));
+
+        assertTrue(dialog.isOpen());
+        assertFalse(tooltip.isShowing());
+      } finally {
+        dialog.close();
+        stage.close();
+      }
+    });
+  }
+
+  @Test
   void closingAnIntervalModalDoesNotReshowTheTriggerTooltipWhenFocusReturns() throws InterruptedException {
     AtomicReference<Button> buttonReference = new AtomicReference<>();
     AtomicReference<Tooltip> tooltipReference = new AtomicReference<>();
@@ -75,8 +106,8 @@ class ChartTest {
       chart.applyCss();
       chart.layout();
 
-      ChartStatusLine statusLine = (ChartStatusLine) chart.lookup(".chart-status-line");
-      Tooltip tooltip = statusLine.intervalTooltip();
+      HBox statusLine = (HBox) chart.lookup(".chart-status-line");
+      Tooltip tooltip = (Tooltip) statusLine.getChildren().get(1);
       Button intervalButton = (Button) tooltip.getTrigger().getTarget();
       Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
       buttonReference.set(intervalButton);

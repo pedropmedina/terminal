@@ -1,6 +1,7 @@
 package com.acteque.terminal.chart;
 
 import com.acteque.terminal.chart.XAxisTickCalculator.XAxisTick;
+import com.acteque.terminal.chart.statusline.ChartStatusLineController;
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.RefreshableView;
 import java.time.LocalDate;
@@ -10,6 +11,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
 import javafx.css.StyleableProperty;
@@ -104,7 +106,7 @@ final class ChartCanvas extends Canvas implements RefreshableView {
 
   private final ChartCrosshair crosshair;
 
-  private final ChartStatusLine statusLine;
+  private final ChartStatusLineController statusLine;
 
   private final StyleableProperty<Paint> chartBackground = paintProperty(
     "chartBackground",
@@ -216,10 +218,14 @@ final class ChartCanvas extends Canvas implements RefreshableView {
   }
 
   ChartCanvas(List<PricePoint> pricePoints, String stockSymbol, ChartInterval interval) {
-    this(pricePoints, interval, new ChartStatusLine(stockSymbol, interval));
+    this(
+      pricePoints,
+      interval,
+      new ChartStatusLineController(stockSymbol, interval, new SimpleBooleanProperty(false), () -> {}, () -> {})
+    );
   }
 
-  ChartCanvas(List<PricePoint> pricePoints, ChartInterval interval, ChartStatusLine statusLine) {
+  ChartCanvas(List<PricePoint> pricePoints, ChartInterval interval, ChartStatusLineController statusLine) {
     this.interval = Objects.requireNonNull(interval);
     this.crosshair = new ChartCrosshair(interval);
     this.statusLine = Objects.requireNonNull(statusLine, "statusLine");

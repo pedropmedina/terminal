@@ -136,7 +136,7 @@ public final class ChartInterval {
     return name;
   }
 
-  String displayName() {
+  public String displayName() {
     if (amount == 1) {
       return switch (classification) {
         case DAYS -> "Daily";
