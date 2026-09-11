@@ -2,6 +2,7 @@ package com.acteque.terminal.ui.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -18,6 +19,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.css.PseudoClass;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -130,6 +132,42 @@ class ButtonTest {
     FxTestSupport.runAndWait(() -> {
       assertEquals(Color.web("#171717"), resolvedBackground(AppTheme.LIGHT));
       assertEquals(Color.web("#e5e5e5"), resolvedBackground(AppTheme.DARK));
+    });
+  }
+
+  @Test
+  void rendersTheInputStyleRingWhenButtonFocusIsVisible() {
+    FxTestSupport.runAndWait(() -> {
+      Button button = new Button("Save", Variant.GHOST, Size.DEFAULT);
+      StackPane root = new StackPane(button);
+      new ThemeManager(new Scene(root), AppTheme.LIGHT);
+      button.pseudoClassStateChanged(PseudoClass.getPseudoClass("focus-visible"), true);
+
+      root.applyCss();
+
+      assertEquals(2, button.getBorder().getStrokes().size());
+      assertEquals(Color.web("#a1a1a1"), button.getBorder().getStrokes().get(0).getTopStroke());
+      assertEquals(Color.web("rgba(161, 161, 161, 0.5)"), button.getBorder().getStrokes().get(1).getTopStroke());
+      assertEquals(1.0, button.getBorder().getStrokes().get(0).getWidths().getTop());
+      assertEquals(3.0, button.getBorder().getStrokes().get(1).getWidths().getTop());
+      assertEquals(-3.0, button.getBorder().getStrokes().get(1).getInsets().getTop());
+      assertNull(button.getEffect());
+    });
+  }
+
+  @Test
+  void doesNotRenderTheRingForFocusAlone() {
+    FxTestSupport.runAndWait(() -> {
+      Button button = new Button("Save", Variant.GHOST, Size.DEFAULT);
+      StackPane root = new StackPane(button);
+      new ThemeManager(new Scene(root), AppTheme.LIGHT);
+      button.pseudoClassStateChanged(PseudoClass.getPseudoClass("focused"), true);
+
+      root.applyCss();
+
+      assertEquals(1, button.getBorder().getStrokes().size());
+      assertEquals(Color.TRANSPARENT, button.getBorder().getStrokes().getFirst().getTopStroke());
+      assertNull(button.getEffect());
     });
   }
 
