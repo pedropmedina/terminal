@@ -42,6 +42,10 @@
   -fx-font-size: 12pt;
 }
 
+.chart-tooltip-shortcut {
+  -fx-text-fill: -app-muted-foreground;
+}
+
 .chart-status-line {
   -fx-alignment: center-left;
   -fx-spacing: 2px;

@@ -37,7 +37,13 @@ final class ChartStatusLine extends HBox implements RefreshableView {
   private InstrumentLogo logo;
   private Image logoImage;
   private final Label logoAttribution = new Label();
-  private final VBox symbolTooltipContent = new VBox(new Label("Click to select a different symbol"), logoAttribution);
+  private final Label symbolShortcutNote = shortcutNote("Shortcut: ⌘F, ⌘/, or ⌘P");
+  private final Label intervalShortcutNote = shortcutNote("Shortcut: ⌘I");
+  private final VBox symbolTooltipContent = new VBox(
+    new Label("Click to select a different symbol"),
+    symbolShortcutNote,
+    logoAttribution
+  );
   private final Tooltip symbolTooltip;
   private final Tooltip intervalTooltip;
 
@@ -52,7 +58,7 @@ final class ChartStatusLine extends HBox implements RefreshableView {
     symbolTooltip = new Tooltip(new TooltipTrigger(new Button()), new TooltipContent(symbolTooltipContent));
     intervalTooltip = new Tooltip(
       new TooltipTrigger(new Button()),
-      new TooltipContent("Click to select a different interval")
+      new TooltipContent(new VBox(new Label("Click to select a different interval"), intervalShortcutNote))
     );
 
     refreshView();
@@ -195,5 +201,11 @@ final class ChartStatusLine extends HBox implements RefreshableView {
       point.close(),
       point.volume() / 1_000_000.0
     );
+  }
+
+  private static Label shortcutNote(String text) {
+    Label note = new Label(text);
+    note.getStyleClass().add("chart-tooltip-shortcut");
+    return note;
   }
 }

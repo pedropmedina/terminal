@@ -69,7 +69,7 @@ class ChartStatusLineTest {
       assertTrue(statusLine.logoAttribution().isManaged());
       assertEquals("Logos by Example", statusLine.logoAttribution().getText());
       VBox tooltipContent = assertInstanceOf(VBox.class, statusLine.symbolTooltip().getContentNodes().getFirst());
-      assertSame(statusLine.logoAttribution(), tooltipContent.getChildren().get(1));
+      assertSame(statusLine.logoAttribution(), tooltipContent.getChildren().get(2));
       themes.setTheme(AppTheme.DARK);
       root.applyCss();
     });
@@ -141,16 +141,28 @@ class ChartStatusLineTest {
         "Click to select a different symbol",
         assertInstanceOf(Label.class, symbolTooltipContent.getChildren().getFirst()).getText()
       );
-      assertSame(statusLine.logoAttribution(), symbolTooltipContent.getChildren().get(1));
+      assertEquals(
+        "Shortcut: ⌘F, ⌘/, or ⌘P",
+        assertInstanceOf(Label.class, symbolTooltipContent.getChildren().get(1)).getText()
+      );
+      assertSame(statusLine.logoAttribution(), symbolTooltipContent.getChildren().get(2));
       assertSame(statusLine.intervalTooltip(), statusLine.getChildren().get(1));
       Button intervalButton = triggerTarget(statusLine.intervalTooltip());
       assertEquals("Daily", intervalButton.getText());
       assertEquals("Select interval, currently Daily", intervalButton.getAccessibleText());
       assertEquals(Variant.GHOST, intervalButton.getVariant());
       assertFalse(intervalButton.getProperties().containsValue(statusLine.intervalTooltip()));
+      VBox intervalTooltipContent = assertInstanceOf(
+        VBox.class,
+        statusLine.intervalTooltip().getContentNodes().getFirst()
+      );
       assertEquals(
         "Click to select a different interval",
-        assertInstanceOf(Label.class, statusLine.intervalTooltip().getContentNodes().getFirst()).getText()
+        assertInstanceOf(Label.class, intervalTooltipContent.getChildren().getFirst()).getText()
+      );
+      assertEquals(
+        "Shortcut: ⌘I",
+        assertInstanceOf(Label.class, intervalTooltipContent.getChildren().get(1)).getText()
       );
       assertEquals(
         "O104.00  H108.25  L103.50  C107.75  Vol2.50 M",

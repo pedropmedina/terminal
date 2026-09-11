@@ -15,12 +15,45 @@ import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.Test;
 
 class ChartTest {
+
+  @Test
+  void mapsPlatformShortcutsToTheChartDialogs() {
+    FxTestSupport.runAndWait(() -> {
+      for (KeyCode keyCode : List.of(KeyCode.F, KeyCode.SLASH, KeyCode.P)) {
+        KeyEvent event = shortcutEvent(keyCode);
+        assertTrue(Chart.isInstrumentSearchShortcut(event));
+        assertFalse(Chart.isIntervalSelectionShortcut(event));
+      }
+
+      KeyEvent intervalEvent = shortcutEvent(KeyCode.I);
+      assertFalse(Chart.isInstrumentSearchShortcut(intervalEvent));
+      assertTrue(Chart.isIntervalSelectionShortcut(intervalEvent));
+      assertFalse(Chart.isInstrumentSearchShortcut(plainKeyEvent(KeyCode.F)));
+      assertFalse(Chart.isIntervalSelectionShortcut(plainKeyEvent(KeyCode.I)));
+    });
+  }
+
+  @Test
+  void opensTheIntervalDialogFromItsPlatformShortcut() {
+    FxTestSupport.runAndWait(() -> {
+      TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
+      Chart chart = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
+
+      chart.fireEvent(shortcutEvent(KeyCode.I));
+
+      assertTrue(dialog.isOpen());
+      dialog.close();
+    });
+  }
 
   @Test
   void closingAnIntervalModalDoesNotReshowTheTriggerTooltipWhenFocusReturns() throws InterruptedException {
@@ -92,6 +125,15 @@ class ChartTest {
   private static void click(Button button, Bounds screenBounds) {
     button.fireEvent(mouseEvent(MouseEvent.MOUSE_PRESSED, screenBounds, true));
     button.fireEvent(mouseEvent(MouseEvent.MOUSE_RELEASED, screenBounds, false));
+  }
+
+  private static KeyEvent shortcutEvent(KeyCode keyCode) {
+    boolean macOs = System.getProperty("os.name", "").startsWith("Mac");
+    return new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode, false, !macOs, false, macOs);
+  }
+
+  private static KeyEvent plainKeyEvent(KeyCode keyCode) {
+    return new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode, false, false, false, false);
   }
 
   private static MouseEvent mouseEvent(

@@ -9,11 +9,22 @@ import java.util.function.Consumer;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 /** Composes the price chart canvas with its controls and overlays. */
 public final class Chart extends StackPane {
+
+  private static final List<KeyCombination> INSTRUMENT_SEARCH_SHORTCUTS = List.of(
+    shortcut(KeyCode.F),
+    shortcut(KeyCode.SLASH),
+    shortcut(KeyCode.P)
+  );
+  private static final KeyCombination INTERVAL_SELECTION_SHORTCUT = shortcut(KeyCode.I);
 
   private final BooleanProperty instrumentSearchOpen = new SimpleBooleanProperty(false);
   private final BooleanProperty intervalSelectionOpen = new SimpleBooleanProperty(false);
@@ -40,8 +51,8 @@ public final class Chart extends StackPane {
     intervalSelectionDialog.onRequestClose(() -> intervalSelectionOpen.set(false));
 
     statusLine = new ChartStatusLine(stockSymbol, interval);
-    statusLine.onInstrumentClick(() -> instrumentSearchOpen.set(true));
-    statusLine.onIntervalClick(() -> intervalSelectionOpen.set(true));
+    statusLine.onInstrumentClick(this::openInstrumentSearch);
+    statusLine.onIntervalClick(this::openIntervalSelection);
     intervalSelectionDialog.onIntervalSelected(statusLine::setInterval);
     instrumentSearchOpen.addListener((ignored, wasOpen, isOpen) -> dismissTooltipsWhenModalOpens(isOpen));
     intervalSelectionOpen.addListener((ignored, wasOpen, isOpen) -> dismissTooltipsWhenModalOpens(isOpen));
@@ -59,6 +70,7 @@ public final class Chart extends StackPane {
     statusOverlay.setPickOnBounds(false);
 
     getChildren().setAll(canvas, menu, statusOverlay, instrumentSearchDialog, intervalSelectionDialog);
+    addEventFilter(KeyEvent.KEY_PRESSED, this::handleShortcut);
 
     canvas.widthProperty().bind(widthProperty());
     canvas.heightProperty().bind(heightProperty());
@@ -103,6 +115,39 @@ public final class Chart extends StackPane {
     if (isOpen) {
       statusLine.dismissTooltips();
     }
+  }
+
+  private void handleShortcut(KeyEvent event) {
+    if (instrumentSearchOpen.get() || intervalSelectionOpen.get()) {
+      return;
+    }
+    if (isInstrumentSearchShortcut(event)) {
+      openInstrumentSearch();
+      event.consume();
+    } else if (isIntervalSelectionShortcut(event)) {
+      openIntervalSelection();
+      event.consume();
+    }
+  }
+
+  private void openInstrumentSearch() {
+    instrumentSearchOpen.set(true);
+  }
+
+  private void openIntervalSelection() {
+    intervalSelectionOpen.set(true);
+  }
+
+  static boolean isInstrumentSearchShortcut(KeyEvent event) {
+    return INSTRUMENT_SEARCH_SHORTCUTS.stream().anyMatch(shortcut -> shortcut.match(event));
+  }
+
+  static boolean isIntervalSelectionShortcut(KeyEvent event) {
+    return INTERVAL_SELECTION_SHORTCUT.match(event);
+  }
+
+  private static KeyCombination shortcut(KeyCode keyCode) {
+    return new KeyCodeCombination(keyCode, KeyCombination.SHORTCUT_DOWN);
   }
 
   @Override
