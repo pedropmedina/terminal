@@ -1,10 +1,10 @@
-package com.acteque.terminal.chart;
+package com.acteque.terminal.chart.canvas;
 
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 
 /** CSS-resolved presentation values used by Canvas drawing helpers. */
-record ChartRenderStyle(
+record RenderStyle(
   Paint background,
   Paint axis,
   Paint grid,

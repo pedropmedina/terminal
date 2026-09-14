@@ -1,5 +1,6 @@
-package com.acteque.terminal.chart;
+package com.acteque.terminal.chart.canvas;
 
+import com.acteque.terminal.chart.ChartInterval;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;

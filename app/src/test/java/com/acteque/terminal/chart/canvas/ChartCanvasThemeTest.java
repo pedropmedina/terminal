@@ -1,7 +1,9 @@
-package com.acteque.terminal.chart;
+package com.acteque.terminal.chart.canvas;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
@@ -17,24 +19,28 @@ class ChartCanvasThemeTest {
   @Test
   void resolvesLightAndDarkCanvasPaintsFromTheSameSemanticTheme() {
     FxTestSupport.runAndWait(() -> {
-      ChartCanvas canvas = new ChartCanvas(
+      ChartCanvasModel model = new ChartCanvasModel();
+      ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
+      interactor.initialize(
         List.of(new PricePoint(LocalDate.of(2026, 8, 24), 100, 101, 99, 100, 1_000)),
-        "ACME"
+        ChartInterval.DAILY
       );
+      ChartCanvasViewBuilder builder = new ChartCanvasViewBuilder(model, interactor);
+      javafx.scene.canvas.Canvas canvas = builder.build();
       StackPane root = new StackPane(canvas);
       Scene scene = new Scene(root, 800, 500);
       ThemeManager themes = new ThemeManager(scene, AppTheme.LIGHT);
       root.applyCss();
 
-      assertEquals(Color.web("#ffffff"), canvas.renderStyle().background());
-      assertEquals(Color.web("#e76e00"), canvas.renderStyle().series());
-      assertEquals(24.0, canvas.renderStyle().badgeHeight());
+      assertEquals(Color.web("#ffffff"), builder.renderStyle().background());
+      assertEquals(Color.web("#e76e00"), builder.renderStyle().series());
+      assertEquals(24.0, builder.renderStyle().badgeHeight());
 
       themes.setTheme(AppTheme.DARK);
       root.applyCss();
 
-      assertEquals(Color.web("#0a0a0a"), canvas.renderStyle().background());
-      assertEquals(Color.web("#7c3aed"), canvas.renderStyle().series());
+      assertEquals(Color.web("#0a0a0a"), builder.renderStyle().background());
+      assertEquals(Color.web("#7c3aed"), builder.renderStyle().series());
     });
   }
 }

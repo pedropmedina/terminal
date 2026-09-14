@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart;
+package com.acteque.terminal.chart.canvas;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,11 +37,6 @@ class YAxisTickCalculatorTest {
     List<Double> ticks = YAxisTickCalculator.calculate(10.000, 10.025, 660.0, 0.2);
 
     assertEquals(List.of(10.00, 10.01, 10.02), ticks);
-  }
-
-  @Test
-  void limitsTheVisibleRangeToOneCentPerCollisionSafeInterval() {
-    assertEquals(0.20, YAxisTickCalculator.minimumPriceSpan(480.0), 0.000_001);
   }
 
   @Test

@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart;
+package com.acteque.terminal.chart.canvas;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,16 +6,11 @@ import java.util.List;
 final class YAxisTickCalculator {
 
   private static final int DEFAULT_INTERVAL_COUNT = 10;
-  private static final double MIN_LABEL_SPACING = 24.0;
   private static final double CENTS_PER_DOLLAR = 100.0;
   private static final double CENT_ROUNDING_EPSILON = 0.000_000_1;
   private static final long MIN_TICK_SIZE_IN_CENTS = 1L;
 
   private YAxisTickCalculator() {}
-
-  static double minimumPriceSpan(double chartHeight) {
-    return (collisionSafeIntervalCount(chartHeight) * MIN_TICK_SIZE_IN_CENTS) / CENTS_PER_DOLLAR;
-  }
 
   static List<Double> calculate(double minPrice, double maxPrice, double chartHeight, double zoomScale) {
     if (
@@ -31,7 +26,7 @@ final class YAxisTickCalculator {
     }
 
     int zoomIntervalCount = Math.max(DEFAULT_INTERVAL_COUNT, (int) Math.ceil(DEFAULT_INTERVAL_COUNT / zoomScale));
-    int collisionSafeIntervalCount = collisionSafeIntervalCount(chartHeight);
+    int collisionSafeIntervalCount = YAxisPolicy.maximumYAxisIntervalCount(chartHeight);
     int targetIntervalCount = Math.min(zoomIntervalCount, collisionSafeIntervalCount);
 
     double priceSpan = maxPrice - minPrice;
@@ -49,12 +44,5 @@ final class YAxisTickCalculator {
       ticks.add(tickInCents / CENTS_PER_DOLLAR);
     }
     return List.copyOf(ticks);
-  }
-
-  private static int collisionSafeIntervalCount(double chartHeight) {
-    if (!Double.isFinite(chartHeight) || chartHeight <= 0.0) {
-      return 1;
-    }
-    return Math.max(1, (int) Math.floor(chartHeight / MIN_LABEL_SPACING));
   }
 }

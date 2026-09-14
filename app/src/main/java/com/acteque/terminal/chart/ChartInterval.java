@@ -165,23 +165,23 @@ public final class ChartInterval {
     );
   }
 
-  String formatMonth(LocalDate date) {
+  public String formatMonth(LocalDate date) {
     return date.format(MONTH_LABEL_FORMATTER);
   }
 
-  String formatDay(LocalDate date) {
+  public String formatDay(LocalDate date) {
     return date.format(DAY_LABEL_FORMATTER);
   }
 
-  String formatYear(LocalDate date) {
+  public String formatYear(LocalDate date) {
     return date.format(YEAR_LABEL_FORMATTER);
   }
 
-  String formatCrosshair(LocalDate date) {
+  public String formatCrosshair(LocalDate date) {
     return date.format(CROSSHAIR_LABEL_FORMATTER);
   }
 
-  double minimumLabelSpacing() {
+  public double minimumLabelSpacing() {
     return minimumLabelSpacing;
   }
 }

@@ -1,5 +1,6 @@
 package com.acteque.terminal.chart;
 
+import com.acteque.terminal.chart.canvas.ChartCanvasController;
 import com.acteque.terminal.chart.intervalselection.ChartIntervalSelectionController;
 import com.acteque.terminal.chart.statusline.ChartStatusLineController;
 import com.acteque.terminal.marketdata.InstrumentLogo;
@@ -12,6 +13,7 @@ import java.util.function.Consumer;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -35,7 +37,8 @@ public final class Chart extends StackPane {
   private final InstrumentSearchDialog instrumentSearchDialog;
   private final ChartIntervalSelectionController intervalSelection;
   private final Dialog intervalSelectionDialog;
-  private final ChartCanvas canvas;
+  private final ChartCanvasController canvasController;
+  private final Canvas canvas;
   private final ChartStatusLineController statusLine;
 
   public Chart(
@@ -68,7 +71,8 @@ public final class Chart extends StackPane {
 
     ChartMenu menu = new ChartMenu();
 
-    canvas = new ChartCanvas(pricePoints, interval, statusLine);
+    canvasController = new ChartCanvasController(pricePoints, interval, statusLine);
+    canvas = canvasController.getView();
 
     VBox statusContent = new VBox(statusLine.getView());
     statusContent.setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
@@ -86,7 +90,7 @@ public final class Chart extends StackPane {
   }
 
   public void setOnEarlierHistoryRequested(Runnable callback) {
-    canvas.setOnEarlierHistoryRequested(callback);
+    canvasController.setOnEarlierHistoryRequested(callback);
   }
 
   public void setOnInstrumentSelected(Consumer<String> callback) {
@@ -105,7 +109,7 @@ public final class Chart extends StackPane {
     Objects.requireNonNull(symbol, "symbol");
     statusLine.setInstrumentName(displayName);
     instrumentSearchDialog.setCurrentSymbol(symbol);
-    canvas.setInstrumentPricePoints(pricePoints);
+    canvasController.setInstrumentPricePoints(pricePoints);
   }
 
   public void setInstrumentLogo(InstrumentLogo logo, Image image) {
@@ -113,11 +117,11 @@ public final class Chart extends StackPane {
   }
 
   public void setPricePoints(List<PricePoint> pricePoints) {
-    canvas.setPricePoints(pricePoints);
+    canvasController.setPricePoints(pricePoints);
   }
 
   public void drawChart() {
-    canvas.drawChart();
+    canvasController.drawChart();
   }
 
   private void handleShortcut(KeyEvent event) {

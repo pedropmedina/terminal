@@ -1,7 +1,9 @@
-package com.acteque.terminal.chart;
+package com.acteque.terminal.chart.canvas;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.test.FxTestSupport;
 import java.time.LocalDate;
 import java.util.List;
@@ -14,13 +16,16 @@ class ChartCanvasInteractionTest {
   @Test
   void ignoresMouseInteractionWhenTheSelectedInstrumentHasNoPriceHistory() {
     FxTestSupport.runAndWait(() -> {
-      ChartCanvas canvas = new ChartCanvas(
+      ChartCanvasModel model = new ChartCanvasModel();
+      ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
+      interactor.initialize(
         List.of(new PricePoint(LocalDate.of(2026, 8, 24), 100, 101, 99, 100, 1_000)),
-        "ACME"
+        ChartInterval.DAILY
       );
+      javafx.scene.canvas.Canvas canvas = new ChartCanvasViewBuilder(model, interactor).build();
       canvas.setWidth(800);
       canvas.setHeight(500);
-      canvas.setInstrumentPricePoints(List.of());
+      interactor.setInstrumentPricePoints(List.of());
 
       assertDoesNotThrow(() -> canvas.getOnMouseMoved().handle(mouseEvent(MouseEvent.MOUSE_MOVED)));
       assertDoesNotThrow(() -> canvas.getOnMousePressed().handle(mouseEvent(MouseEvent.MOUSE_PRESSED)));
