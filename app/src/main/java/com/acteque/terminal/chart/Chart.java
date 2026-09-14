@@ -1,9 +1,11 @@
 package com.acteque.terminal.chart;
 
+import com.acteque.terminal.chart.intervalselection.ChartIntervalSelectionController;
 import com.acteque.terminal.chart.statusline.ChartStatusLineController;
 import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
 import com.acteque.terminal.search.InstrumentSearchDialog;
+import com.acteque.terminal.ui.core.dialog.Dialog;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -31,7 +33,8 @@ public final class Chart extends StackPane {
   private final BooleanProperty instrumentSearchOpen = new SimpleBooleanProperty(false);
   private final BooleanProperty intervalSelectionOpen = new SimpleBooleanProperty(false);
   private final InstrumentSearchDialog instrumentSearchDialog;
-  private final ChartIntervalSelectionDialog intervalSelectionDialog;
+  private final ChartIntervalSelectionController intervalSelection;
+  private final Dialog intervalSelectionDialog;
   private final ChartCanvas canvas;
   private final ChartStatusLineController statusLine;
 
@@ -49,8 +52,9 @@ public final class Chart extends StackPane {
     instrumentSearchDialog = new InstrumentSearchDialog(stockSymbol, instrumentSearchOpen, tickerCatalog);
     instrumentSearchDialog.onRequestClose(() -> instrumentSearchOpen.set(false));
 
-    intervalSelectionDialog = new ChartIntervalSelectionDialog(interval, intervalSelectionOpen);
-    intervalSelectionDialog.onRequestClose(() -> intervalSelectionOpen.set(false));
+    intervalSelection = new ChartIntervalSelectionController(interval, intervalSelectionOpen);
+    intervalSelection.onRequestClose(() -> intervalSelectionOpen.set(false));
+    intervalSelectionDialog = intervalSelection.getView();
 
     BooleanBinding modalOpen = instrumentSearchOpen.or(intervalSelectionOpen);
     statusLine = new ChartStatusLineController(
@@ -60,7 +64,7 @@ public final class Chart extends StackPane {
       this::openInstrumentSearch,
       this::openIntervalSelection
     );
-    intervalSelectionDialog.onIntervalSelected(statusLine::setInterval);
+    intervalSelection.onIntervalSelected(statusLine::setInterval);
 
     ChartMenu menu = new ChartMenu();
 
@@ -91,7 +95,7 @@ public final class Chart extends StackPane {
 
   public void setOnIntervalSelected(Consumer<ChartInterval> callback) {
     Objects.requireNonNull(callback, "callback");
-    intervalSelectionDialog.onIntervalSelected(interval -> {
+    intervalSelection.onIntervalSelected(interval -> {
       statusLine.setInterval(interval);
       callback.accept(interval);
     });

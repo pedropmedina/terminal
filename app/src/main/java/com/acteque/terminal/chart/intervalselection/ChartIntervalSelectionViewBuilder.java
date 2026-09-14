@@ -1,5 +1,6 @@
-package com.acteque.terminal.chart;
+package com.acteque.terminal.chart.intervalselection;
 
+import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.RefreshableView;
 import com.acteque.terminal.ui.core.Toggle;
@@ -14,12 +15,8 @@ import com.acteque.terminal.ui.core.togglegroup.ToggleGroup;
 import com.acteque.terminal.ui.core.togglegroup.ToggleGroupItem;
 import com.acteque.terminal.ui.icons.LucideIcon;
 import com.acteque.terminal.ui.icons.LucideIcons;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -29,11 +26,18 @@ import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
+import javafx.util.Builder;
 
-/** A transient, searchable picker for chart intervals. */
-public final class ChartIntervalSelectionDialog extends Dialog implements RefreshableView {
+/** Builds the reactive JavaFX view for chart interval selection. */
+final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, RefreshableView {
 
   private static final int COLUMN_COUNT = 6;
+
+  private final ChartIntervalSelectionModel model;
+  private final Consumer<String> queryChangedHandler;
+  private final Consumer<ChartInterval> intervalSelectedHandler;
+  private final Runnable soleMatchRequestedHandler;
+  private final Dialog root = new Dialog();
   private final InputGroupInput intervalField = new InputGroupInput();
   private final InputGroupButton addIntervalButton = new InputGroupButton(
     "Add interval",
@@ -42,61 +46,76 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
   private final ChartAddIntervalDialog addIntervalDialog = new ChartAddIntervalDialog();
   private final VBox categories = new VBox();
   private final Label noMatches = new Label("No matching intervals");
-  private final List<ChartInterval> intervals = new ArrayList<>(Arrays.asList(ChartInterval.values()));
   private final Map<ChartInterval, ToggleGroupItem> intervalItems = new HashMap<>();
-  private ChartInterval currentInterval;
-  private Runnable closeRequestHandler = () -> {};
-  private Consumer<ChartInterval> intervalSelectedHandler = ignored -> {};
 
-  public ChartIntervalSelectionDialog(ChartInterval currentInterval, ObservableBooleanValue open) {
-    this.currentInterval = Objects.requireNonNull(currentInterval, "currentInterval");
+  ChartIntervalSelectionViewBuilder(
+    ChartIntervalSelectionModel model,
+    ObservableBooleanValue open,
+    Consumer<String> queryChangedHandler,
+    Consumer<ChartInterval> intervalAddedHandler,
+    Consumer<ChartInterval> intervalSelectedHandler,
+    Runnable soleMatchRequestedHandler,
+    Runnable closeRequestHandler
+  ) {
+    this.model = Objects.requireNonNull(model, "model");
+    this.queryChangedHandler = Objects.requireNonNull(queryChangedHandler, "queryChangedHandler");
+    this.intervalSelectedHandler = Objects.requireNonNull(intervalSelectedHandler, "intervalSelectedHandler");
+    this.soleMatchRequestedHandler = Objects.requireNonNull(soleMatchRequestedHandler, "soleMatchRequestedHandler");
+    Objects.requireNonNull(intervalAddedHandler, "intervalAddedHandler");
+    Objects.requireNonNull(closeRequestHandler, "closeRequestHandler");
     Objects.requireNonNull(open, "open");
 
-    getStyleClass().add("chart-interval-selection-dialog");
+    root.getStyleClass().add("chart-interval-selection-dialog");
     intervalField.getStyleClass().add("chart-interval-search-field");
     addIntervalButton.getStyleClass().add("chart-interval-add-button");
     addIntervalButton.setAccessibleText("Add chart interval");
     addIntervalButton.setOnAction(ignored -> addIntervalDialog.openForEntry());
-    addIntervalDialog.onIntervalAdded(interval -> {
-      intervals.add(interval);
-      rebuildCategories(intervalField.getText());
-    });
+    addIntervalDialog.onIntervalAdded(intervalAddedHandler);
     addIntervalDialog.openProperty().addListener((ignored, wasOpen, isOpen) -> {
-      if (getContent() != null) {
-        getContent().setDisable(isOpen);
+      if (root.getContent() != null) {
+        root.getContent().setDisable(isOpen);
       }
-      setDismissible(!isOpen);
+      root.setDismissible(!isOpen);
     });
-    getChildren().add(addIntervalDialog);
+    root.getChildren().add(addIntervalDialog);
+
     categories.getStyleClass().add("chart-interval-categories");
     noMatches.getStyleClass().add("chart-interval-no-matches");
     noMatches.setMaxWidth(Double.MAX_VALUE);
-    intervalField.textProperty().addListener((ignored, oldValue, newValue) -> rebuildCategories(newValue));
-    intervalField.setOnAction(ignored -> selectSoleMatch());
+    intervalField.textProperty().addListener((ignored, oldValue, newValue) -> queryChangedHandler.accept(newValue));
+    intervalField.setOnAction(ignored -> soleMatchRequestedHandler.run());
+
+    model.matchingIntervalsProperty().addListener(ignored -> rebuildCategories());
+    model.currentIntervalProperty().addListener(ignored -> updateSelectedInterval());
 
     open.addListener((ignored, wasOpen, isOpen) -> {
-      setOpen(isOpen);
+      root.setOpen(isOpen);
       if (isOpen) {
         intervalField.clear();
         Platform.runLater(intervalField::requestFocus);
       }
     });
-    openProperty().addListener((ignored, wasOpen, isOpen) -> {
+    root.openProperty().addListener((ignored, wasOpen, isOpen) -> {
       if (!isOpen && open.get()) {
         closeRequestHandler.run();
       }
     });
-    setOpen(open.get());
+    root.setOpen(open.get());
 
     refreshView();
     ChartReloadHooks.register(this);
   }
 
   @Override
+  public Dialog build() {
+    return root;
+  }
+
+  @Override
   public void refreshView() {
     intervalField.setPromptText("Change interval e.g. 5m, 1h");
     intervalField.setAccessibleText("Filter chart intervals");
-    rebuildCategories(intervalField.getText());
+    rebuildCategories();
 
     InputGroup searchGroup = new InputGroup(
       intervalField,
@@ -105,33 +124,16 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
     DialogContent card = new DialogContent(searchGroup, categories, noMatches);
     card.getStyleClass().add("chart-interval-selection-card");
     card.setShowCloseButton(false);
-    card.setMaxHeight(USE_PREF_SIZE);
-    setContent(card);
+    card.setMaxHeight(Dialog.USE_PREF_SIZE);
+    root.setContent(card);
   }
 
-  public void setCurrentInterval(ChartInterval interval) {
-    currentInterval = Objects.requireNonNull(interval, "interval");
-    rebuildCategories(intervalField.getText());
+  void close() {
+    root.close();
   }
 
-  public void onIntervalSelected(Consumer<ChartInterval> callback) {
-    intervalSelectedHandler = Objects.requireNonNull(callback, "callback");
-  }
-
-  public void onRequestClose(Runnable callback) {
-    closeRequestHandler = Objects.requireNonNull(callback, "callback");
-  }
-
-  private void rebuildCategories(String query) {
-    String normalizedQuery = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
-    Map<String, List<ChartInterval>> matchingByCategory = new LinkedHashMap<>();
-    intervals
-      .stream()
-      .filter(interval -> interval.matches(normalizedQuery))
-      .forEach(interval ->
-        matchingByCategory.computeIfAbsent(interval.category(), ignored -> new ArrayList<>()).add(interval)
-      );
-
+  private void rebuildCategories() {
+    Map<String, List<ChartInterval>> matchingByCategory = model.getMatchingIntervals();
     intervalItems.clear();
     categories.getChildren().setAll(
       matchingByCategory
@@ -176,7 +178,7 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
     item.getStyleClass().add("chart-interval-button");
     item.setFocusTraversable(true);
     item.setAccessibleText(interval.description());
-    item.setSelected(interval == currentInterval);
+    item.setSelected(interval == model.getCurrentInterval());
     intervalItems.put(interval, item);
 
     item.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
@@ -185,25 +187,12 @@ public final class ChartIntervalSelectionDialog extends Dialog implements Refres
         event.consume();
       }
     });
-    item.setOnAction(ignored -> select(interval));
+    item.setOnAction(ignored -> intervalSelectedHandler.accept(interval));
     return item;
   }
 
-  private void selectSoleMatch() {
-    String query = intervalField.getText() == null ? "" : intervalField.getText().strip().toLowerCase(Locale.ROOT);
-    List<ChartInterval> matches = intervals
-      .stream()
-      .filter(interval -> interval.matches(query))
-      .toList();
-    if (matches.size() == 1) {
-      select(matches.getFirst());
-    }
-  }
-
-  private void select(ChartInterval interval) {
-    currentInterval = interval;
-    intervalItems.forEach((candidate, item) -> item.setSelected(candidate == interval));
-    close();
-    intervalSelectedHandler.accept(interval);
+  private void updateSelectedInterval() {
+    ChartInterval currentInterval = model.getCurrentInterval();
+    intervalItems.forEach((candidate, item) -> item.setSelected(candidate == currentInterval));
   }
 }

@@ -132,7 +132,7 @@ public final class ChartInterval {
     return new ChartInterval(amount, classification, amount + " " + classification.unit + " interval", 56.0);
   }
 
-  String name() {
+  public String name() {
     return name;
   }
 
@@ -148,15 +148,15 @@ public final class ChartInterval {
     return amount + " " + classification.unit + "s";
   }
 
-  String category() {
+  public String category() {
     return category;
   }
 
-  String description() {
+  public String description() {
     return description;
   }
 
-  boolean matches(String normalizedQuery) {
+  public boolean matches(String normalizedQuery) {
     return (
       normalizedQuery.isEmpty() ||
       name.toLowerCase(Locale.ROOT).equals(normalizedQuery) ||

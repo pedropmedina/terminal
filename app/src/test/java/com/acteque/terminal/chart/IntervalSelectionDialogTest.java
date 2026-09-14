@@ -6,12 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.acteque.terminal.chart.intervalselection.ChartIntervalSelectionController;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.core.Input;
 import com.acteque.terminal.ui.core.Select;
 import com.acteque.terminal.ui.core.Toggle;
+import com.acteque.terminal.ui.core.dialog.Dialog;
 import com.acteque.terminal.ui.core.inputgroup.InputGroup;
 import com.acteque.terminal.ui.core.inputgroup.InputGroupAddon;
 import com.acteque.terminal.ui.core.inputgroup.InputGroupAlignment;
@@ -39,7 +41,7 @@ class ChartIntervalSelectionDialogTest {
   @Test
   void displaysCategorizedIntervalButtonsAndHighlightsTheCurrentInterval() {
     FxTestSupport.runAndWait(() -> {
-      ChartIntervalSelectionDialog dialog = createDialog();
+      Dialog dialog = createFeature().view();
       dialog.show();
 
       Button addInterval = (Button) dialog.lookup(".chart-interval-add-button");
@@ -115,7 +117,7 @@ class ChartIntervalSelectionDialogTest {
   @Test
   void sizesTheVisibleCardToItsContent() {
     FxTestSupport.runAndWait(() -> {
-      ChartIntervalSelectionDialog dialog = createDialog();
+      Dialog dialog = createFeature().view();
       StackPane root = (StackPane) dialog.getParent();
       dialog.show();
       root.applyCss();
@@ -133,7 +135,7 @@ class ChartIntervalSelectionDialogTest {
   @Test
   void filtersIntervalsAndShowsAnEmptyState() {
     FxTestSupport.runAndWait(() -> {
-      ChartIntervalSelectionDialog dialog = createDialog();
+      Dialog dialog = createFeature().view();
       dialog.show();
       Input field = (Input) dialog.lookup(".chart-interval-search-field");
 
@@ -167,11 +169,12 @@ class ChartIntervalSelectionDialogTest {
   void pressingEnterClosesAndReportsTheSelectedInterval() {
     FxTestSupport.runAndWait(() -> {
       SimpleBooleanProperty open = new SimpleBooleanProperty(true);
-      ChartIntervalSelectionDialog dialog = new ChartIntervalSelectionDialog(ChartInterval.DAILY, open);
+      ChartIntervalSelectionController controller = new ChartIntervalSelectionController(ChartInterval.DAILY, open);
+      Dialog dialog = controller.getView();
       new Scene(new StackPane(dialog), 800.0, 600.0);
       AtomicReference<ChartInterval> selected = new AtomicReference<>();
-      dialog.onIntervalSelected(selected::set);
-      dialog.onRequestClose(() -> open.set(false));
+      controller.onIntervalSelected(selected::set);
+      controller.onRequestClose(() -> open.set(false));
 
       ToggleGroupItem previous = button(dialog, "1D");
       ToggleGroupItem latest = button(dialog, "4H");
@@ -196,11 +199,11 @@ class ChartIntervalSelectionDialogTest {
 
   @Test
   void tabsThroughVisibleIntervalsInVisualOrderAndWrapsWithinTheDialog() {
-    AtomicReference<ChartIntervalSelectionDialog> dialogReference = new AtomicReference<>();
+    AtomicReference<Dialog> dialogReference = new AtomicReference<>();
     AtomicReference<Input> inputReference = new AtomicReference<>();
     AtomicReference<Stage> stageReference = new AtomicReference<>();
     FxTestSupport.runAndWait(() -> {
-      ChartIntervalSelectionDialog dialog = createDialog();
+      Dialog dialog = createFeature().view();
       Stage stage = new Stage();
       stage.setScene(dialog.getScene());
       Platform.setImplicitExit(false);
@@ -277,9 +280,10 @@ class ChartIntervalSelectionDialogTest {
   @Test
   void addsANumericCustomIntervalToTheInMemoryChoices() {
     FxTestSupport.runAndWait(() -> {
-      ChartIntervalSelectionDialog dialog = createDialog();
+      IntervalSelectionFeature feature = createFeature();
+      Dialog dialog = feature.view();
       AtomicReference<ChartInterval> selected = new AtomicReference<>();
-      dialog.onIntervalSelected(selected::set);
+      feature.controller().onIntervalSelected(selected::set);
       dialog.show();
 
       ((Button) dialog.lookup(".chart-interval-add-button")).fire();
@@ -315,7 +319,7 @@ class ChartIntervalSelectionDialogTest {
   @Test
   void cancellingTheAddDialogLeavesTheIntervalChoicesUnchanged() {
     FxTestSupport.runAndWait(() -> {
-      ChartIntervalSelectionDialog dialog = createDialog();
+      Dialog dialog = createFeature().view();
       dialog.show();
 
       ((Button) dialog.lookup(".chart-interval-add-button")).fire();
@@ -326,18 +330,21 @@ class ChartIntervalSelectionDialogTest {
     });
   }
 
-  private static ChartIntervalSelectionDialog createDialog() {
-    ChartIntervalSelectionDialog dialog = new ChartIntervalSelectionDialog(
+  private static IntervalSelectionFeature createFeature() {
+    ChartIntervalSelectionController controller = new ChartIntervalSelectionController(
       ChartInterval.DAILY,
       new SimpleBooleanProperty(false)
     );
+    Dialog dialog = controller.getView();
     StackPane root = new StackPane(dialog);
     new ThemeManager(new Scene(root, 800.0, 600.0), AppTheme.LIGHT);
     root.applyCss();
-    return dialog;
+    return new IntervalSelectionFeature(controller, dialog);
   }
 
-  private static ToggleGroupItem button(ChartIntervalSelectionDialog dialog, String text) {
+  private record IntervalSelectionFeature(ChartIntervalSelectionController controller, Dialog view) {}
+
+  private static ToggleGroupItem button(Dialog dialog, String text) {
     return dialog
       .lookupAll(".chart-interval-button")
       .stream()

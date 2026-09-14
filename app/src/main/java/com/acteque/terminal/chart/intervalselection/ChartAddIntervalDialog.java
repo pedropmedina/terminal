@@ -1,5 +1,6 @@
-package com.acteque.terminal.chart;
+package com.acteque.terminal.chart.intervalselection;
 
+import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartInterval.Classification;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Input;
