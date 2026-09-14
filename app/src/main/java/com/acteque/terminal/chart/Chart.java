@@ -2,6 +2,7 @@ package com.acteque.terminal.chart;
 
 import com.acteque.terminal.chart.canvas.ChartCanvasController;
 import com.acteque.terminal.chart.intervalselection.ChartIntervalSelectionController;
+import com.acteque.terminal.chart.menu.ChartMenuController;
 import com.acteque.terminal.chart.statusline.ChartStatusLineController;
 import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
@@ -69,7 +70,9 @@ public final class Chart extends StackPane {
     );
     intervalSelection.onIntervalSelected(statusLine::setInterval);
 
-    ChartMenu menu = new ChartMenu();
+    ChartMenuController menu = new ChartMenuController();
+    menu.onInstrumentSelectionRequested(this::openInstrumentSearch);
+    menu.onIntervalSelectionRequested(this::openIntervalSelection);
 
     canvasController = new ChartCanvasController(pricePoints, interval, statusLine);
     canvas = canvasController.getView();
@@ -82,7 +85,7 @@ public final class Chart extends StackPane {
     statusOverlay.getStyleClass().add("chart-status-overlay");
     statusOverlay.setPickOnBounds(false);
 
-    getChildren().setAll(canvas, menu, statusOverlay, instrumentSearchDialog, intervalSelectionDialog);
+    getChildren().setAll(canvas, menu.getView(), statusOverlay, instrumentSearchDialog, intervalSelectionDialog);
     addEventFilter(KeyEvent.KEY_PRESSED, this::handleShortcut);
 
     canvas.widthProperty().bind(widthProperty());
