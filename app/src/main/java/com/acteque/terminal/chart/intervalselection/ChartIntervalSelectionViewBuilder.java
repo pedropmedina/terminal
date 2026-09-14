@@ -34,9 +34,7 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Refres
   private static final int COLUMN_COUNT = 6;
 
   private final ChartIntervalSelectionModel model;
-  private final Consumer<String> queryChangedHandler;
   private final Consumer<ChartInterval> intervalSelectedHandler;
-  private final Runnable soleMatchRequestedHandler;
   private final Dialog root = new Dialog();
   private final InputGroupInput intervalField = new InputGroupInput();
   private final InputGroupButton addIntervalButton = new InputGroupButton(
@@ -58,10 +56,10 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Refres
     Runnable closeRequestHandler
   ) {
     this.model = Objects.requireNonNull(model, "model");
-    this.queryChangedHandler = Objects.requireNonNull(queryChangedHandler, "queryChangedHandler");
     this.intervalSelectedHandler = Objects.requireNonNull(intervalSelectedHandler, "intervalSelectedHandler");
-    this.soleMatchRequestedHandler = Objects.requireNonNull(soleMatchRequestedHandler, "soleMatchRequestedHandler");
+    Objects.requireNonNull(queryChangedHandler, "queryChangedHandler");
     Objects.requireNonNull(intervalAddedHandler, "intervalAddedHandler");
+    Objects.requireNonNull(soleMatchRequestedHandler, "soleMatchRequestedHandler");
     Objects.requireNonNull(closeRequestHandler, "closeRequestHandler");
     Objects.requireNonNull(open, "open");
 
