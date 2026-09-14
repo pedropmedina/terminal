@@ -1,35 +1,22 @@
 package com.acteque.terminal.chart;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
+import java.util.Objects;
 
-public final class ChartInterval {
-
+/** Immutable interval value shared by chart MVCI models. */
+public record ChartInterval(int amount, Classification classification) {
   public enum Classification {
-    TICKS("Ticks", "Ticks", "T", "tick"),
-    SECONDS("Seconds", "Seconds", "S", "second"),
-    MINUTES("Minutes", "Minutes", "M", "minute"),
-    HOURS("Hours", "Hours", "H", "hour"),
-    DAYS("Days", "Days", "D", "day"),
-    WEEKS("Weeks", "Days", "W", "week"),
-    MONTHS("Months", "Days", "Mo", "month");
+    TICKS("T"),
+    SECONDS("S"),
+    MINUTES("M"),
+    HOURS("H"),
+    DAYS("D"),
+    WEEKS("W"),
+    MONTHS("Mo");
 
-    private final String label;
-    private final String category;
     private final String suffix;
-    private final String unit;
 
-    Classification(String label, String category, String suffix, String unit) {
-      this.label = label;
-      this.category = category;
+    Classification(String suffix) {
       this.suffix = suffix;
-      this.unit = unit;
-    }
-
-    @Override
-    public String toString() {
-      return label;
     }
   }
 
@@ -91,37 +78,15 @@ public final class ChartInterval {
     TWELVE_MONTHS,
   };
 
-  private static final DateTimeFormatter MONTH_LABEL_FORMATTER = DateTimeFormatter.ofPattern("MMM", Locale.US);
-  private static final DateTimeFormatter DAY_LABEL_FORMATTER = DateTimeFormatter.ofPattern("d", Locale.US);
-  private static final DateTimeFormatter YEAR_LABEL_FORMATTER = DateTimeFormatter.ofPattern("yyyy", Locale.US);
-  private static final DateTimeFormatter CROSSHAIR_LABEL_FORMATTER = DateTimeFormatter.ofPattern(
-    "EEE MMM dd, yyyy",
-    Locale.US
-  );
-
-  private final int amount;
-  private final Classification classification;
-  private final String name;
-  private final String category;
-  private final String description;
-  private final double minimumLabelSpacing;
-
-  private ChartInterval(int amount, Classification classification, String description, double minimumLabelSpacing) {
-    this.amount = amount;
-    this.classification = classification;
-    this.name = amount + classification.suffix;
-    this.category = classification.category;
-    this.description = description;
-    this.minimumLabelSpacing = minimumLabelSpacing;
-  }
-
-  public static ChartInterval of(int amount, Classification classification) {
+  public ChartInterval {
     if (amount <= 0) {
       throw new IllegalArgumentException("amount must be greater than zero");
     }
-    Classification selectedClassification = java.util.Objects.requireNonNull(classification, "classification");
-    String pluralizedUnit = amount == 1 ? selectedClassification.unit : selectedClassification.unit + "s";
-    return new ChartInterval(amount, selectedClassification, amount + " " + pluralizedUnit + " interval", 56.0);
+    Objects.requireNonNull(classification, "classification");
+  }
+
+  public static ChartInterval of(int amount, Classification classification) {
+    return new ChartInterval(amount, classification);
   }
 
   public static ChartInterval[] values() {
@@ -129,59 +94,10 @@ public final class ChartInterval {
   }
 
   private static ChartInterval standard(int amount, Classification classification) {
-    return new ChartInterval(amount, classification, amount + " " + classification.unit + " interval", 56.0);
+    return new ChartInterval(amount, classification);
   }
 
   public String name() {
-    return name;
-  }
-
-  public String displayName() {
-    if (amount == 1) {
-      return switch (classification) {
-        case DAYS -> "Daily";
-        case WEEKS -> "Weekly";
-        case MONTHS -> "Monthly";
-        default -> "1 " + classification.unit;
-      };
-    }
-    return amount + " " + classification.unit + "s";
-  }
-
-  public String category() {
-    return category;
-  }
-
-  public String description() {
-    return description;
-  }
-
-  public boolean matches(String normalizedQuery) {
-    return (
-      normalizedQuery.isEmpty() ||
-      name.toLowerCase(Locale.ROOT).equals(normalizedQuery) ||
-      category.toLowerCase(Locale.ROOT).contains(normalizedQuery) ||
-      description.toLowerCase(Locale.ROOT).contains(normalizedQuery)
-    );
-  }
-
-  public String formatMonth(LocalDate date) {
-    return date.format(MONTH_LABEL_FORMATTER);
-  }
-
-  public String formatDay(LocalDate date) {
-    return date.format(DAY_LABEL_FORMATTER);
-  }
-
-  public String formatYear(LocalDate date) {
-    return date.format(YEAR_LABEL_FORMATTER);
-  }
-
-  public String formatCrosshair(LocalDate date) {
-    return date.format(CROSSHAIR_LABEL_FORMATTER);
-  }
-
-  public double minimumLabelSpacing() {
-    return minimumLabelSpacing;
+    return amount + classification.suffix;
   }
 }

@@ -21,5 +21,6 @@ record RenderStyle(
   double gridLineWidth,
   double seriesLineWidth,
   double badgeHeight,
-  double controlRadius
+  double controlRadius,
+  double axisLabelSpacing
 ) {}

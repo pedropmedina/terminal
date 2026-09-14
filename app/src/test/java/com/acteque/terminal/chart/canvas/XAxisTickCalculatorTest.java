@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.canvas.XAxisTickCalculator.XAxisTick;
 import java.time.LocalDate;
 import java.util.List;
@@ -12,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 class XAxisTickCalculatorTest {
 
+  private static final double LABEL_SPACING = 56.0;
   private static final List<LocalDate> TRADING_DATES = List.of(
     LocalDate.of(2025, 12, 30),
     LocalDate.of(2025, 12, 31),
@@ -26,8 +26,8 @@ class XAxisTickCalculatorTest {
   @Test
   void increasesDailyDetailAsTheVisibleWindowShrinks() {
     List<LocalDate> dates = tradingDates(100);
-    List<XAxisTick> zoomedOut = XAxisTickCalculator.calculate(dates, 0, 100, 660.0, ChartInterval.DAILY);
-    List<XAxisTick> zoomedIn = XAxisTickCalculator.calculate(dates, 88, 12, 660.0, ChartInterval.DAILY);
+    List<XAxisTick> zoomedOut = XAxisTickCalculator.calculate(dates, 0, 100, 660.0, LABEL_SPACING);
+    List<XAxisTick> zoomedIn = XAxisTickCalculator.calculate(dates, 88, 12, 660.0, LABEL_SPACING);
 
     assertTrue(zoomedIn.size() > zoomedOut.size());
     assertEquals(12, zoomedIn.size());
@@ -35,7 +35,7 @@ class XAxisTickCalculatorTest {
 
   @Test
   void displaysEveryTradingSessionAtMaximumZoom() {
-    List<XAxisTick> ticks = XAxisTickCalculator.calculate(tradingDates(100), 92, 8, 660.0, ChartInterval.DAILY);
+    List<XAxisTick> ticks = XAxisTickCalculator.calculate(tradingDates(100), 92, 8, 660.0, LABEL_SPACING);
 
     assertEquals(8, ticks.size());
     assertEquals(List.of(92, 93, 94, 95, 96, 97, 98, 99), ticks.stream().map(XAxisTick::dataIndex).toList());
@@ -50,21 +50,21 @@ class XAxisTickCalculatorTest {
       0,
       visibleSlots,
       chartWidth,
-      ChartInterval.DAILY
+      LABEL_SPACING
     );
     double pointSpacing = chartWidth / (visibleSlots - 1);
 
     for (int index = 1; index < ticks.size(); index++) {
       int slotDifference = ticks.get(index).slotIndex() - ticks.get(index - 1).slotIndex();
-      assertTrue(slotDifference * pointSpacing >= ChartInterval.DAILY.minimumLabelSpacing());
+      assertTrue(slotDifference * pointSpacing >= LABEL_SPACING);
     }
   }
 
   @Test
   void alignsTicksToDataIndicesWhilePanning() {
     List<LocalDate> dates = tradingDates(100);
-    List<XAxisTick> firstWindow = XAxisTickCalculator.calculate(dates, 40, 20, 660.0, ChartInterval.DAILY);
-    List<XAxisTick> pannedWindow = XAxisTickCalculator.calculate(dates, 41, 20, 660.0, ChartInterval.DAILY);
+    List<XAxisTick> firstWindow = XAxisTickCalculator.calculate(dates, 40, 20, 660.0, LABEL_SPACING);
+    List<XAxisTick> pannedWindow = XAxisTickCalculator.calculate(dates, 41, 20, 660.0, LABEL_SPACING);
 
     List<Integer> firstIndices = firstWindow.stream().map(XAxisTick::dataIndex).toList();
     List<Integer> pannedIndices = pannedWindow.stream().map(XAxisTick::dataIndex).toList();
@@ -73,7 +73,7 @@ class XAxisTickCalculatorTest {
 
   @Test
   void plansUnlabelledSlotsBeyondTheNewestPoint() {
-    List<XAxisTick> ticks = XAxisTickCalculator.calculate(tradingDates(100), 94, 10, 660.0, ChartInterval.DAILY);
+    List<XAxisTick> ticks = XAxisTickCalculator.calculate(tradingDates(100), 94, 10, 660.0, LABEL_SPACING);
 
     assertTrue(ticks.stream().anyMatch(tick -> tick.dataIndex() >= 100));
     assertFalse(ticks.isEmpty());
@@ -81,7 +81,7 @@ class XAxisTickCalculatorTest {
 
   @Test
   void showsMonthNamesAtTheFirstTradingSessionWhenZoomedOut() {
-    List<XAxisTick> ticks = XAxisTickCalculator.calculate(TRADING_DATES, 0, 8, 100.0, ChartInterval.DAILY);
+    List<XAxisTick> ticks = XAxisTickCalculator.calculate(TRADING_DATES, 0, 8, 100.0, LABEL_SPACING);
 
     assertEquals(List.of("Dec", "2026", "Feb"), ticks.stream().map(XAxisTick::label).toList());
     assertEquals(List.of(0, 2, 5), ticks.stream().map(XAxisTick::dataIndex).toList());
@@ -94,7 +94,7 @@ class XAxisTickCalculatorTest {
       0,
       2,
       20.0,
-      ChartInterval.DAILY
+      LABEL_SPACING
     );
 
     assertEquals(List.of("May"), ticks.stream().map(XAxisTick::label).toList());
@@ -102,7 +102,7 @@ class XAxisTickCalculatorTest {
 
   @Test
   void showsDayNumbersAndKeepsPeriodBoundariesWhenZoomedIn() {
-    List<XAxisTick> ticks = XAxisTickCalculator.calculate(TRADING_DATES, 0, 8, 660.0, ChartInterval.DAILY);
+    List<XAxisTick> ticks = XAxisTickCalculator.calculate(TRADING_DATES, 0, 8, 660.0, LABEL_SPACING);
 
     assertEquals(
       List.of("Dec", "31", "2026", "5", "6", "Feb", "3", "4"),
@@ -112,7 +112,7 @@ class XAxisTickCalculatorTest {
 
   @Test
   void formatsCrosshairLabelsWithWeekdayAndFullDate() {
-    assertEquals("Thu Jul 09, 2026", ChartInterval.DAILY.formatCrosshair(LocalDate.of(2026, 7, 9)));
+    assertEquals("Thu Jul 09, 2026", ChartDateFormatter.crosshair(LocalDate.of(2026, 7, 9)));
   }
 
   private static List<LocalDate> tradingDates(int count) {

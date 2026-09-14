@@ -1,6 +1,5 @@
 package com.acteque.terminal.chart.canvas;
 
-import com.acteque.terminal.chart.ChartInterval;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Objects;
@@ -15,11 +14,7 @@ final class CrosshairRenderer {
   private static final double PRICE_TEXT_OFFSET = 10.0;
   private static final double DATE_TEXT_OFFSET = 10.0;
 
-  private final ChartInterval interval;
-
-  CrosshairRenderer(ChartInterval interval) {
-    this.interval = Objects.requireNonNull(interval, "interval");
-  }
+  CrosshairRenderer() {}
 
   void draw(
     GraphicsContext graphics,
@@ -69,6 +64,6 @@ final class CrosshairRenderer {
   }
 
   String dateText(LocalDate date) {
-    return interval.formatCrosshair(Objects.requireNonNull(date, "date"));
+    return ChartDateFormatter.crosshair(Objects.requireNonNull(date, "date"));
   }
 }

@@ -1,9 +1,12 @@
 package com.acteque.terminal.chart.statusline;
 
 import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.ChartLogoSource;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.marketdata.InstrumentLogo;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.Executor;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
@@ -23,10 +26,30 @@ public final class ChartStatusLineController {
     Runnable instrumentSelectionAction,
     Runnable intervalSelectionAction
   ) {
+    this(
+      instrumentName,
+      interval,
+      tooltipsSuppressed,
+      instrumentSelectionAction,
+      intervalSelectionAction,
+      ignored -> java.util.concurrent.CompletableFuture.completedFuture(Optional.empty()),
+      Runnable::run
+    );
+  }
+
+  public ChartStatusLineController(
+    String instrumentName,
+    ChartInterval interval,
+    ObservableBooleanValue tooltipsSuppressed,
+    Runnable instrumentSelectionAction,
+    Runnable intervalSelectionAction,
+    ChartLogoSource logoSource,
+    Executor uiExecutor
+  ) {
     this.instrumentSelectionAction = Objects.requireNonNull(instrumentSelectionAction, "instrumentSelectionAction");
     this.intervalSelectionAction = Objects.requireNonNull(intervalSelectionAction, "intervalSelectionAction");
     ChartStatusLineModel model = new ChartStatusLineModel();
-    interactor = new ChartStatusLineInteractor(model);
+    interactor = new ChartStatusLineInteractor(model, logoSource, uiExecutor);
     interactor.initialize(instrumentName, interval);
     viewBuilder = new ChartStatusLineViewBuilder(
       model,
@@ -50,6 +73,14 @@ public final class ChartStatusLineController {
 
   public void setInstrumentName(String instrumentName) {
     interactor.setInstrumentName(instrumentName);
+  }
+
+  public void setInstrument(String instrumentName, Optional<InstrumentLogo> logo) {
+    interactor.setInstrument(instrumentName, logo);
+  }
+
+  public void cancelLogoLoad() {
+    interactor.cancelLogoLoad();
   }
 
   public void setInstrumentLogo(InstrumentLogo logo, Image image) {

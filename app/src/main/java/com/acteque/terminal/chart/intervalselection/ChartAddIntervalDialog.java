@@ -2,6 +2,7 @@ package com.acteque.terminal.chart.intervalselection;
 
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartInterval.Classification;
+import com.acteque.terminal.chart.ChartIntervalText;
 import com.acteque.terminal.ui.core.Button;
 import com.acteque.terminal.ui.core.Input;
 import com.acteque.terminal.ui.core.Select;
@@ -19,6 +20,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TextFormatter;
+import javafx.util.StringConverter;
 
 /** Form dialog for creating a chart interval that lives for the current application session. */
 final class ChartAddIntervalDialog extends Dialog {
@@ -38,6 +40,19 @@ final class ChartAddIntervalDialog extends Dialog {
     classification.setPromptText("Select interval type");
     classification.setAccessibleText("Interval classification");
     classification.setMaxWidth(Double.MAX_VALUE);
+    classification.setConverter(
+      new StringConverter<>() {
+        @Override
+        public String toString(Classification value) {
+          return value == null ? "" : ChartIntervalText.classificationName(value);
+        }
+
+        @Override
+        public Classification fromString(String value) {
+          throw new UnsupportedOperationException("Interval classifications are selected, not parsed");
+        }
+      }
+    );
 
     amount.getStyleClass().add("chart-add-interval-amount");
     amount.setPromptText("Enter a number");

@@ -1,6 +1,7 @@
 package com.acteque.terminal.chart.intervalselection;
 
 import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.ChartIntervalText;
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.RefreshableView;
 import com.acteque.terminal.ui.core.Toggle;
@@ -175,8 +176,8 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Refres
     ToggleGroupItem item = new ToggleGroupItem(interval.name());
     item.getStyleClass().add("chart-interval-button");
     item.setFocusTraversable(true);
-    item.setAccessibleText(interval.description());
-    item.setSelected(interval == model.getCurrentInterval());
+    item.setAccessibleText(ChartIntervalText.description(interval));
+    item.setSelected(interval.equals(model.getCurrentInterval()));
     intervalItems.put(interval, item);
 
     item.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
@@ -191,6 +192,6 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Refres
 
   private void updateSelectedInterval() {
     ChartInterval currentInterval = model.getCurrentInterval();
-    intervalItems.forEach((candidate, item) -> item.setSelected(candidate == currentInterval));
+    intervalItems.forEach((candidate, item) -> item.setSelected(candidate.equals(currentInterval)));
   }
 }

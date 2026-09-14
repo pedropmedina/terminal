@@ -52,6 +52,10 @@ public final class ChartCanvasController {
     interactor.setInstrumentPricePoints(pricePoints);
   }
 
+  public void setInterval(ChartInterval interval) {
+    interactor.setInterval(interval);
+  }
+
   public void drawChart() {
     viewBuilder.drawChart();
   }

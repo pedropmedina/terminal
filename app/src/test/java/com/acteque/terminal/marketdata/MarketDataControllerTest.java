@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.marketdata.MarketDataController.LoadedInstrument;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -44,11 +43,11 @@ class MarketDataControllerTest {
       )
     ) {
       LoadedInstrument initial = controller.loadInitial().toCompletableFuture().join();
-      List<PricePoint> withEarlierHistory = controller.loadEarlier().toCompletableFuture().join();
+      List<DailyBar> withEarlierHistory = controller.loadEarlier().toCompletableFuture().join();
 
-      assertEquals(List.of(date("2026-02-23"), date("2026-08-20")), dates(initial.pricePoints()));
+      assertEquals(List.of(date("2026-02-23"), date("2026-08-20")), dates(initial.bars()));
       assertEquals(List.of(date("2025-09-02"), date("2026-02-23"), date("2026-08-20")), dates(withEarlierHistory));
-      assertEquals(100.0, withEarlierHistory.get(1).close());
+      assertEquals(new BigDecimal("100"), withEarlierHistory.get(1).prices().close());
       assertEquals(List.of("IBM"), client.metadataRequests);
       assertEquals(
         List.of(
@@ -98,12 +97,12 @@ class MarketDataControllerTest {
 
       assertEquals("IBM", initial.symbol());
       assertEquals("IBM name", initial.displayName());
-      assertEquals(List.of(date("2026-08-20")), dates(initial.pricePoints()));
-      assertEquals(102.0, initial.pricePoints().getFirst().close());
+      assertEquals(List.of(date("2026-08-20")), dates(initial.bars()));
+      assertEquals(new BigDecimal("102"), initial.bars().getFirst().prices().close());
       assertEquals("AAPL", selected.symbol());
       assertEquals("AAPL name", selected.displayName());
       assertEquals(List.of("IBM", "AAPL"), client.metadataRequests);
-      assertEquals(List.of(date("2026-08-19"), date("2026-08-20")), dates(selected.pricePoints()));
+      assertEquals(List.of(date("2026-08-19"), date("2026-08-20")), dates(selected.bars()));
       assertEquals(
         List.of(
           new DailyBarRequest("IBM", date("2026-02-21"), date("2026-08-21")),
@@ -150,7 +149,7 @@ class MarketDataControllerTest {
       LoadedInstrument loaded = controller.loadInitial().toCompletableFuture().join();
       assertEquals("IBM", loaded.symbol());
       assertEquals("IBM", loaded.displayName());
-      assertEquals(102.0, loaded.pricePoints().getFirst().close());
+      assertEquals(new BigDecimal("102"), loaded.bars().getFirst().prices().close());
       assertEquals(List.of("IBM"), client.metadataRequests);
     }
   }
@@ -164,8 +163,8 @@ class MarketDataControllerTest {
     try (MarketDataController controller = controller(client)) {
       LoadedInstrument loaded = controller.loadInitial().toCompletableFuture().join();
       assertEquals("IBM", loaded.displayName());
-      assertEquals(102.0, loaded.pricePoints().getFirst().close());
-      assertEquals(loaded.pricePoints(), controller.loadEarlier().toCompletableFuture().join());
+      assertEquals(new BigDecimal("102"), loaded.bars().getFirst().prices().close());
+      assertEquals(loaded.bars(), controller.loadEarlier().toCompletableFuture().join());
       assertEquals(List.of("IBM"), client.metadataRequests);
     }
   }
@@ -212,8 +211,8 @@ class MarketDataControllerTest {
         assertInstanceOf(CancellationException.class, failure.getCause());
         assertEquals("AAPL", selected.symbol());
         assertEquals("AAPL name", selected.displayName());
-        assertEquals(List.of(date("2026-08-19")), dates(selected.pricePoints()));
-        assertEquals(201.0, selected.pricePoints().getFirst().close());
+        assertEquals(List.of(date("2026-08-19")), dates(selected.bars()));
+        assertEquals(new BigDecimal("201"), selected.bars().getFirst().prices().close());
         assertEquals(
           List.of(date("2026-02-18"), date("2026-08-19")),
           dates(controller.loadEarlier().toCompletableFuture().get(5, TimeUnit.SECONDS))
@@ -227,12 +226,12 @@ class MarketDataControllerTest {
   }
 
   @Test
-  void loadedInstrumentDefensivelyCopiesItsPricePoints() {
-    List<PricePoint> points = new ArrayList<>();
-    LoadedInstrument loaded = new LoadedInstrument("IBM", "IBM name", points);
-    points.add(new PricePoint(date("2026-08-20"), 1, 1, 1, 1, 1));
-    assertTrue(loaded.pricePoints().isEmpty());
-    assertThrows(UnsupportedOperationException.class, () -> loaded.pricePoints().add(points.getFirst()));
+  void loadedInstrumentDefensivelyCopiesItsBars() {
+    List<DailyBar> bars = new ArrayList<>();
+    LoadedInstrument loaded = new LoadedInstrument("IBM", "IBM name", bars);
+    bars.add(bar("2026-08-20", "1"));
+    assertTrue(loaded.bars().isEmpty());
+    assertThrows(UnsupportedOperationException.class, () -> loaded.bars().add(bars.getFirst()));
   }
 
   private static MarketDataController controller(StubMarketDataClient client) {
@@ -252,8 +251,8 @@ class MarketDataControllerTest {
     }
   }
 
-  private static List<LocalDate> dates(List<PricePoint> points) {
-    return points.stream().map(PricePoint::date).toList();
+  private static List<LocalDate> dates(List<DailyBar> bars) {
+    return bars.stream().map(DailyBar::date).toList();
   }
 
   private static LocalDate date(String value) {

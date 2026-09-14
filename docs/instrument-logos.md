@@ -23,7 +23,7 @@ https://api.elbstream.com/logos/symbol/{encoded-symbol}?format=png&size=64
 
 This is best-effort ticker matching. Symbols remain provider-scoped in our metadata, and Elbstream's symbol lookup does not disambiguate exchanges. The integration preserves ticker punctuation and does not guess exchange suffixes or company domains. ISIN-based matching would be preferable if a future metadata source supplies a stable ISIN.
 
-`MarketDataController.loadLogo` downloads separately from price loading. `ChartLogoLoader` decodes the PNG and dispatches current-generation results to the JavaFX thread. The chart owns image presentation and does not perform HTTP requests.
+`MarketDataController.loadLogo` downloads separately from price loading through the chart's `ChartLogoSource` port. The status-line interactor owns decoding, stale-result suppression, cancellation, and JavaFX-thread model updates. The chart owns image presentation and does not perform HTTP requests.
 
 Requests have connection and whole-body timeouts, a 1 MiB streamed payload limit, PNG validation, a fixed endpoint allowlist, and no redirects or automatic retries. A 404 means no logo; other failures use normalized market-data errors and leave the fallback in place. No Tiingo credentials are sent to Elbstream.
 
@@ -47,6 +47,6 @@ Provider tests use injected transports and local HTTP fixtures, not live provide
 
 ```sh
 ./gradlew test --tests 'com.acteque.terminal.marketdata.*'
-./gradlew test --tests 'com.acteque.terminal.chart.ChartLogoLoaderTest' --tests 'com.acteque.terminal.chart.ChartStatusLineTest'
+./gradlew test --tests 'com.acteque.terminal.chart.statusline.ChartStatusLineLogoInteractorTest' --tests 'com.acteque.terminal.chart.statusline.ChartStatusLineTest'
 ./gradlew test
 ```

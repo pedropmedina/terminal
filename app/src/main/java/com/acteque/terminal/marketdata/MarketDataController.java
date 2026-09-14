@@ -1,6 +1,5 @@
 package com.acteque.terminal.marketdata;
 
-import com.acteque.terminal.chart.PricePoint;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
@@ -25,17 +24,12 @@ public final class MarketDataController implements AutoCloseable {
   private static final System.Logger LOGGER = System.getLogger(MarketDataController.class.getName());
   private static final long HISTORY_PAGE_MONTHS = 6;
 
-  public record LoadedInstrument(
-    String symbol,
-    String displayName,
-    List<PricePoint> pricePoints,
-    InstrumentDetails details
-  ) {
-    public LoadedInstrument(String symbol, String displayName, List<PricePoint> pricePoints) {
+  public record LoadedInstrument(String symbol, String displayName, List<DailyBar> bars, InstrumentDetails details) {
+    public LoadedInstrument(String symbol, String displayName, List<DailyBar> bars) {
       this(
         symbol,
         displayName,
-        pricePoints,
+        bars,
         new InstrumentDetails(symbol, Optional.of(displayName), Optional.empty(), Optional.empty())
       );
     }
@@ -44,7 +38,7 @@ public final class MarketDataController implements AutoCloseable {
       Objects.requireNonNull(details, "details");
       Objects.requireNonNull(symbol, "symbol");
       Objects.requireNonNull(displayName, "displayName");
-      pricePoints = List.copyOf(pricePoints);
+      bars = List.copyOf(bars);
     }
   }
 
@@ -52,7 +46,7 @@ public final class MarketDataController implements AutoCloseable {
   private String symbol;
   private final Clock clock;
   private final ExecutorService executor;
-  private final NavigableMap<LocalDate, PricePoint> pointsByDate = new TreeMap<>();
+  private final NavigableMap<LocalDate, DailyBar> barsByDate = new TreeMap<>();
 
   private boolean earlierHistoryLoadInProgress;
   private boolean allEarlierHistoryLoaded;
@@ -74,17 +68,17 @@ public final class MarketDataController implements AutoCloseable {
     return loadInstrument(symbol);
   }
 
-  public CompletionStage<List<PricePoint>> loadEarlier() {
+  public CompletionStage<List<DailyBar>> loadEarlier() {
     LocalDate oldestAvailableDate;
     String requestedSymbol;
     long generation;
     synchronized (this) {
-      if (earlierHistoryLoadInProgress || allEarlierHistoryLoaded || pointsByDate.isEmpty()) {
+      if (earlierHistoryLoadInProgress || allEarlierHistoryLoaded || barsByDate.isEmpty()) {
         return CompletableFuture.completedFuture(snapshot());
       }
 
       earlierHistoryLoadInProgress = true;
-      oldestAvailableDate = pointsByDate.firstKey();
+      oldestAvailableDate = barsByDate.firstKey();
       requestedSymbol = symbol;
       generation = instrumentLoadGeneration;
     }
@@ -103,9 +97,9 @@ public final class MarketDataController implements AutoCloseable {
               throw asCompletionException(failure);
             }
 
-            int previousSize = pointsByDate.size();
-            addPoints(page);
-            if (pointsByDate.size() == previousSize) {
+            int previousSize = barsByDate.size();
+            addBars(page);
+            if (barsByDate.size() == previousSize) {
               allEarlierHistoryLoaded = true;
             }
             return snapshot();
@@ -130,7 +124,7 @@ public final class MarketDataController implements AutoCloseable {
     LocalDate endDate = LocalDate.now(clock);
     LocalDate startDate = endDate.minusMonths(HISTORY_PAGE_MONTHS);
     return CompletableFuture.supplyAsync(() -> {
-      List<PricePoint> page = loadPage(requestedSymbol, startDate, endDate);
+      List<DailyBar> page = loadPage(requestedSymbol, startDate, endDate);
       InstrumentDetails details;
       try {
         details = client.discovery().getInstrument(requestedSymbol);
@@ -158,9 +152,9 @@ public final class MarketDataController implements AutoCloseable {
         }
 
         this.symbol = requestedSymbol;
-        pointsByDate.clear();
+        barsByDate.clear();
         allEarlierHistoryLoaded = false;
-        addPoints(loaded.pricePoints());
+        addBars(loaded.bars());
         return new LoadedInstrument(requestedSymbol, loaded.displayName(), snapshot(), loaded.details());
       }
     });
@@ -220,13 +214,8 @@ public final class MarketDataController implements AutoCloseable {
     executor.close();
   }
 
-  private List<PricePoint> loadPage(String symbol, LocalDate startDate, LocalDate endDate) {
-    return client
-      .historicalBars()
-      .getDailyBars(new DailyBarRequest(symbol, startDate, endDate))
-      .stream()
-      .map(MarketDataController::toPricePoint)
-      .toList();
+  private List<DailyBar> loadPage(String symbol, LocalDate startDate, LocalDate endDate) {
+    return client.historicalBars().getDailyBars(new DailyBarRequest(symbol, startDate, endDate));
   }
 
   private static String normalizeSymbol(String symbol) {
@@ -244,25 +233,13 @@ public final class MarketDataController implements AutoCloseable {
       : new CompletionException(failure);
   }
 
-  private void addPoints(List<PricePoint> points) {
-    for (PricePoint point : points) {
-      pointsByDate.put(point.date(), point);
+  private void addBars(List<DailyBar> bars) {
+    for (DailyBar bar : bars) {
+      barsByDate.put(bar.date(), bar);
     }
   }
 
-  private List<PricePoint> snapshot() {
-    return List.copyOf(pointsByDate.values());
-  }
-
-  private static PricePoint toPricePoint(DailyBar bar) {
-    Ohlcv prices = bar.prices();
-    return new PricePoint(
-      bar.date(),
-      prices.open().doubleValue(),
-      prices.high().doubleValue(),
-      prices.low().doubleValue(),
-      prices.close().doubleValue(),
-      prices.volume().longValueExact()
-    );
+  private List<DailyBar> snapshot() {
+    return List.copyOf(barsByDate.values());
   }
 }

@@ -32,7 +32,7 @@ final class CanvasRenderer {
   CanvasRenderer(Canvas canvas, ChartCanvasModel model) {
     this.canvas = Objects.requireNonNull(canvas, "canvas");
     this.model = Objects.requireNonNull(model, "model");
-    crosshair = new CrosshairRenderer(model.interval);
+    crosshair = new CrosshairRenderer();
   }
 
   void draw(RenderStyle style, VisibleWindow visibleWindow, PriceRange priceRange) {
@@ -50,7 +50,7 @@ final class CanvasRenderer {
     }
 
     ChartBounds bounds = chartBounds();
-    List<XAxisTick> xAxisTicks = xAxisTicks(bounds, visibleWindow);
+    List<XAxisTick> xAxisTicks = xAxisTicks(bounds, visibleWindow, style);
     List<Double> yAxisTicks = YAxisTickCalculator.calculate(
       priceRange.min(),
       priceRange.max(),
@@ -256,13 +256,13 @@ final class CanvasRenderer {
     }
   }
 
-  private List<XAxisTick> xAxisTicks(ChartBounds bounds, VisibleWindow visibleWindow) {
+  private List<XAxisTick> xAxisTicks(ChartBounds bounds, VisibleWindow visibleWindow, RenderStyle style) {
     return XAxisTickCalculator.calculate(
       model.pricePoints.stream().map(PricePoint::date).toList(),
       visibleWindow.firstDataIndex(),
       model.visiblePricePointCount,
       bounds.width(),
-      model.interval
+      style.axisLabelSpacing()
     );
   }
 

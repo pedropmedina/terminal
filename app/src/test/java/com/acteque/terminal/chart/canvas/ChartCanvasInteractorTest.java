@@ -57,6 +57,19 @@ class ChartCanvasInteractorTest {
   }
 
   @Test
+  void updatesTheCanvasIntervalAndPublishesARevision() {
+    ChartCanvasModel model = new ChartCanvasModel();
+    ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
+    interactor.initialize(points(12), ChartInterval.DAILY);
+    long previousRevision = model.revisionProperty().get();
+
+    interactor.setInterval(ChartInterval.FIVE_MINUTES);
+
+    assertEquals(ChartInterval.FIVE_MINUTES, model.interval);
+    assertEquals(previousRevision + 1, model.revisionProperty().get());
+  }
+
+  @Test
   void horizontalZoomAndPanAreClampedAndRequestEarlierHistory() {
     ChartCanvasModel model = new ChartCanvasModel();
     ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);

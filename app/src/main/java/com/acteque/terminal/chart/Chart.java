@@ -4,18 +4,20 @@ import com.acteque.terminal.chart.canvas.ChartCanvasController;
 import com.acteque.terminal.chart.intervalselection.ChartIntervalSelectionController;
 import com.acteque.terminal.chart.menu.ChartMenuController;
 import com.acteque.terminal.chart.statusline.ChartStatusLineController;
+import com.acteque.terminal.marketdata.DailyBar;
 import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
 import com.acteque.terminal.search.InstrumentSearchDialog;
 import com.acteque.terminal.ui.core.dialog.Dialog;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -41,12 +43,31 @@ public final class Chart extends StackPane {
   private final ChartCanvasController canvasController;
   private final Canvas canvas;
   private final ChartStatusLineController statusLine;
+  private Consumer<ChartInterval> intervalSelectedHandler = ignored -> {};
 
   public Chart(
     List<PricePoint> pricePoints,
     String stockSymbol,
     ChartInterval interval,
     TiingoTickerCatalogApi tickerCatalog
+  ) {
+    this(
+      pricePoints,
+      stockSymbol,
+      interval,
+      tickerCatalog,
+      ignored -> java.util.concurrent.CompletableFuture.completedFuture(Optional.empty()),
+      Runnable::run
+    );
+  }
+
+  public Chart(
+    List<PricePoint> pricePoints,
+    String stockSymbol,
+    ChartInterval interval,
+    TiingoTickerCatalogApi tickerCatalog,
+    ChartLogoSource logoSource,
+    Executor uiExecutor
   ) {
     Objects.requireNonNull(stockSymbol, "stockSymbol");
     Objects.requireNonNull(interval, "interval");
@@ -66,9 +87,11 @@ public final class Chart extends StackPane {
       interval,
       modalOpen,
       this::openInstrumentSearch,
-      this::openIntervalSelection
+      this::openIntervalSelection,
+      logoSource,
+      uiExecutor
     );
-    intervalSelection.onIntervalSelected(statusLine::setInterval);
+    intervalSelection.onIntervalSelected(this::selectInterval);
 
     ChartMenuController menu = new ChartMenuController();
     menu.onInstrumentSelectionRequested(this::openInstrumentSearch);
@@ -101,30 +124,41 @@ public final class Chart extends StackPane {
   }
 
   public void setOnIntervalSelected(Consumer<ChartInterval> callback) {
-    Objects.requireNonNull(callback, "callback");
-    intervalSelection.onIntervalSelected(interval -> {
-      statusLine.setInterval(interval);
-      callback.accept(interval);
-    });
+    intervalSelectedHandler = Objects.requireNonNull(callback, "callback");
   }
 
-  public void setInstrument(String symbol, String displayName, List<PricePoint> pricePoints) {
+  public void beginInstrumentLoad() {
+    statusLine.cancelLogoLoad();
+  }
+
+  public void setInstrument(String symbol, String displayName, List<DailyBar> bars, Optional<InstrumentLogo> logo) {
     Objects.requireNonNull(symbol, "symbol");
-    statusLine.setInstrumentName(displayName);
+    statusLine.setInstrument(displayName, logo);
     instrumentSearchDialog.setCurrentSymbol(symbol);
-    canvasController.setInstrumentPricePoints(pricePoints);
-  }
-
-  public void setInstrumentLogo(InstrumentLogo logo, Image image) {
-    statusLine.setInstrumentLogo(logo, image);
+    canvasController.setInstrumentPricePoints(toPricePoints(bars));
   }
 
   public void setPricePoints(List<PricePoint> pricePoints) {
     canvasController.setPricePoints(pricePoints);
   }
 
+  public void setBars(List<DailyBar> bars) {
+    canvasController.setPricePoints(toPricePoints(bars));
+  }
+
   public void drawChart() {
     canvasController.drawChart();
+  }
+
+  private void selectInterval(ChartInterval interval) {
+    statusLine.setInterval(interval);
+    canvasController.setInterval(interval);
+    intervalSelectedHandler.accept(interval);
+  }
+
+  private static List<PricePoint> toPricePoints(List<DailyBar> bars) {
+    Objects.requireNonNull(bars, "bars");
+    return bars.stream().map(PricePoint::from).toList();
   }
 
   private void handleShortcut(KeyEvent event) {

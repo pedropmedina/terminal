@@ -1,5 +1,6 @@
 package com.acteque.terminal.chart.statusline;
 
+import com.acteque.terminal.chart.ChartIntervalText;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.RefreshableView;
@@ -110,12 +111,14 @@ final class ChartStatusLineViewBuilder implements Builder<Region>, RefreshableVi
     intervalSection.getStyleClass().add("chart-interval-button");
     intervalSection
       .textProperty()
-      .bind(Bindings.createStringBinding(() -> model.getInterval().displayName(), model.intervalProperty()));
+      .bind(
+        Bindings.createStringBinding(() -> ChartIntervalText.displayName(model.getInterval()), model.intervalProperty())
+      );
     intervalSection
       .accessibleTextProperty()
       .bind(
         Bindings.createStringBinding(
-          () -> "Select interval, currently " + model.getInterval().displayName(),
+          () -> "Select interval, currently " + ChartIntervalText.displayName(model.getInterval()),
           model.intervalProperty()
         )
       );

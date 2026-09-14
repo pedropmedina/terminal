@@ -66,6 +66,15 @@ final class ChartCanvasInteractor {
     publishCurrentPoint();
   }
 
+  void setInterval(ChartInterval interval) {
+    ChartInterval replacement = Objects.requireNonNull(interval, "interval");
+    if (replacement.equals(model.interval)) {
+      return;
+    }
+    model.interval = replacement;
+    model.publish(model.displayedPricePointProperty().get());
+  }
+
   void movePointer(Integer pointIndex, Double crosshairX, Double crosshairY, boolean priceAxisHovered) {
     if (
       Objects.equals(pointIndex, model.hoveredVisiblePointIndex) &&

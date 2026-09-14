@@ -1,6 +1,5 @@
 package com.acteque.terminal.chart.canvas;
 
-import com.acteque.terminal.chart.ChartInterval;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -16,7 +15,7 @@ final class XAxisTickCalculator {
     int firstVisibleDataIndex,
     int visibleSlotCount,
     double chartWidth,
-    ChartInterval interval
+    double minimumLabelSpacing
   ) {
     if (dates.isEmpty() || visibleSlotCount <= 0 || chartWidth <= 0) {
       return List.of();
@@ -24,12 +23,12 @@ final class XAxisTickCalculator {
 
     if (visibleSlotCount == 1) {
       LocalDate date = dateAt(dates, firstVisibleDataIndex);
-      return List.of(tick(firstVisibleDataIndex, firstVisibleDataIndex, date, dates, interval));
+      return List.of(tick(firstVisibleDataIndex, firstVisibleDataIndex, date, dates));
     }
 
     double pointSpacing = chartWidth / (visibleSlotCount - 1);
-    int minimumSlotSpacing = Math.max(1, (int) Math.ceil(interval.minimumLabelSpacing() / pointSpacing));
-    boolean showDayDetail = pointSpacing >= interval.minimumLabelSpacing() / 2.0;
+    int minimumSlotSpacing = Math.max(1, (int) Math.ceil(minimumLabelSpacing / pointSpacing));
+    boolean showDayDetail = pointSpacing >= minimumLabelSpacing / 2.0;
     int lastVisibleDataIndex = firstVisibleDataIndex + visibleSlotCount - 1;
 
     TreeSet<Integer> boundaryIndices = new TreeSet<>();
@@ -51,7 +50,7 @@ final class XAxisTickCalculator {
     List<XAxisTick> ticks = new ArrayList<>();
     for (int dataIndex : tickIndices) {
       LocalDate date = dateAt(dates, dataIndex);
-      ticks.add(tick(dataIndex, firstVisibleDataIndex, date, dates, interval));
+      ticks.add(tick(dataIndex, firstVisibleDataIndex, date, dates));
     }
     return List.copyOf(ticks);
   }
@@ -74,24 +73,18 @@ final class XAxisTickCalculator {
     return !YearMonth.from(date).equals(YearMonth.from(previousDate));
   }
 
-  private static XAxisTick tick(
-    int dataIndex,
-    int firstVisibleDataIndex,
-    LocalDate date,
-    List<LocalDate> dates,
-    ChartInterval interval
-  ) {
+  private static XAxisTick tick(int dataIndex, int firstVisibleDataIndex, LocalDate date, List<LocalDate> dates) {
     LocalDate previousDate = dataIndex == 0 ? null : dateAt(dates, dataIndex - 1);
     String label;
     boolean startsYear =
       (previousDate == null && date.getMonthValue() == 1) ||
       (previousDate != null && date.getYear() != previousDate.getYear());
     if (startsYear) {
-      label = interval.formatYear(date);
+      label = ChartDateFormatter.year(date);
     } else if (previousDate == null || !YearMonth.from(date).equals(YearMonth.from(previousDate))) {
-      label = interval.formatMonth(date);
+      label = ChartDateFormatter.month(date);
     } else {
-      label = interval.formatDay(date);
+      label = ChartDateFormatter.day(date);
     }
     return new XAxisTick(dataIndex - firstVisibleDataIndex, dataIndex, label);
   }

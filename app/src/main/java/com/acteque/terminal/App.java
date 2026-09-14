@@ -2,7 +2,8 @@ package com.acteque.terminal;
 
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
-import com.acteque.terminal.chart.ChartLogoLoader;
+import com.acteque.terminal.chart.ChartLogoSource;
+import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.marketdata.LogoMarketDataClient;
 import com.acteque.terminal.marketdata.MarketDataController;
 import com.acteque.terminal.marketdata.MarketDataController.LoadedInstrument;
@@ -11,6 +12,7 @@ import com.acteque.terminal.marketdata.provider.tiingo.TiingoMarketDataClient;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionStage;
 import javafx.application.Application;
@@ -33,7 +35,7 @@ public class App extends Application {
   private static final double MIN_CANVAS_HEIGHT = 460.0;
 
   private MarketDataController marketData;
-  private ChartLogoLoader logoLoader;
+  private Chart chartView;
   private long instrumentLoadGeneration;
 
   public static void main(String[] args) {
@@ -47,11 +49,27 @@ public class App extends Application {
       new LogoMarketDataClient(client, ElbstreamInstrumentLogos.create()),
       STOCK_SYMBOL
     );
-    logoLoader = new ChartLogoLoader(marketData::loadLogo, Platform::runLater);
-    Chart chartView = new Chart(List.of(), STOCK_SYMBOL, DATA_INTERVAL, client.tickerCatalog);
+    chartView = new Chart(
+      List.of(),
+      STOCK_SYMBOL,
+      DATA_INTERVAL,
+      client.tickerCatalog,
+      new ChartLogoSource() {
+        @Override
+        public CompletionStage<Optional<byte[]>> load(InstrumentLogo logo) {
+          return marketData.loadLogo(logo);
+        }
+
+        @Override
+        public void cancel() {
+          marketData.cancelLogoLoad();
+        }
+      },
+      Platform::runLater
+    );
     chartView.setOnEarlierHistoryRequested(() -> {
       long generation = instrumentLoadGeneration;
-      marketData.loadEarlier().whenComplete((updatedPoints, failure) -> {
+      marketData.loadEarlier().whenComplete((updatedBars, failure) -> {
         Platform.runLater(() -> {
           if (generation != instrumentLoadGeneration) {
             return;
@@ -59,7 +77,7 @@ public class App extends Application {
           if (failure != null) {
             reportEarlierHistoryLoadFailure(failure);
           } else {
-            chartView.setPricePoints(updatedPoints);
+            chartView.setBars(updatedBars);
           }
         });
       });
@@ -90,8 +108,7 @@ public class App extends Application {
     Stage stage
   ) {
     long generation = ++instrumentLoadGeneration;
-    logoLoader.cancel();
-    marketData.cancelLogoLoad();
+    chartView.beginInstrumentLoad();
     load.whenComplete((instrument, failure) ->
       Platform.runLater(() -> {
         // A completed background load can still be stale by the time this UI task runs.
@@ -105,9 +122,13 @@ public class App extends Application {
           }
           return;
         }
-        chartView.setInstrument(instrument.symbol(), instrument.displayName(), instrument.pricePoints());
+        chartView.setInstrument(
+          instrument.symbol(),
+          instrument.displayName(),
+          instrument.bars(),
+          instrument.details().logo()
+        );
         stage.setTitle(instrument.symbol());
-        logoLoader.load(instrument.details().logo(), chartView::setInstrumentLogo);
       })
     );
   }
@@ -115,8 +136,8 @@ public class App extends Application {
   @Override
   public void stop() {
     ++instrumentLoadGeneration;
-    if (logoLoader != null) {
-      logoLoader.cancel();
+    if (chartView != null) {
+      chartView.beginInstrumentLoad();
     }
     if (marketData != null) {
       marketData.close();

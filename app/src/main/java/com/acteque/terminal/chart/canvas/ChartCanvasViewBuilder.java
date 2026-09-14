@@ -132,6 +132,12 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     4.0,
     canvas -> canvas.chartControlRadius
   );
+  private final StyleableProperty<Number> chartAxisLabelSpacing = numberProperty(
+    "chartAxisLabelSpacing",
+    "-chart-axis-label-spacing",
+    56.0,
+    canvas -> canvas.chartAxisLabelSpacing
+  );
 
   private boolean redrawScheduled;
 
@@ -190,7 +196,8 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
       chartGridLineWidth.getValue().doubleValue(),
       chartSeriesLineWidth.getValue().doubleValue(),
       chartBadgeHeight.getValue().doubleValue(),
-      chartControlRadius.getValue().doubleValue()
+      chartControlRadius.getValue().doubleValue(),
+      chartAxisLabelSpacing.getValue().doubleValue()
     );
   }
 

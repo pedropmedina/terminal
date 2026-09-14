@@ -1,6 +1,7 @@
 package com.acteque.terminal.chart.intervalselection;
 
 import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.ChartIntervalText;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -36,9 +37,11 @@ final class ChartIntervalSelectionInteractor {
     model
       .intervalsProperty()
       .stream()
-      .filter(interval -> interval.matches(normalizedQuery))
+      .filter(interval -> ChartIntervalText.matches(interval, normalizedQuery))
       .forEach(interval ->
-        matchingByCategory.computeIfAbsent(interval.category(), ignored -> new ArrayList<>()).add(interval)
+        matchingByCategory
+          .computeIfAbsent(ChartIntervalText.category(interval), ignored -> new ArrayList<>())
+          .add(interval)
       );
     matchingByCategory.replaceAll((ignored, intervals) -> List.copyOf(intervals));
     model.setMatchingIntervals(Collections.unmodifiableMap(new LinkedHashMap<>(matchingByCategory)));
