@@ -50,7 +50,7 @@ class MarketDataControllerLogoTest {
       assertEquals("IBM", loaded.displayName());
       assertTrue(controller.loadLogo(LOGO).toCompletableFuture().get(5, TimeUnit.SECONDS).isEmpty());
     }
-    var legacy = new MarketDataController.LoadedInstrument("IBM", "IBM name", List.of());
+    var legacy = new LoadedInstrument("IBM", "IBM name", List.of());
     assertEquals(Optional.of("IBM name"), legacy.details().name());
     assertTrue(legacy.details().logo().isEmpty());
   }

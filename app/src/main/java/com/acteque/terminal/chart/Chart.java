@@ -7,6 +7,8 @@ import com.acteque.terminal.chart.statusline.ChartStatusLine;
 import com.acteque.terminal.marketdata.DailyBar;
 import com.acteque.terminal.marketdata.InstrumentCatalog;
 import com.acteque.terminal.marketdata.InstrumentLogo;
+import com.acteque.terminal.marketdata.LoadedInstrument;
+import com.acteque.terminal.marketdata.MarketDataSession;
 import com.acteque.terminal.search.InstrumentSearch;
 import com.acteque.terminal.ui.core.dialog.Dialog;
 import java.util.List;
@@ -19,13 +21,15 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.layout.StackPane;
 
 /** Composes and exposes the chart's MVCI feature. */
-public final class Chart {
+public final class Chart implements AutoCloseable {
 
   private final ChartInteractor interactor;
   private final InstrumentSearch instrumentSearch;
   private final ChartCanvas canvas;
   private final ChartStatusLine statusLine;
   private final ChartViewBuilder viewBuilder;
+  private final String initialSymbol;
+  private final boolean ownsMarketData;
   private Consumer<ChartInterval> intervalSelectedHandler = ignored -> {};
 
   public Chart(
@@ -53,7 +57,16 @@ public final class Chart {
     ChartLogoSource logoSource,
     Executor uiExecutor
   ) {
-    this(pricePoints, stockSymbol, interval, instrumentCatalog, logoSource, ForkJoinPool.commonPool(), uiExecutor);
+    this(
+      pricePoints,
+      stockSymbol,
+      interval,
+      instrumentCatalog,
+      logoSource,
+      null,
+      ForkJoinPool.commonPool(),
+      uiExecutor
+    );
   }
 
   public Chart(
@@ -65,11 +78,48 @@ public final class Chart {
     Executor backgroundExecutor,
     Executor uiExecutor
   ) {
+    this(pricePoints, stockSymbol, interval, instrumentCatalog, logoSource, null, backgroundExecutor, uiExecutor);
+  }
+
+  public Chart(
+    List<PricePoint> pricePoints,
+    String stockSymbol,
+    ChartInterval interval,
+    InstrumentCatalog instrumentCatalog,
+    MarketDataSession marketData,
+    Executor uiExecutor
+  ) {
+    this(
+      pricePoints,
+      stockSymbol,
+      interval,
+      instrumentCatalog,
+      logoSource(marketData),
+      Objects.requireNonNull(marketData, "marketData"),
+      ForkJoinPool.commonPool(),
+      uiExecutor
+    );
+  }
+
+  private Chart(
+    List<PricePoint> pricePoints,
+    String stockSymbol,
+    ChartInterval interval,
+    InstrumentCatalog instrumentCatalog,
+    ChartLogoSource logoSource,
+    MarketDataSession marketData,
+    Executor backgroundExecutor,
+    Executor uiExecutor
+  ) {
     Objects.requireNonNull(stockSymbol, "stockSymbol");
     Objects.requireNonNull(interval, "interval");
     Objects.requireNonNull(instrumentCatalog, "instrumentCatalog");
+    initialSymbol = stockSymbol;
+    ownsMarketData = marketData != null;
     ChartModel model = new ChartModel();
-    interactor = new ChartInteractor(model);
+    interactor = ownsMarketData
+      ? new ChartInteractor(model, marketData, Objects.requireNonNull(uiExecutor, "uiExecutor"))
+      : new ChartInteractor(model);
     interactor.initialize(interval);
 
     instrumentSearch = new InstrumentSearch(
@@ -116,6 +166,15 @@ public final class Chart {
       interactor::openIntervalSelection
     );
     interactor.onIntervalSelected(selectedInterval -> applySelectedInterval(selectedInterval, intervalSelection));
+    if (ownsMarketData) {
+      interactor.onInstrumentLoadStarted(statusLine::cancelLogoLoad);
+      interactor.onInstrumentLoaded(this::applyLoadedInstrument);
+      interactor.onEarlierHistoryLoaded(bars -> canvas.setPricePoints(toPricePoints(bars)));
+      interactor.onInstrumentLoadFailed(Chart::reportInstrumentLoadFailure);
+      interactor.onEarlierHistoryLoadFailed(Chart::reportEarlierHistoryLoadFailure);
+      instrumentSearch.onInstrumentSelected(interactor::selectInstrument);
+      canvas.setOnEarlierHistoryRequested(interactor::loadEarlierHistory);
+    }
   }
 
   public StackPane getView() {
@@ -157,11 +216,48 @@ public final class Chart {
     canvas.drawChart();
   }
 
+  public void loadInitialInstrument() {
+    interactor.loadInitialInstrument(initialSymbol);
+  }
+
+  @Override
+  public void close() {
+    statusLine.cancelLogoLoad();
+    interactor.close();
+  }
+
   private void applySelectedInterval(ChartInterval interval, ChartIntervalSelection intervalSelection) {
     intervalSelection.setCurrentInterval(interval);
     statusLine.setInterval(interval);
     canvas.setInterval(interval);
     intervalSelectedHandler.accept(interval);
+  }
+
+  private void applyLoadedInstrument(LoadedInstrument instrument) {
+    setInstrument(instrument.symbol(), instrument.displayName(), instrument.bars(), instrument.details().logo());
+  }
+
+  private static ChartLogoSource logoSource(MarketDataSession marketData) {
+    Objects.requireNonNull(marketData, "marketData");
+    return new ChartLogoSource() {
+      @Override
+      public java.util.concurrent.CompletionStage<Optional<byte[]>> load(InstrumentLogo logo) {
+        return marketData.loadLogo(logo);
+      }
+
+      @Override
+      public void cancel() {
+        marketData.cancelLogoLoad();
+      }
+    };
+  }
+
+  private static void reportEarlierHistoryLoadFailure(Throwable failure) {
+    System.err.println("Unable to load earlier price history: " + failure.getMessage());
+  }
+
+  private static void reportInstrumentLoadFailure(String symbol, Throwable failure) {
+    System.err.println("Unable to load " + symbol + ": " + failure.getMessage());
   }
 
   private static List<PricePoint> toPricePoints(List<DailyBar> bars) {

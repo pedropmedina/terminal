@@ -19,28 +19,10 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.RejectedExecutionException;
 
 /** Owns the loaded daily-price history and fetches earlier pages on demand. */
-public final class MarketDataController implements AutoCloseable {
+public final class MarketDataController implements MarketDataSession {
 
   private static final System.Logger LOGGER = System.getLogger(MarketDataController.class.getName());
   private static final long HISTORY_PAGE_MONTHS = 6;
-
-  public record LoadedInstrument(String symbol, String displayName, List<DailyBar> bars, InstrumentDetails details) {
-    public LoadedInstrument(String symbol, String displayName, List<DailyBar> bars) {
-      this(
-        symbol,
-        displayName,
-        bars,
-        new InstrumentDetails(symbol, Optional.of(displayName), Optional.empty(), Optional.empty())
-      );
-    }
-
-    public LoadedInstrument {
-      Objects.requireNonNull(details, "details");
-      Objects.requireNonNull(symbol, "symbol");
-      Objects.requireNonNull(displayName, "displayName");
-      bars = List.copyOf(bars);
-    }
-  }
 
   private final MarketDataClient client;
   private String symbol;
@@ -64,10 +46,12 @@ public final class MarketDataController implements AutoCloseable {
     this.executor = Objects.requireNonNull(executor, "executor");
   }
 
+  @Override
   public synchronized CompletionStage<LoadedInstrument> loadInitial() {
     return loadInstrument(symbol);
   }
 
+  @Override
   public CompletionStage<List<DailyBar>> loadEarlier() {
     LocalDate oldestAvailableDate;
     String requestedSymbol;
@@ -114,6 +98,7 @@ public final class MarketDataController implements AutoCloseable {
     }
   }
 
+  @Override
   public CompletionStage<LoadedInstrument> loadInstrument(String symbol) {
     String requestedSymbol = normalizeSymbol(symbol);
     long generation;
@@ -161,6 +146,7 @@ public final class MarketDataController implements AutoCloseable {
   }
 
   /** Loads a logo independently of history, interrupting any previous logo request. */
+  @Override
   public synchronized CompletionStage<Optional<byte[]>> loadLogo(InstrumentLogo logo) {
     Objects.requireNonNull(logo, "logo");
     cancelLogoLoad();
@@ -196,6 +182,7 @@ public final class MarketDataController implements AutoCloseable {
   }
 
   /** Interrupts the pending logo task and cancels its returned stage; safe when none is pending. */
+  @Override
   public synchronized void cancelLogoLoad() {
     FutureTask<Optional<byte[]>> task = logoTask;
     logoTask = null;

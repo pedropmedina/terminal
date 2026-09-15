@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.acteque.terminal.marketdata.MarketDataController.LoadedInstrument;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
