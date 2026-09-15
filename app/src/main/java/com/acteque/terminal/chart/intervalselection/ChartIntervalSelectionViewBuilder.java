@@ -42,7 +42,7 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Refres
     "Add interval",
     new LucideIcon(LucideIcons.PLUS)
   );
-  private final ChartAddIntervalDialog addIntervalDialog = new ChartAddIntervalDialog();
+  private final ChartAddIntervalDialogView addIntervalDialog = new ChartAddIntervalDialogView();
   private final VBox categories = new VBox();
   private final Label noMatches = new Label("No matching intervals");
   private final Map<ChartInterval, ToggleGroupItem> intervalItems = new HashMap<>();

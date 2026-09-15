@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.acteque.terminal.marketdata.InstrumentDetails;
 import com.acteque.terminal.marketdata.MarketDataException;
 import com.acteque.terminal.marketdata.provider.tiingo.eod.TiingoDailyApi;
 import com.acteque.terminal.marketdata.provider.tiingo.eod.TiingoTickerMetadata;
@@ -68,6 +69,22 @@ class TiingoMarketDataClientReferenceDataTest {
     tickerCatalog.getSupportedTickers();
 
     assertEquals(2, requests.get());
+  }
+
+  @Test
+  void adaptsSupportedTickersToProviderNeutralInstrumentDetails() throws IOException {
+    byte[] archive = zip(
+      "ticker,exchange,assetType,priceCurrency,startDate,endDate\n" + "AAPL,NASDAQ,Stock,USD,1980-12-12,2026-08-25"
+    );
+    TiingoHttpTransport transport = (uri, headers) -> new TiingoHttpTransport.Response(200, archive);
+    TiingoInstrumentCatalog catalog = new TiingoInstrumentCatalog(tickerCatalog(transport, Clock.systemUTC()));
+
+    InstrumentDetails instrument = catalog.getSupportedInstruments().getFirst();
+
+    assertEquals("AAPL", instrument.symbol());
+    assertEquals("NASDAQ", instrument.exchange().orElseThrow());
+    assertTrue(instrument.name().isEmpty());
+    assertTrue(instrument.description().isEmpty());
   }
 
   @Test

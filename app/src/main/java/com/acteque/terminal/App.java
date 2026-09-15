@@ -53,7 +53,7 @@ public class App extends Application {
       List.of(),
       STOCK_SYMBOL,
       DATA_INTERVAL,
-      client.tickerCatalog,
+      client.instrumentCatalog,
       new ChartLogoSource() {
         @Override
         public CompletionStage<Optional<byte[]>> load(InstrumentLogo logo) {

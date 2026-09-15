@@ -5,14 +5,15 @@ import com.acteque.terminal.chart.intervalselection.ChartIntervalSelection;
 import com.acteque.terminal.chart.menu.ChartMenu;
 import com.acteque.terminal.chart.statusline.ChartStatusLine;
 import com.acteque.terminal.marketdata.DailyBar;
+import com.acteque.terminal.marketdata.InstrumentCatalog;
 import com.acteque.terminal.marketdata.InstrumentLogo;
-import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
-import com.acteque.terminal.search.InstrumentSearchDialog;
+import com.acteque.terminal.search.InstrumentSearch;
 import com.acteque.terminal.ui.core.dialog.Dialog;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.layout.StackPane;
@@ -21,7 +22,7 @@ import javafx.scene.layout.StackPane;
 public final class Chart {
 
   private final ChartInteractor interactor;
-  private final InstrumentSearchDialog instrumentSearchDialog;
+  private final InstrumentSearch instrumentSearch;
   private final ChartCanvas canvas;
   private final ChartStatusLine statusLine;
   private final ChartViewBuilder viewBuilder;
@@ -31,14 +32,15 @@ public final class Chart {
     List<PricePoint> pricePoints,
     String stockSymbol,
     ChartInterval interval,
-    TiingoTickerCatalogApi tickerCatalog
+    InstrumentCatalog instrumentCatalog
   ) {
     this(
       pricePoints,
       stockSymbol,
       interval,
-      tickerCatalog,
+      instrumentCatalog,
       ignored -> java.util.concurrent.CompletableFuture.completedFuture(Optional.empty()),
+      ForkJoinPool.commonPool(),
       Runnable::run
     );
   }
@@ -47,23 +49,37 @@ public final class Chart {
     List<PricePoint> pricePoints,
     String stockSymbol,
     ChartInterval interval,
-    TiingoTickerCatalogApi tickerCatalog,
+    InstrumentCatalog instrumentCatalog,
     ChartLogoSource logoSource,
+    Executor uiExecutor
+  ) {
+    this(pricePoints, stockSymbol, interval, instrumentCatalog, logoSource, ForkJoinPool.commonPool(), uiExecutor);
+  }
+
+  public Chart(
+    List<PricePoint> pricePoints,
+    String stockSymbol,
+    ChartInterval interval,
+    InstrumentCatalog instrumentCatalog,
+    ChartLogoSource logoSource,
+    Executor backgroundExecutor,
     Executor uiExecutor
   ) {
     Objects.requireNonNull(stockSymbol, "stockSymbol");
     Objects.requireNonNull(interval, "interval");
-    Objects.requireNonNull(tickerCatalog, "tickerCatalog");
+    Objects.requireNonNull(instrumentCatalog, "instrumentCatalog");
     ChartModel model = new ChartModel();
     interactor = new ChartInteractor(model);
     interactor.initialize(interval);
 
-    instrumentSearchDialog = new InstrumentSearchDialog(
+    instrumentSearch = new InstrumentSearch(
       stockSymbol,
       model.instrumentSearchOpenProperty(),
-      tickerCatalog
+      instrumentCatalog,
+      Objects.requireNonNull(backgroundExecutor, "backgroundExecutor"),
+      Objects.requireNonNull(uiExecutor, "uiExecutor")
     );
-    instrumentSearchDialog.onRequestClose(interactor::closeInstrumentSearch);
+    instrumentSearch.onRequestClose(interactor::closeInstrumentSearch);
 
     ChartIntervalSelection intervalSelection = new ChartIntervalSelection(
       interval,
@@ -94,7 +110,7 @@ public final class Chart {
       canvasView,
       menu.getView(),
       statusLine.getView(),
-      instrumentSearchDialog,
+      instrumentSearch.getView(),
       intervalSelectionDialog,
       interactor::openInstrumentSearch,
       interactor::openIntervalSelection
@@ -111,7 +127,7 @@ public final class Chart {
   }
 
   public void setOnInstrumentSelected(Consumer<String> callback) {
-    instrumentSearchDialog.onInstrumentSelected(callback);
+    instrumentSearch.onInstrumentSelected(callback);
   }
 
   public void setOnIntervalSelected(Consumer<ChartInterval> callback) {
@@ -125,7 +141,7 @@ public final class Chart {
   public void setInstrument(String symbol, String displayName, List<DailyBar> bars, Optional<InstrumentLogo> logo) {
     Objects.requireNonNull(symbol, "symbol");
     statusLine.setInstrument(displayName, logo);
-    instrumentSearchDialog.setCurrentSymbol(symbol);
+    instrumentSearch.setCurrentSymbol(symbol);
     canvas.setInstrumentPricePoints(toPricePoints(bars));
   }
 

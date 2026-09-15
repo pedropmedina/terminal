@@ -47,7 +47,7 @@ class ChartTest {
   void opensTheIntervalDialogFromItsPlatformShortcut() {
     FxTestSupport.runAndWait(() -> {
       TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
-      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.instrumentCatalog);
       StackPane chart = chartController.getView();
       Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
 
@@ -62,7 +62,7 @@ class ChartTest {
   void dismissesTheStatusTooltipWhenAShortcutOpensAModal() {
     FxTestSupport.runAndWait(() -> {
       TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
-      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.instrumentCatalog);
       StackPane chart = chartController.getView();
       Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
       Stage stage = new Stage();
@@ -98,7 +98,7 @@ class ChartTest {
 
     FxTestSupport.runAndWait(() -> {
       TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
-      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.instrumentCatalog);
       StackPane chart = chartController.getView();
       Stage stage = new Stage();
       stage.setX(200.0);

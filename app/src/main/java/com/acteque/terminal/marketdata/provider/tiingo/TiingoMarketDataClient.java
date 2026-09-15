@@ -1,6 +1,7 @@
 package com.acteque.terminal.marketdata.provider.tiingo;
 
 import com.acteque.terminal.marketdata.HistoricalBarData;
+import com.acteque.terminal.marketdata.InstrumentCatalog;
 import com.acteque.terminal.marketdata.InstrumentDiscovery;
 import com.acteque.terminal.marketdata.MarketDataClient;
 import com.acteque.terminal.marketdata.provider.tiingo.eod.TiingoDailyApi;
@@ -27,6 +28,9 @@ public final class TiingoMarketDataClient implements MarketDataClient {
   /** Tiingo's supported-ticker catalog module. */
   public final TiingoTickerCatalogApi tickerCatalog;
 
+  /** Provider-neutral view of Tiingo's supported-instrument catalog. */
+  public final InstrumentCatalog instrumentCatalog;
+
   private final TiingoUtilitiesApi utilities;
   private final HistoricalBarData historicalBars;
   private final InstrumentDiscovery discovery;
@@ -40,6 +44,7 @@ public final class TiingoMarketDataClient implements MarketDataClient {
     daily = TiingoDailyApi.usingDefaults(requests);
     iex = TiingoIexApi.usingDefaults(requests);
     tickerCatalog = TiingoTickerCatalogApi.usingDefaults(requests);
+    instrumentCatalog = new TiingoInstrumentCatalog(tickerCatalog);
     utilities = TiingoUtilitiesApi.usingDefaults(requests);
     historicalBars = new TiingoHistoricalBarData(daily, iex);
     discovery = new TiingoInstrumentDiscovery(daily);
@@ -51,6 +56,7 @@ public final class TiingoMarketDataClient implements MarketDataClient {
     daily = new TiingoDailyApi(baseUri, requests);
     iex = new TiingoIexApi(baseUri, requests);
     tickerCatalog = new TiingoTickerCatalogApi(baseUri.resolve("/supported_tickers.zip"), requests);
+    instrumentCatalog = new TiingoInstrumentCatalog(tickerCatalog);
     utilities = new TiingoUtilitiesApi(baseUri, requests);
     historicalBars = new TiingoHistoricalBarData(daily, iex);
     discovery = new TiingoInstrumentDiscovery(daily);
