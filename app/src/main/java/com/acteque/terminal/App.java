@@ -86,7 +86,7 @@ public class App extends Application {
       displayInstrumentLoad(symbol, marketData.loadInstrument(symbol), chartView, stage)
     );
 
-    Scene scene = new Scene(chartView, MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT);
+    Scene scene = new Scene(chartView.getView(), MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT);
 
     // This is find for now, but we might want defined up top if we need to access the theme manager later
     new ThemeManager(scene, AppTheme.LIGHT);

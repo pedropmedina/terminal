@@ -20,6 +20,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.Test;
 
@@ -30,15 +31,15 @@ class ChartTest {
     FxTestSupport.runAndWait(() -> {
       for (KeyCode keyCode : List.of(KeyCode.F, KeyCode.SLASH, KeyCode.P)) {
         KeyEvent event = shortcutEvent(keyCode);
-        assertTrue(Chart.isInstrumentSearchShortcut(event));
-        assertFalse(Chart.isIntervalSelectionShortcut(event));
+        assertTrue(ChartViewBuilder.isInstrumentSearchShortcut(event));
+        assertFalse(ChartViewBuilder.isIntervalSelectionShortcut(event));
       }
 
       KeyEvent intervalEvent = shortcutEvent(KeyCode.I);
-      assertFalse(Chart.isInstrumentSearchShortcut(intervalEvent));
-      assertTrue(Chart.isIntervalSelectionShortcut(intervalEvent));
-      assertFalse(Chart.isInstrumentSearchShortcut(plainKeyEvent(KeyCode.F)));
-      assertFalse(Chart.isIntervalSelectionShortcut(plainKeyEvent(KeyCode.I)));
+      assertFalse(ChartViewBuilder.isInstrumentSearchShortcut(intervalEvent));
+      assertTrue(ChartViewBuilder.isIntervalSelectionShortcut(intervalEvent));
+      assertFalse(ChartViewBuilder.isInstrumentSearchShortcut(plainKeyEvent(KeyCode.F)));
+      assertFalse(ChartViewBuilder.isIntervalSelectionShortcut(plainKeyEvent(KeyCode.I)));
     });
   }
 
@@ -46,7 +47,8 @@ class ChartTest {
   void opensTheIntervalDialogFromItsPlatformShortcut() {
     FxTestSupport.runAndWait(() -> {
       TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
-      Chart chart = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      StackPane chart = chartController.getView();
       Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
 
       chart.fireEvent(shortcutEvent(KeyCode.I));
@@ -60,7 +62,8 @@ class ChartTest {
   void dismissesTheStatusTooltipWhenAShortcutOpensAModal() {
     FxTestSupport.runAndWait(() -> {
       TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
-      Chart chart = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      StackPane chart = chartController.getView();
       Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
       Stage stage = new Stage();
       stage.setScene(new Scene(chart, 800.0, 500.0));
@@ -95,7 +98,8 @@ class ChartTest {
 
     FxTestSupport.runAndWait(() -> {
       TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
-      Chart chart = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.tickerCatalog);
+      StackPane chart = chartController.getView();
       Stage stage = new Stage();
       stage.setX(200.0);
       stage.setY(200.0);

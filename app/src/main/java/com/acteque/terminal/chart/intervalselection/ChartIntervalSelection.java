@@ -7,14 +7,14 @@ import java.util.function.Consumer;
 import javafx.beans.value.ObservableBooleanValue;
 
 /** Composes and exposes the chart interval-selection MVCI feature. */
-public final class ChartIntervalSelectionController {
+public final class ChartIntervalSelection {
 
   private final ChartIntervalSelectionInteractor interactor;
   private final ChartIntervalSelectionViewBuilder viewBuilder;
   private Consumer<ChartInterval> intervalSelectedHandler = ignored -> {};
   private Runnable closeRequestHandler = () -> {};
 
-  public ChartIntervalSelectionController(ChartInterval currentInterval, ObservableBooleanValue open) {
+  public ChartIntervalSelection(ChartInterval currentInterval, ObservableBooleanValue open) {
     ChartIntervalSelectionModel model = new ChartIntervalSelectionModel();
     interactor = new ChartIntervalSelectionInteractor(model);
     interactor.initialize(currentInterval);

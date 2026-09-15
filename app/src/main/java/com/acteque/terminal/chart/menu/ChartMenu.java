@@ -5,7 +5,7 @@ import java.util.Objects;
 import javafx.scene.layout.Region;
 
 /** Composes and exposes the chart menu's MVCI feature. */
-public final class ChartMenuController {
+public final class ChartMenu {
 
   private final ChartMenuInteractor interactor;
   private final ChartMenuViewBuilder viewBuilder;
@@ -13,7 +13,7 @@ public final class ChartMenuController {
   private Runnable intervalSelectionAction = () -> {};
   private Runnable chartTypeSelectionAction = () -> {};
 
-  public ChartMenuController() {
+  public ChartMenu() {
     ChartMenuModel model = new ChartMenuModel();
     interactor = new ChartMenuInteractor(model);
     interactor.onActionRequested(this::requestAction);

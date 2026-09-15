@@ -1,0 +1,134 @@
+package com.acteque.terminal.chart;
+
+import com.acteque.terminal.ui.ChartReloadHooks;
+import com.acteque.terminal.ui.RefreshableView;
+import com.acteque.terminal.ui.core.dialog.Dialog;
+import java.util.List;
+import java.util.Objects;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.util.Builder;
+
+/** Builds the reactive JavaFX view for the chart. */
+final class ChartViewBuilder implements Builder<StackPane>, RefreshableView {
+
+  private static final List<KeyCombination> INSTRUMENT_SEARCH_SHORTCUTS = List.of(
+    shortcut(KeyCode.F),
+    shortcut(KeyCode.SLASH),
+    shortcut(KeyCode.P)
+  );
+  private static final KeyCombination INTERVAL_SELECTION_SHORTCUT = shortcut(KeyCode.I);
+
+  private final ChartModel model;
+  private final Canvas canvas;
+  private final Region menu;
+  private final Region statusLine;
+  private final Dialog instrumentSearchDialog;
+  private final Dialog intervalSelectionDialog;
+  private final Runnable instrumentSearchRequestedHandler;
+  private final Runnable intervalSelectionRequestedHandler;
+  private final ChartPane root;
+
+  ChartViewBuilder(
+    ChartModel model,
+    Canvas canvas,
+    Region menu,
+    Region statusLine,
+    Dialog instrumentSearchDialog,
+    Dialog intervalSelectionDialog,
+    Runnable instrumentSearchRequestedHandler,
+    Runnable intervalSelectionRequestedHandler
+  ) {
+    this.model = Objects.requireNonNull(model, "model");
+    this.canvas = Objects.requireNonNull(canvas, "canvas");
+    this.menu = Objects.requireNonNull(menu, "menu");
+    this.statusLine = Objects.requireNonNull(statusLine, "statusLine");
+    this.instrumentSearchDialog = Objects.requireNonNull(instrumentSearchDialog, "instrumentSearchDialog");
+    this.intervalSelectionDialog = Objects.requireNonNull(intervalSelectionDialog, "intervalSelectionDialog");
+    this.instrumentSearchRequestedHandler = Objects.requireNonNull(
+      instrumentSearchRequestedHandler,
+      "instrumentSearchRequestedHandler"
+    );
+    this.intervalSelectionRequestedHandler = Objects.requireNonNull(
+      intervalSelectionRequestedHandler,
+      "intervalSelectionRequestedHandler"
+    );
+    root = new ChartPane(instrumentSearchDialog, intervalSelectionDialog);
+
+    root.getStyleClass().add("chart");
+    root.addEventFilter(KeyEvent.KEY_PRESSED, this::handleShortcut);
+    canvas.widthProperty().bind(root.widthProperty());
+    canvas.heightProperty().bind(root.heightProperty());
+
+    refreshView();
+    ChartReloadHooks.register(this);
+  }
+
+  @Override
+  public StackPane build() {
+    return root;
+  }
+
+  @Override
+  public void refreshView() {
+    VBox statusContent = new VBox(statusLine);
+    statusContent.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+    statusContent.setPickOnBounds(false);
+    statusContent.disableProperty().bind(model.modalOpenProperty());
+
+    StackPane statusOverlay = new StackPane(statusContent);
+    statusOverlay.getStyleClass().add("chart-status-overlay");
+    statusOverlay.setPickOnBounds(false);
+
+    root.getChildren().setAll(canvas, menu, statusOverlay, instrumentSearchDialog, intervalSelectionDialog);
+  }
+
+  private void handleShortcut(KeyEvent event) {
+    if (model.isModalOpen()) {
+      return;
+    }
+    if (isInstrumentSearchShortcut(event)) {
+      instrumentSearchRequestedHandler.run();
+      event.consume();
+    } else if (isIntervalSelectionShortcut(event)) {
+      intervalSelectionRequestedHandler.run();
+      event.consume();
+    }
+  }
+
+  static boolean isInstrumentSearchShortcut(KeyEvent event) {
+    return INSTRUMENT_SEARCH_SHORTCUTS.stream().anyMatch(shortcut -> shortcut.match(event));
+  }
+
+  static boolean isIntervalSelectionShortcut(KeyEvent event) {
+    return INTERVAL_SELECTION_SHORTCUT.match(event);
+  }
+
+  private static KeyCombination shortcut(KeyCode keyCode) {
+    return new KeyCodeCombination(keyCode, KeyCombination.SHORTCUT_DOWN);
+  }
+
+  private static final class ChartPane extends StackPane {
+
+    private final Dialog instrumentSearchDialog;
+    private final Dialog intervalSelectionDialog;
+
+    private ChartPane(Dialog instrumentSearchDialog, Dialog intervalSelectionDialog) {
+      this.instrumentSearchDialog = instrumentSearchDialog;
+      this.intervalSelectionDialog = intervalSelectionDialog;
+    }
+
+    @Override
+    protected void layoutChildren() {
+      super.layoutChildren();
+      instrumentSearchDialog.resizeRelocate(0.0, 0.0, getWidth(), getHeight());
+      intervalSelectionDialog.resizeRelocate(0.0, 0.0, getWidth(), getHeight());
+    }
+  }
+}

@@ -51,8 +51,8 @@ class ChartStatusLineTest {
   @Test
   void displaysAFixedSizeFallbackWithoutAttributionUntilTheLogoArrives() {
     FxTestSupport.runAndWait(() -> {
-      ChartStatusLineController controller = controller();
-      HBox statusLine = view(controller);
+      ChartStatusLine feature = statusLine();
+      HBox statusLine = view(feature);
       StackPane root = new StackPane(statusLine);
       Scene scene = new Scene(root, 800, 500);
       ThemeManager themes = new ThemeManager(scene, AppTheme.LIGHT);
@@ -67,7 +67,7 @@ class ChartStatusLineTest {
       assertFalse(attribution.isVisible());
       assertFalse(attribution.isManaged());
 
-      controller.setInstrumentLogo(LOGO, new WritableImage(64, 64));
+      feature.setInstrumentLogo(LOGO, new WritableImage(64, 64));
       root.applyCss();
       root.layout();
       slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
@@ -119,9 +119,9 @@ class ChartStatusLineTest {
   @Test
   void displaysTheSelectedPricePointInAChartOverlay() {
     FxTestSupport.runAndWait(() -> {
-      ChartStatusLineController controller = controller();
-      HBox statusLine = view(controller);
-      controller.setPricePoint(PRICE_POINT);
+      ChartStatusLine feature = statusLine();
+      HBox statusLine = view(feature);
+      feature.setPricePoint(PRICE_POINT);
 
       assertEquals(3, statusLine.getChildren().size());
       Tooltip symbolTooltip = symbolTooltip(statusLine);
@@ -167,14 +167,14 @@ class ChartStatusLineTest {
     FxTestSupport.runAndWait(() -> {
       AtomicBoolean instrumentClicked = new AtomicBoolean();
       AtomicBoolean intervalClicked = new AtomicBoolean();
-      ChartStatusLineController controller = new ChartStatusLineController(
+      ChartStatusLine feature = new ChartStatusLine(
         "ACME",
         ChartInterval.DAILY,
         new SimpleBooleanProperty(false),
         () -> instrumentClicked.set(true),
         () -> intervalClicked.set(true)
       );
-      HBox statusLine = view(controller);
+      HBox statusLine = view(feature);
 
       triggerTarget(symbolTooltip(statusLine)).fire();
       triggerTarget(intervalTooltip(statusLine)).fire();
@@ -187,12 +187,12 @@ class ChartStatusLineTest {
   @Test
   void updatesBoundIntervalAndInstrumentNodes() {
     FxTestSupport.runAndWait(() -> {
-      ChartStatusLineController controller = controller();
-      HBox statusLine = view(controller);
-      controller.setPricePoint(PRICE_POINT);
+      ChartStatusLine feature = statusLine();
+      HBox statusLine = view(feature);
+      feature.setPricePoint(PRICE_POINT);
 
-      controller.setInterval(ChartInterval.FIVE_MINUTES);
-      controller.setInstrumentName("Widget Industries");
+      feature.setInterval(ChartInterval.FIVE_MINUTES);
+      feature.setInstrumentName("Widget Industries");
 
       Button intervalButton = triggerTarget(intervalTooltip(statusLine));
       assertEquals("5 minutes", intervalButton.getText());
@@ -200,24 +200,18 @@ class ChartStatusLineTest {
       assertEquals("Widget Industries", triggerTarget(symbolTooltip(statusLine)).getText());
       assertEquals("O104.00  H108.25  L103.50  C107.75  Vol2.50 M", ohlcv(statusLine).getText());
 
-      controller.clearPricePoint();
+      feature.clearPricePoint();
       assertEquals("", ohlcv(statusLine).getText());
     });
   }
 
-  private static ChartStatusLineController controller() {
-    return new ChartStatusLineController(
-      "ACME",
-      ChartInterval.DAILY,
-      new SimpleBooleanProperty(false),
-      () -> {},
-      () -> {}
-    );
+  private static ChartStatusLine statusLine() {
+    return new ChartStatusLine("ACME", ChartInterval.DAILY, new SimpleBooleanProperty(false), () -> {}, () -> {});
   }
 
-  private static HBox view(ChartStatusLineController controller) {
-    Region firstView = controller.getView();
-    assertSame(firstView, controller.getView());
+  private static HBox view(ChartStatusLine feature) {
+    Region firstView = feature.getView();
+    assertSame(firstView, feature.getView());
     return assertInstanceOf(HBox.class, firstView);
   }
 

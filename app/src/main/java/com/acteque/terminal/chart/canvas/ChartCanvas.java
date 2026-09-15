@@ -2,22 +2,18 @@ package com.acteque.terminal.chart.canvas;
 
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.PricePoint;
-import com.acteque.terminal.chart.statusline.ChartStatusLineController;
+import com.acteque.terminal.chart.statusline.ChartStatusLine;
 import java.util.List;
 import java.util.Objects;
 import javafx.scene.canvas.Canvas;
 
 /** Composes and exposes the chart canvas's MVCI feature. */
-public final class ChartCanvasController {
+public final class ChartCanvas {
 
   private final ChartCanvasInteractor interactor;
   private final ChartCanvasViewBuilder viewBuilder;
 
-  public ChartCanvasController(
-    List<PricePoint> pricePoints,
-    ChartInterval interval,
-    ChartStatusLineController statusLine
-  ) {
+  public ChartCanvas(List<PricePoint> pricePoints, ChartInterval interval, ChartStatusLine statusLine) {
     Objects.requireNonNull(statusLine, "statusLine");
     ChartCanvasModel model = new ChartCanvasModel();
     interactor = new ChartCanvasInteractor(model);

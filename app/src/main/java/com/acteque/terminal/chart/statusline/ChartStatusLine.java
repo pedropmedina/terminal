@@ -12,14 +12,14 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
 
 /** Composes and exposes the chart status line's MVCI feature. */
-public final class ChartStatusLineController {
+public final class ChartStatusLine {
 
   private final ChartStatusLineInteractor interactor;
   private final ChartStatusLineViewBuilder viewBuilder;
   private final Runnable instrumentSelectionAction;
   private final Runnable intervalSelectionAction;
 
-  public ChartStatusLineController(
+  public ChartStatusLine(
     String instrumentName,
     ChartInterval interval,
     ObservableBooleanValue tooltipsSuppressed,
@@ -37,7 +37,7 @@ public final class ChartStatusLineController {
     );
   }
 
-  public ChartStatusLineController(
+  public ChartStatusLine(
     String instrumentName,
     ChartInterval interval,
     ObservableBooleanValue tooltipsSuppressed,

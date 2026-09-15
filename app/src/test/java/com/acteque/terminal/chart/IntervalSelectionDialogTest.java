@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.acteque.terminal.chart.intervalselection.ChartIntervalSelectionController;
+import com.acteque.terminal.chart.intervalselection.ChartIntervalSelection;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
@@ -169,12 +169,12 @@ class ChartIntervalSelectionDialogTest {
   void pressingEnterClosesAndReportsTheSelectedInterval() {
     FxTestSupport.runAndWait(() -> {
       SimpleBooleanProperty open = new SimpleBooleanProperty(true);
-      ChartIntervalSelectionController controller = new ChartIntervalSelectionController(ChartInterval.DAILY, open);
-      Dialog dialog = controller.getView();
+      ChartIntervalSelection selection = new ChartIntervalSelection(ChartInterval.DAILY, open);
+      Dialog dialog = selection.getView();
       new Scene(new StackPane(dialog), 800.0, 600.0);
       AtomicReference<ChartInterval> selected = new AtomicReference<>();
-      controller.onIntervalSelected(selected::set);
-      controller.onRequestClose(() -> open.set(false));
+      selection.onIntervalSelected(selected::set);
+      selection.onRequestClose(() -> open.set(false));
 
       ToggleGroupItem previous = button(dialog, "1D");
       ToggleGroupItem latest = button(dialog, "4H");
@@ -283,7 +283,7 @@ class ChartIntervalSelectionDialogTest {
       IntervalSelectionFeature feature = createFeature();
       Dialog dialog = feature.view();
       AtomicReference<ChartInterval> selected = new AtomicReference<>();
-      feature.controller().onIntervalSelected(selected::set);
+      feature.selection().onIntervalSelected(selected::set);
       dialog.show();
 
       ((Button) dialog.lookup(".chart-interval-add-button")).fire();
@@ -331,18 +331,18 @@ class ChartIntervalSelectionDialogTest {
   }
 
   private static IntervalSelectionFeature createFeature() {
-    ChartIntervalSelectionController controller = new ChartIntervalSelectionController(
+    ChartIntervalSelection selection = new ChartIntervalSelection(
       ChartInterval.DAILY,
       new SimpleBooleanProperty(false)
     );
-    Dialog dialog = controller.getView();
+    Dialog dialog = selection.getView();
     StackPane root = new StackPane(dialog);
     new ThemeManager(new Scene(root, 800.0, 600.0), AppTheme.LIGHT);
     root.applyCss();
-    return new IntervalSelectionFeature(controller, dialog);
+    return new IntervalSelectionFeature(selection, dialog);
   }
 
-  private record IntervalSelectionFeature(ChartIntervalSelectionController controller, Dialog view) {}
+  private record IntervalSelectionFeature(ChartIntervalSelection selection, Dialog view) {}
 
   private static ToggleGroupItem button(Dialog dialog, String text) {
     return dialog

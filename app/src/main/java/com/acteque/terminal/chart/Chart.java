@@ -1,9 +1,9 @@
 package com.acteque.terminal.chart;
 
-import com.acteque.terminal.chart.canvas.ChartCanvasController;
-import com.acteque.terminal.chart.intervalselection.ChartIntervalSelectionController;
-import com.acteque.terminal.chart.menu.ChartMenuController;
-import com.acteque.terminal.chart.statusline.ChartStatusLineController;
+import com.acteque.terminal.chart.canvas.ChartCanvas;
+import com.acteque.terminal.chart.intervalselection.ChartIntervalSelection;
+import com.acteque.terminal.chart.menu.ChartMenu;
+import com.acteque.terminal.chart.statusline.ChartStatusLine;
 import com.acteque.terminal.marketdata.DailyBar;
 import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.marketdata.provider.tiingo.tickercatalog.TiingoTickerCatalogApi;
@@ -14,35 +14,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
-import javafx.beans.binding.BooleanBinding;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 
-/** Composes the price chart canvas with its controls and overlays. */
-public final class Chart extends StackPane {
+/** Composes and exposes the chart's MVCI feature. */
+public final class Chart {
 
-  private static final List<KeyCombination> INSTRUMENT_SEARCH_SHORTCUTS = List.of(
-    shortcut(KeyCode.F),
-    shortcut(KeyCode.SLASH),
-    shortcut(KeyCode.P)
-  );
-  private static final KeyCombination INTERVAL_SELECTION_SHORTCUT = shortcut(KeyCode.I);
-
-  private final BooleanProperty instrumentSearchOpen = new SimpleBooleanProperty(false);
-  private final BooleanProperty intervalSelectionOpen = new SimpleBooleanProperty(false);
+  private final ChartInteractor interactor;
   private final InstrumentSearchDialog instrumentSearchDialog;
-  private final ChartIntervalSelectionController intervalSelection;
-  private final Dialog intervalSelectionDialog;
-  private final ChartCanvasController canvasController;
-  private final Canvas canvas;
-  private final ChartStatusLineController statusLine;
+  private final ChartCanvas canvas;
+  private final ChartStatusLine statusLine;
+  private final ChartViewBuilder viewBuilder;
   private Consumer<ChartInterval> intervalSelectedHandler = ignored -> {};
 
   public Chart(
@@ -72,51 +54,60 @@ public final class Chart extends StackPane {
     Objects.requireNonNull(stockSymbol, "stockSymbol");
     Objects.requireNonNull(interval, "interval");
     Objects.requireNonNull(tickerCatalog, "tickerCatalog");
-    getStyleClass().add("chart");
+    ChartModel model = new ChartModel();
+    interactor = new ChartInteractor(model);
+    interactor.initialize(interval);
 
-    instrumentSearchDialog = new InstrumentSearchDialog(stockSymbol, instrumentSearchOpen, tickerCatalog);
-    instrumentSearchDialog.onRequestClose(() -> instrumentSearchOpen.set(false));
+    instrumentSearchDialog = new InstrumentSearchDialog(
+      stockSymbol,
+      model.instrumentSearchOpenProperty(),
+      tickerCatalog
+    );
+    instrumentSearchDialog.onRequestClose(interactor::closeInstrumentSearch);
 
-    intervalSelection = new ChartIntervalSelectionController(interval, intervalSelectionOpen);
-    intervalSelection.onRequestClose(() -> intervalSelectionOpen.set(false));
-    intervalSelectionDialog = intervalSelection.getView();
+    ChartIntervalSelection intervalSelection = new ChartIntervalSelection(
+      interval,
+      model.intervalSelectionOpenProperty()
+    );
+    intervalSelection.onRequestClose(interactor::closeIntervalSelection);
+    Dialog intervalSelectionDialog = intervalSelection.getView();
 
-    BooleanBinding modalOpen = instrumentSearchOpen.or(intervalSelectionOpen);
-    statusLine = new ChartStatusLineController(
+    statusLine = new ChartStatusLine(
       stockSymbol,
       interval,
-      modalOpen,
-      this::openInstrumentSearch,
-      this::openIntervalSelection,
+      model.modalOpenProperty(),
+      interactor::openInstrumentSearch,
+      interactor::openIntervalSelection,
       logoSource,
       uiExecutor
     );
-    intervalSelection.onIntervalSelected(this::selectInterval);
+    intervalSelection.onIntervalSelected(interactor::selectInterval);
 
-    ChartMenuController menu = new ChartMenuController();
-    menu.onInstrumentSelectionRequested(this::openInstrumentSearch);
-    menu.onIntervalSelectionRequested(this::openIntervalSelection);
+    ChartMenu menu = new ChartMenu();
+    menu.onInstrumentSelectionRequested(interactor::openInstrumentSearch);
+    menu.onIntervalSelectionRequested(interactor::openIntervalSelection);
 
-    canvasController = new ChartCanvasController(pricePoints, interval, statusLine);
-    canvas = canvasController.getView();
+    canvas = new ChartCanvas(pricePoints, interval, statusLine);
+    Canvas canvasView = canvas.getView();
+    viewBuilder = new ChartViewBuilder(
+      model,
+      canvasView,
+      menu.getView(),
+      statusLine.getView(),
+      instrumentSearchDialog,
+      intervalSelectionDialog,
+      interactor::openInstrumentSearch,
+      interactor::openIntervalSelection
+    );
+    interactor.onIntervalSelected(selectedInterval -> applySelectedInterval(selectedInterval, intervalSelection));
+  }
 
-    VBox statusContent = new VBox(statusLine.getView());
-    statusContent.setMaxSize(USE_PREF_SIZE, USE_PREF_SIZE);
-    statusContent.setPickOnBounds(false);
-    statusContent.disableProperty().bind(modalOpen);
-    StackPane statusOverlay = new StackPane(statusContent);
-    statusOverlay.getStyleClass().add("chart-status-overlay");
-    statusOverlay.setPickOnBounds(false);
-
-    getChildren().setAll(canvas, menu.getView(), statusOverlay, instrumentSearchDialog, intervalSelectionDialog);
-    addEventFilter(KeyEvent.KEY_PRESSED, this::handleShortcut);
-
-    canvas.widthProperty().bind(widthProperty());
-    canvas.heightProperty().bind(heightProperty());
+  public StackPane getView() {
+    return viewBuilder.build();
   }
 
   public void setOnEarlierHistoryRequested(Runnable callback) {
-    canvasController.setOnEarlierHistoryRequested(callback);
+    canvas.setOnEarlierHistoryRequested(callback);
   }
 
   public void setOnInstrumentSelected(Consumer<String> callback) {
@@ -135,69 +126,30 @@ public final class Chart extends StackPane {
     Objects.requireNonNull(symbol, "symbol");
     statusLine.setInstrument(displayName, logo);
     instrumentSearchDialog.setCurrentSymbol(symbol);
-    canvasController.setInstrumentPricePoints(toPricePoints(bars));
+    canvas.setInstrumentPricePoints(toPricePoints(bars));
   }
 
   public void setPricePoints(List<PricePoint> pricePoints) {
-    canvasController.setPricePoints(pricePoints);
+    canvas.setPricePoints(pricePoints);
   }
 
   public void setBars(List<DailyBar> bars) {
-    canvasController.setPricePoints(toPricePoints(bars));
+    canvas.setPricePoints(toPricePoints(bars));
   }
 
   public void drawChart() {
-    canvasController.drawChart();
+    canvas.drawChart();
   }
 
-  private void selectInterval(ChartInterval interval) {
+  private void applySelectedInterval(ChartInterval interval, ChartIntervalSelection intervalSelection) {
+    intervalSelection.setCurrentInterval(interval);
     statusLine.setInterval(interval);
-    canvasController.setInterval(interval);
+    canvas.setInterval(interval);
     intervalSelectedHandler.accept(interval);
   }
 
   private static List<PricePoint> toPricePoints(List<DailyBar> bars) {
     Objects.requireNonNull(bars, "bars");
     return bars.stream().map(PricePoint::from).toList();
-  }
-
-  private void handleShortcut(KeyEvent event) {
-    if (instrumentSearchOpen.get() || intervalSelectionOpen.get()) {
-      return;
-    }
-    if (isInstrumentSearchShortcut(event)) {
-      openInstrumentSearch();
-      event.consume();
-    } else if (isIntervalSelectionShortcut(event)) {
-      openIntervalSelection();
-      event.consume();
-    }
-  }
-
-  private void openInstrumentSearch() {
-    instrumentSearchOpen.set(true);
-  }
-
-  private void openIntervalSelection() {
-    intervalSelectionOpen.set(true);
-  }
-
-  static boolean isInstrumentSearchShortcut(KeyEvent event) {
-    return INSTRUMENT_SEARCH_SHORTCUTS.stream().anyMatch(shortcut -> shortcut.match(event));
-  }
-
-  static boolean isIntervalSelectionShortcut(KeyEvent event) {
-    return INTERVAL_SELECTION_SHORTCUT.match(event);
-  }
-
-  private static KeyCombination shortcut(KeyCode keyCode) {
-    return new KeyCodeCombination(keyCode, KeyCombination.SHORTCUT_DOWN);
-  }
-
-  @Override
-  protected void layoutChildren() {
-    super.layoutChildren();
-    instrumentSearchDialog.resizeRelocate(0.0, 0.0, getWidth(), getHeight());
-    intervalSelectionDialog.resizeRelocate(0.0, 0.0, getWidth(), getHeight());
   }
 }
