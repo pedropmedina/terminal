@@ -23,8 +23,8 @@ import javafx.stage.Stage;
  */
 public class App extends Application {
 
-  private static final String STOCK_SYMBOL = "IBM";
-  private static final ChartInterval DATA_INTERVAL = ChartInterval.DAILY;
+  private static final String SYMBOL = "IBM";
+  private static final ChartInterval INTERVAL = ChartInterval.DAILY;
   private static final double MIN_CANVAS_WIDTH = 1060.0;
   private static final double MIN_CANVAS_HEIGHT = 760.0;
 
@@ -36,19 +36,11 @@ public class App extends Application {
 
   @Override
   public void start(Stage stage) {
-    TiingoMarketDataClient client = TiingoMarketDataClient.create();
-    MarketDataController marketData = new MarketDataController(
-      new LogoMarketDataClient(client, ElbstreamInstrumentLogos.create()),
-      STOCK_SYMBOL
-    );
-    chartView = new Chart(
-      List.of(),
-      STOCK_SYMBOL,
-      DATA_INTERVAL,
-      client.instrumentCatalog,
-      marketData,
-      Platform::runLater
-    );
+    TiingoMarketDataClient tiingoClient = TiingoMarketDataClient.create();
+    LogoMarketDataClient logoClient = new LogoMarketDataClient(tiingoClient, ElbstreamInstrumentLogos.create());
+    MarketDataController marketData = new MarketDataController(logoClient, SYMBOL);
+
+    chartView = new Chart(List.of(), SYMBOL, INTERVAL, tiingoClient.instrumentCatalog, marketData, Platform::runLater);
 
     Scene scene = new Scene(chartView.getView(), MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT);
 

@@ -21,119 +21,124 @@ class ChartInteractorTest {
   @Test
   void initializesTheCurrentInterval() {
     ChartModel model = new ChartModel();
-    ChartInteractor interactor = new ChartInteractor(model);
+    try (ChartInteractor interactor = new ChartInteractor(model)) {
+      interactor.initialize(ChartInterval.DAILY);
 
-    interactor.initialize(ChartInterval.DAILY);
-
-    assertEquals(ChartInterval.DAILY, model.getInterval());
+      assertEquals(ChartInterval.DAILY, model.getInterval());
+    }
   }
 
   @Test
   void keepsChartModalsMutuallyExclusive() {
     ChartModel model = new ChartModel();
-    ChartInteractor interactor = new ChartInteractor(model);
+    try (ChartInteractor interactor = new ChartInteractor(model)) {
+      interactor.openInstrumentSearch();
+      interactor.openIntervalSelection();
 
-    interactor.openInstrumentSearch();
-    interactor.openIntervalSelection();
+      assertTrue(model.isInstrumentSearchOpen());
+      assertFalse(model.isIntervalSelectionOpen());
+      assertTrue(model.isModalOpen());
 
-    assertTrue(model.isInstrumentSearchOpen());
-    assertFalse(model.isIntervalSelectionOpen());
-    assertTrue(model.isModalOpen());
+      interactor.closeInstrumentSearch();
+      interactor.openIntervalSelection();
 
-    interactor.closeInstrumentSearch();
-    interactor.openIntervalSelection();
-
-    assertFalse(model.isInstrumentSearchOpen());
-    assertTrue(model.isIntervalSelectionOpen());
+      assertFalse(model.isInstrumentSearchOpen());
+      assertTrue(model.isIntervalSelectionOpen());
+    }
   }
 
   @Test
   void selectingAnIntervalUpdatesStateAndClosesTheDialog() {
     ChartModel model = new ChartModel();
-    ChartInteractor interactor = new ChartInteractor(model);
-    interactor.initialize(ChartInterval.DAILY);
-    interactor.openIntervalSelection();
-    AtomicReference<ChartInterval> selectedInterval = new AtomicReference<>();
-    interactor.onIntervalSelected(selectedInterval::set);
+    try (ChartInteractor interactor = new ChartInteractor(model)) {
+      interactor.initialize(ChartInterval.DAILY);
+      interactor.openIntervalSelection();
+      AtomicReference<ChartInterval> selectedInterval = new AtomicReference<>();
+      interactor.onIntervalSelected(selectedInterval::set);
 
-    interactor.selectInterval(ChartInterval.ONE_HOUR);
+      interactor.selectInterval(ChartInterval.ONE_HOUR);
 
-    assertEquals(ChartInterval.ONE_HOUR, model.getInterval());
-    assertEquals(ChartInterval.ONE_HOUR, selectedInterval.get());
-    assertFalse(model.isIntervalSelectionOpen());
-    assertFalse(model.isModalOpen());
+      assertEquals(ChartInterval.ONE_HOUR, model.getInterval());
+      assertEquals(ChartInterval.ONE_HOUR, selectedInterval.get());
+      assertFalse(model.isIntervalSelectionOpen());
+      assertFalse(model.isModalOpen());
+    }
   }
 
   @Test
   void publishesInstrumentLoadsOnTheUiExecutor() {
     StubMarketDataSession marketData = new StubMarketDataSession();
     List<Runnable> uiQueue = new ArrayList<>();
-    ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add);
-    AtomicReference<LoadedInstrument> displayed = new AtomicReference<>();
-    interactor.onInstrumentLoaded(displayed::set);
+    try (ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add)) {
+      AtomicReference<LoadedInstrument> displayed = new AtomicReference<>();
+      interactor.onInstrumentLoaded(displayed::set);
 
-    interactor.loadInitialInstrument("IBM");
-    LoadedInstrument loaded = new LoadedInstrument("IBM", "IBM", List.of());
-    marketData.initial.complete(loaded);
+      interactor.loadInitialInstrument("IBM");
+      LoadedInstrument loaded = new LoadedInstrument("IBM", "IBM", List.of());
+      marketData.initial.complete(loaded);
 
-    assertNull(displayed.get());
-    uiQueue.removeFirst().run();
-    assertEquals(loaded, displayed.get());
+      assertNull(displayed.get());
+      uiQueue.removeFirst().run();
+      assertEquals(loaded, displayed.get());
+    }
   }
 
   @Test
   void ignoresACompletedInstrumentLoadAfterANewerSelection() {
     StubMarketDataSession marketData = new StubMarketDataSession();
     List<Runnable> uiQueue = new ArrayList<>();
-    ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add);
-    AtomicReference<LoadedInstrument> displayed = new AtomicReference<>();
-    interactor.onInstrumentLoaded(displayed::set);
+    try (ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add)) {
+      AtomicReference<LoadedInstrument> displayed = new AtomicReference<>();
+      interactor.onInstrumentLoaded(displayed::set);
 
-    interactor.selectInstrument("IBM");
-    CompletableFuture<LoadedInstrument> ibmLoad = marketData.instrumentLoads.getFirst();
-    ibmLoad.complete(new LoadedInstrument("IBM", "IBM", List.of()));
-    interactor.selectInstrument("AAPL");
-    CompletableFuture<LoadedInstrument> appleLoad = marketData.instrumentLoads.getLast();
-    LoadedInstrument apple = new LoadedInstrument("AAPL", "Apple", List.of());
-    appleLoad.complete(apple);
+      interactor.selectInstrument("IBM");
+      CompletableFuture<LoadedInstrument> ibmLoad = marketData.instrumentLoads.getFirst();
+      ibmLoad.complete(new LoadedInstrument("IBM", "IBM", List.of()));
+      interactor.selectInstrument("AAPL");
+      CompletableFuture<LoadedInstrument> appleLoad = marketData.instrumentLoads.getLast();
+      LoadedInstrument apple = new LoadedInstrument("AAPL", "Apple", List.of());
+      appleLoad.complete(apple);
 
-    uiQueue.removeFirst().run();
-    assertNull(displayed.get());
-    uiQueue.removeFirst().run();
-    assertEquals(apple, displayed.get());
+      uiQueue.removeFirst().run();
+      assertNull(displayed.get());
+      uiQueue.removeFirst().run();
+      assertEquals(apple, displayed.get());
+    }
   }
 
   @Test
   void changingInstrumentInvalidatesAnEarlierHistoryCompletion() {
     StubMarketDataSession marketData = new StubMarketDataSession();
     List<Runnable> uiQueue = new ArrayList<>();
-    ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add);
-    AtomicReference<List<DailyBar>> displayed = new AtomicReference<>();
-    interactor.onEarlierHistoryLoaded(displayed::set);
+    try (ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add)) {
+      AtomicReference<List<DailyBar>> displayed = new AtomicReference<>();
+      interactor.onEarlierHistoryLoaded(displayed::set);
 
-    interactor.loadEarlierHistory();
-    marketData.earlier.complete(List.of());
-    interactor.selectInstrument("AAPL");
+      interactor.loadEarlierHistory();
+      marketData.earlier.complete(List.of());
+      interactor.selectInstrument("AAPL");
 
-    uiQueue.removeFirst().run();
-    assertNull(displayed.get());
+      uiQueue.removeFirst().run();
+      assertNull(displayed.get());
+    }
   }
 
   @Test
   void closingInvalidatesUiWorkAndClosesTheMarketDataSession() {
     StubMarketDataSession marketData = new StubMarketDataSession();
     List<Runnable> uiQueue = new ArrayList<>();
-    ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add);
-    AtomicReference<LoadedInstrument> displayed = new AtomicReference<>();
-    interactor.onInstrumentLoaded(displayed::set);
+    try (ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add)) {
+      AtomicReference<LoadedInstrument> displayed = new AtomicReference<>();
+      interactor.onInstrumentLoaded(displayed::set);
 
-    interactor.loadInitialInstrument("IBM");
-    marketData.initial.complete(new LoadedInstrument("IBM", "IBM", List.of()));
-    interactor.close();
-    uiQueue.removeFirst().run();
+      interactor.loadInitialInstrument("IBM");
+      marketData.initial.complete(new LoadedInstrument("IBM", "IBM", List.of()));
+      interactor.close();
+      uiQueue.removeFirst().run();
 
-    assertNull(displayed.get());
-    assertTrue(marketData.closed);
+      assertNull(displayed.get());
+      assertTrue(marketData.closed);
+    }
   }
 
   private static final class StubMarketDataSession implements MarketDataSession {

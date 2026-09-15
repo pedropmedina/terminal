@@ -34,13 +34,13 @@ public final class Chart implements AutoCloseable {
 
   public Chart(
     List<PricePoint> pricePoints,
-    String stockSymbol,
+    String symbol,
     ChartInterval interval,
     InstrumentCatalog instrumentCatalog
   ) {
     this(
       pricePoints,
-      stockSymbol,
+      symbol,
       interval,
       instrumentCatalog,
       ignored -> java.util.concurrent.CompletableFuture.completedFuture(Optional.empty()),
@@ -51,39 +51,30 @@ public final class Chart implements AutoCloseable {
 
   public Chart(
     List<PricePoint> pricePoints,
-    String stockSymbol,
+    String symbol,
     ChartInterval interval,
     InstrumentCatalog instrumentCatalog,
     ChartLogoSource logoSource,
     Executor uiExecutor
   ) {
-    this(
-      pricePoints,
-      stockSymbol,
-      interval,
-      instrumentCatalog,
-      logoSource,
-      null,
-      ForkJoinPool.commonPool(),
-      uiExecutor
-    );
+    this(pricePoints, symbol, interval, instrumentCatalog, logoSource, null, ForkJoinPool.commonPool(), uiExecutor);
   }
 
   public Chart(
     List<PricePoint> pricePoints,
-    String stockSymbol,
+    String symbol,
     ChartInterval interval,
     InstrumentCatalog instrumentCatalog,
     ChartLogoSource logoSource,
     Executor backgroundExecutor,
     Executor uiExecutor
   ) {
-    this(pricePoints, stockSymbol, interval, instrumentCatalog, logoSource, null, backgroundExecutor, uiExecutor);
+    this(pricePoints, symbol, interval, instrumentCatalog, logoSource, null, backgroundExecutor, uiExecutor);
   }
 
   public Chart(
     List<PricePoint> pricePoints,
-    String stockSymbol,
+    String symbol,
     ChartInterval interval,
     InstrumentCatalog instrumentCatalog,
     MarketDataSession marketData,
@@ -91,7 +82,7 @@ public final class Chart implements AutoCloseable {
   ) {
     this(
       pricePoints,
-      stockSymbol,
+      symbol,
       interval,
       instrumentCatalog,
       logoSource(marketData),
@@ -103,7 +94,7 @@ public final class Chart implements AutoCloseable {
 
   private Chart(
     List<PricePoint> pricePoints,
-    String stockSymbol,
+    String symbol,
     ChartInterval interval,
     InstrumentCatalog instrumentCatalog,
     ChartLogoSource logoSource,
@@ -111,10 +102,10 @@ public final class Chart implements AutoCloseable {
     Executor backgroundExecutor,
     Executor uiExecutor
   ) {
-    Objects.requireNonNull(stockSymbol, "stockSymbol");
+    Objects.requireNonNull(symbol, "symbol");
     Objects.requireNonNull(interval, "interval");
     Objects.requireNonNull(instrumentCatalog, "instrumentCatalog");
-    initialSymbol = stockSymbol;
+    initialSymbol = symbol;
     ownsMarketData = marketData != null;
     ChartModel model = new ChartModel();
     interactor = ownsMarketData
@@ -123,7 +114,7 @@ public final class Chart implements AutoCloseable {
     interactor.initialize(interval);
 
     instrumentSearch = new InstrumentSearch(
-      stockSymbol,
+      symbol,
       model.instrumentSearchOpenProperty(),
       instrumentCatalog,
       Objects.requireNonNull(backgroundExecutor, "backgroundExecutor"),
@@ -139,7 +130,7 @@ public final class Chart implements AutoCloseable {
     Dialog intervalSelectionDialog = intervalSelection.getView();
 
     statusLine = new ChartStatusLine(
-      stockSymbol,
+      symbol,
       interval,
       model.modalOpenProperty(),
       interactor::openInstrumentSearch,

@@ -47,14 +47,15 @@ class ChartTest {
   void opensTheIntervalDialogFromItsPlatformShortcut() {
     FxTestSupport.runAndWait(() -> {
       TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
-      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.instrumentCatalog);
-      StackPane chart = chartController.getView();
-      Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
+      try (Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.instrumentCatalog)) {
+        StackPane chart = chartController.getView();
+        Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
 
-      chart.fireEvent(shortcutEvent(KeyCode.I));
+        chart.fireEvent(shortcutEvent(KeyCode.I));
 
-      assertTrue(dialog.isOpen());
-      dialog.close();
+        assertTrue(dialog.isOpen());
+        dialog.close();
+      }
     });
   }
 
@@ -62,29 +63,30 @@ class ChartTest {
   void dismissesTheStatusTooltipWhenAShortcutOpensAModal() {
     FxTestSupport.runAndWait(() -> {
       TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
-      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.instrumentCatalog);
-      StackPane chart = chartController.getView();
-      Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
-      Stage stage = new Stage();
-      stage.setScene(new Scene(chart, 800.0, 500.0));
-      Platform.setImplicitExit(false);
-      stage.show();
-      chart.applyCss();
-      chart.layout();
+      try (Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.instrumentCatalog)) {
+        StackPane chart = chartController.getView();
+        Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
+        Stage stage = new Stage();
+        stage.setScene(new Scene(chart, 800.0, 500.0));
+        Platform.setImplicitExit(false);
+        stage.show();
+        chart.applyCss();
+        chart.layout();
 
-      try {
-        HBox statusLine = (HBox) chart.lookup(".chart-status-line");
-        Tooltip tooltip = (Tooltip) statusLine.getChildren().get(1);
-        tooltip.show();
-        assertTrue(tooltip.isShowing());
+        try {
+          HBox statusLine = (HBox) chart.lookup(".chart-status-line");
+          Tooltip tooltip = (Tooltip) statusLine.getChildren().get(1);
+          tooltip.show();
+          assertTrue(tooltip.isShowing());
 
-        chart.fireEvent(shortcutEvent(KeyCode.I));
+          chart.fireEvent(shortcutEvent(KeyCode.I));
 
-        assertTrue(dialog.isOpen());
-        assertFalse(tooltip.isShowing());
-      } finally {
-        dialog.close();
-        stage.close();
+          assertTrue(dialog.isOpen());
+          assertFalse(tooltip.isShowing());
+        } finally {
+          dialog.close();
+          stage.close();
+        }
       }
     });
   }
@@ -95,6 +97,7 @@ class ChartTest {
     AtomicReference<Tooltip> tooltipReference = new AtomicReference<>();
     AtomicReference<Dialog> dialogReference = new AtomicReference<>();
     AtomicReference<Stage> stageReference = new AtomicReference<>();
+    AtomicReference<Chart> chartControllerReference = new AtomicReference<>();
 
     FxTestSupport.runAndWait(() -> {
       TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
@@ -118,6 +121,7 @@ class ChartTest {
       tooltipReference.set(tooltip);
       dialogReference.set(dialog);
       stageReference.set(stage);
+      chartControllerReference.set(chartController);
     });
 
     try {
@@ -153,7 +157,10 @@ class ChartTest {
       Thread.sleep(500L);
       FxTestSupport.runAndWait(() -> assertFalse(tooltipReference.get().isShowing()));
     } finally {
-      FxTestSupport.runAndWait(() -> stageReference.get().close());
+      FxTestSupport.runAndWait(() -> {
+        stageReference.get().close();
+        chartControllerReference.get().close();
+      });
     }
   }
 
