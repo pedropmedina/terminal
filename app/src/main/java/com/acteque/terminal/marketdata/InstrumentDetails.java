@@ -12,24 +12,9 @@ public record InstrumentDetails(
   String symbol,
   Optional<String> name,
   Optional<String> exchange,
-  Optional<String> description,
-  Optional<InstrumentLogo> logo
+  Optional<String> description
 ) {
-  public InstrumentDetails(
-    String symbol,
-    Optional<String> name,
-    Optional<String> exchange,
-    Optional<String> description
-  ) {
-    this(symbol, name, exchange, description, Optional.empty());
-  }
-
-  public InstrumentDetails withLogo(Optional<InstrumentLogo> logo) {
-    return new InstrumentDetails(symbol, name, exchange, description, logo);
-  }
-
   public InstrumentDetails {
-    Objects.requireNonNull(logo, "logo");
     symbol = Objects.requireNonNull(symbol, "symbol").strip();
     if (symbol.isEmpty()) {
       throw new IllegalArgumentException("symbol must not be blank");

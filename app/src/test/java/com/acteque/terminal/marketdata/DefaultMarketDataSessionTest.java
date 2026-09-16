@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
-class MarketDataControllerTest {
+class DefaultMarketDataSessionTest {
 
   private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-21T12:00:00Z"), ZoneOffset.UTC);
 
@@ -34,7 +34,7 @@ class MarketDataControllerTest {
       List.of(bar("2025-09-02", "99"), bar("2026-02-23", "100"))
     );
     try (
-      MarketDataController controller = new MarketDataController(
+      DefaultMarketDataSession controller = new DefaultMarketDataSession(
         client,
         "IBM",
         CLOCK,
@@ -62,7 +62,7 @@ class MarketDataControllerTest {
   void stopsRequestingOnceAnEarlierPageAddsNoData() {
     StubMarketDataClient client = new StubMarketDataClient(List.of(bar("2026-02-23", "101")), List.of());
     try (
-      MarketDataController controller = new MarketDataController(
+      DefaultMarketDataSession controller = new DefaultMarketDataSession(
         client,
         "IBM",
         CLOCK,
@@ -84,7 +84,7 @@ class MarketDataControllerTest {
       List.of(bar("AAPL", "2026-08-19", "201"), bar("AAPL", "2026-08-20", "202"))
     );
     try (
-      MarketDataController controller = new MarketDataController(
+      DefaultMarketDataSession controller = new DefaultMarketDataSession(
         client,
         "IBM",
         CLOCK,
@@ -118,7 +118,7 @@ class MarketDataControllerTest {
     CountDownLatch executorStarted = new CountDownLatch(1);
     CountDownLatch releaseExecutor = new CountDownLatch(1);
     var executor = Executors.newSingleThreadExecutor();
-    try (MarketDataController controller = new MarketDataController(client, " ibm ", CLOCK, executor)) {
+    try (DefaultMarketDataSession controller = new DefaultMarketDataSession(client, " ibm ", CLOCK, executor)) {
       executor.submit(() -> {
         executorStarted.countDown();
         await(releaseExecutor);
@@ -144,7 +144,7 @@ class MarketDataControllerTest {
   void fallsBackToRequestedSymbolWhenNameIsMissing() {
     StubMarketDataClient client = new StubMarketDataClient(List.of(bar("2026-08-20", "102")));
     client.metadata = symbol -> details("provider-symbol", Optional.empty());
-    try (MarketDataController controller = controller(client)) {
+    try (DefaultMarketDataSession controller = controller(client)) {
       LoadedInstrument loaded = controller.loadInitial().toCompletableFuture().join();
       assertEquals("IBM", loaded.symbol());
       assertEquals("IBM", loaded.displayName());
@@ -159,7 +159,7 @@ class MarketDataControllerTest {
     client.metadata = symbol -> {
       throw new MarketDataException(MarketDataException.Code.NETWORK, "Metadata service unavailable");
     };
-    try (MarketDataController controller = controller(client)) {
+    try (DefaultMarketDataSession controller = controller(client)) {
       LoadedInstrument loaded = controller.loadInitial().toCompletableFuture().join();
       assertEquals("IBM", loaded.displayName());
       assertEquals(new BigDecimal("102"), loaded.bars().getFirst().prices().close());
@@ -175,7 +175,7 @@ class MarketDataControllerTest {
     client.metadata = symbol -> {
       throw failure;
     };
-    try (MarketDataController controller = controller(client)) {
+    try (DefaultMarketDataSession controller = controller(client)) {
       CompletionException thrown = assertThrows(CompletionException.class, () ->
         controller.loadInitial().toCompletableFuture().join()
       );
@@ -200,7 +200,7 @@ class MarketDataControllerTest {
       }
       return details(symbol, Optional.of(symbol + " name"));
     };
-    try (MarketDataController controller = controller(client)) {
+    try (DefaultMarketDataSession controller = controller(client)) {
       try {
         var stale = controller.loadInitial().toCompletableFuture();
         assertTrue(metadataStarted.await(5, TimeUnit.SECONDS));
@@ -233,8 +233,8 @@ class MarketDataControllerTest {
     assertThrows(UnsupportedOperationException.class, () -> loaded.bars().add(bars.getFirst()));
   }
 
-  private static MarketDataController controller(StubMarketDataClient client) {
-    return new MarketDataController(client, "IBM", CLOCK, Executors.newVirtualThreadPerTaskExecutor());
+  private static DefaultMarketDataSession controller(StubMarketDataClient client) {
+    return new DefaultMarketDataSession(client, "IBM", CLOCK, Executors.newVirtualThreadPerTaskExecutor());
   }
 
   private static InstrumentDetails details(String symbol, Optional<String> name) {
@@ -287,16 +287,16 @@ class MarketDataControllerTest {
     }
 
     @Override
-    public HistoricalBarData historicalBars() {
-      return this;
+    public Optional<HistoricalBarData> historicalBars() {
+      return Optional.of(this);
     }
 
     @Override
-    public InstrumentDiscovery discovery() {
-      return symbol -> {
+    public Optional<InstrumentDiscovery> discovery() {
+      return Optional.of(symbol -> {
         metadataRequests.add(symbol);
         return metadata.getInstrument(symbol);
-      };
+      });
     }
 
     @Override

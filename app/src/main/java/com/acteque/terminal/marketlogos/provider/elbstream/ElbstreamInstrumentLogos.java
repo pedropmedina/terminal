@@ -1,9 +1,9 @@
-package com.acteque.terminal.marketdata.provider.elbstream;
+package com.acteque.terminal.marketlogos.provider.elbstream;
 
-import com.acteque.terminal.marketdata.InstrumentDetails;
-import com.acteque.terminal.marketdata.InstrumentLogo;
-import com.acteque.terminal.marketdata.InstrumentLogos;
-import com.acteque.terminal.marketdata.MarketDataException;
+import com.acteque.terminal.marketlogos.InstrumentLogo;
+import com.acteque.terminal.marketlogos.InstrumentLogos;
+import com.acteque.terminal.marketlogos.LogoException;
+import com.acteque.terminal.marketlogos.LogoRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -34,8 +34,8 @@ public final class ElbstreamInstrumentLogos implements InstrumentLogos {
   }
 
   @Override
-  public Optional<InstrumentLogo> findLogo(InstrumentDetails details) {
-    String symbol = Objects.requireNonNull(details, "details").symbol();
+  public Optional<InstrumentLogo> findLogo(LogoRequest request) {
+    String symbol = Objects.requireNonNull(request, "request").symbol();
     // Dot-only segments have path traversal semantics rather than ticker semantics.
     if (symbol.equals(".") || symbol.equals("..")) {
       return Optional.empty();
@@ -58,21 +58,21 @@ public final class ElbstreamInstrumentLogos implements InstrumentLogos {
       response = transport.get(uri);
     } catch (InterruptedException exception) {
       Thread.currentThread().interrupt();
-      throw new MarketDataException(MarketDataException.Code.NETWORK, "Elbstream request was interrupted", exception);
+      throw new LogoException(LogoException.Code.NETWORK, "Elbstream request was interrupted", exception);
     } catch (IOException exception) {
-      throw new MarketDataException(MarketDataException.Code.NETWORK, "Unable to load Elbstream logo", exception);
+      throw new LogoException(LogoException.Code.NETWORK, "Unable to load Elbstream logo", exception);
     }
     int status = response.statusCode();
     if (status == 404) {
       return Optional.empty();
     }
     if (status != 200) {
-      MarketDataException.Code code = switch (status) {
-        case 401, 403 -> MarketDataException.Code.AUTHENTICATION;
-        case 429 -> MarketDataException.Code.RATE_LIMITED;
-        default -> MarketDataException.Code.PROVIDER_ERROR;
+      LogoException.Code code = switch (status) {
+        case 401, 403 -> LogoException.Code.AUTHENTICATION;
+        case 429 -> LogoException.Code.RATE_LIMITED;
+        default -> LogoException.Code.PROVIDER_ERROR;
       };
-      throw new MarketDataException(code, "Elbstream request failed with HTTP status " + status);
+      throw new LogoException(code, "Elbstream request failed with HTTP status " + status);
     }
     byte[] body = response.body();
     String type = response.contentType();
@@ -94,11 +94,8 @@ public final class ElbstreamInstrumentLogos implements InstrumentLogos {
     return Optional.of(body);
   }
 
-  private static MarketDataException invalidResponse() {
-    return new MarketDataException(
-      MarketDataException.Code.INVALID_RESPONSE,
-      "Elbstream returned an invalid PNG payload"
-    );
+  private static LogoException invalidResponse() {
+    return new LogoException(LogoException.Code.INVALID_RESPONSE, "Elbstream returned an invalid PNG payload");
   }
 
   private static void validateEndpoint(URI uri) {

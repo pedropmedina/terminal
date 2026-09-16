@@ -1,8 +1,8 @@
-package com.acteque.terminal.marketdata.provider.elbstream;
+package com.acteque.terminal.marketlogos.provider.elbstream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.acteque.terminal.marketdata.MarketDataException;
+import com.acteque.terminal.marketlogos.LogoException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
@@ -44,10 +44,7 @@ class ElbstreamHttpTransportTest {
     CompletionException failure = assertThrows(CompletionException.class, () ->
       oversized.getBody().toCompletableFuture().join()
     );
-    assertEquals(
-      MarketDataException.Code.INVALID_RESPONSE,
-      assertInstanceOf(MarketDataException.class, failure.getCause()).code()
-    );
+    assertEquals(LogoException.Code.INVALID_RESPONSE, assertInstanceOf(LogoException.class, failure.getCause()).code());
   }
 
   @Test
@@ -147,10 +144,10 @@ class ElbstreamHttpTransportTest {
         null,
         null
       );
-      MarketDataException failure = assertThrows(MarketDataException.class, () ->
+      LogoException failure = assertThrows(LogoException.class, () ->
         ElbstreamHttpTransport.using(client, Duration.ofSeconds(3)).get(uri)
       );
-      assertEquals(MarketDataException.Code.INVALID_RESPONSE, failure.code());
+      assertEquals(LogoException.Code.INVALID_RESPONSE, failure.code());
       serving.get(5, TimeUnit.SECONDS);
     }
   }

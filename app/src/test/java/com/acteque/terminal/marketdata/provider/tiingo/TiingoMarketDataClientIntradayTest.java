@@ -42,6 +42,7 @@ class TiingoMarketDataClientIntradayTest {
 
     List<IntradayBar> bars = client
       .historicalBars()
+      .orElseThrow()
       .getIntradayBars(
         new IntradayBarRequest(
           "aapl",
@@ -86,6 +87,7 @@ class TiingoMarketDataClientIntradayTest {
 
     client
       .historicalBars()
+      .orElseThrow()
       .getIntradayBars(
         new IntradayBarRequest(
           "MSFT",
@@ -115,6 +117,7 @@ class TiingoMarketDataClientIntradayTest {
     MarketDataException exception = assertThrows(MarketDataException.class, () ->
       client
         .historicalBars()
+        .orElseThrow()
         .getIntradayBars(
           new IntradayBarRequest(
             "AAPL",
@@ -147,6 +150,7 @@ class TiingoMarketDataClientIntradayTest {
     MarketDataException exception = assertThrows(MarketDataException.class, () ->
       client
         .historicalBars()
+        .orElseThrow()
         .getIntradayBars(
           new IntradayBarRequest(
             "AAPL",

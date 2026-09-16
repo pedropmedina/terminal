@@ -2,7 +2,7 @@ package com.acteque.terminal.chart.statusline;
 
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.PricePoint;
-import com.acteque.terminal.marketdata.InstrumentLogo;
+import com.acteque.terminal.marketlogos.InstrumentLogo;
 import java.util.Objects;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;

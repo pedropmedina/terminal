@@ -43,6 +43,7 @@ class TiingoMarketDataClientDailyTest {
 
     List<DailyBar> bars = client
       .historicalBars()
+      .orElseThrow()
       .getDailyBars(new DailyBarRequest("aapl", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-03")));
 
     assertEquals("tiingo", client.provider());
@@ -111,6 +112,7 @@ class TiingoMarketDataClientDailyTest {
     MarketDataException exception = assertThrows(MarketDataException.class, () ->
       client
         .historicalBars()
+        .orElseThrow()
         .getDailyBars(new DailyBarRequest("AAPL", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-03")))
     );
 
@@ -128,6 +130,7 @@ class TiingoMarketDataClientDailyTest {
     MarketDataException exception = assertThrows(MarketDataException.class, () ->
       client
         .historicalBars()
+        .orElseThrow()
         .getDailyBars(new DailyBarRequest("AAPL", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-03")))
     );
 

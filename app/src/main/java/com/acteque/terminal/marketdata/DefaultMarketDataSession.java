@@ -12,19 +12,17 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.RejectedExecutionException;
 
-/** Owns the loaded daily-price history and fetches earlier pages on demand. */
-public final class MarketDataController implements MarketDataSession {
+/** Owns one instrument session and its executor, but never closes the shared provider. */
+public final class DefaultMarketDataSession implements MarketDataSession {
 
-  private static final System.Logger LOGGER = System.getLogger(MarketDataController.class.getName());
+  private static final System.Logger LOGGER = System.getLogger(DefaultMarketDataSession.class.getName());
   private static final long HISTORY_PAGE_MONTHS = 6;
 
-  private final MarketDataClient client;
+  private final HistoricalBarData history;
+  private final Optional<InstrumentDiscovery> discovery;
   private String symbol;
   private final Clock clock;
   private final ExecutorService executor;
@@ -33,14 +31,19 @@ public final class MarketDataController implements MarketDataSession {
   private boolean earlierHistoryLoadInProgress;
   private boolean allEarlierHistoryLoaded;
   private long instrumentLoadGeneration;
-  private FutureTask<Optional<byte[]>> logoTask;
 
-  public MarketDataController(MarketDataClient client, String symbol) {
+  public DefaultMarketDataSession(MarketDataClient client, String symbol) {
     this(client, symbol, Clock.systemDefaultZone(), Executors.newVirtualThreadPerTaskExecutor());
   }
 
-  MarketDataController(MarketDataClient client, String symbol, Clock clock, ExecutorService executor) {
-    this.client = Objects.requireNonNull(client, "client");
+  DefaultMarketDataSession(MarketDataClient client, String symbol, Clock clock, ExecutorService executor) {
+    Objects.requireNonNull(client, "client");
+    this.history = client
+      .historicalBars()
+      .orElseThrow(() ->
+        new IllegalArgumentException("Provider " + client.provider() + " does not support historical bars")
+      );
+    this.discovery = client.discovery();
     this.symbol = Objects.requireNonNull(symbol, "symbol");
     this.clock = Objects.requireNonNull(clock, "clock");
     this.executor = Objects.requireNonNull(executor, "executor");
@@ -112,7 +115,11 @@ public final class MarketDataController implements MarketDataSession {
       List<DailyBar> page = loadPage(requestedSymbol, startDate, endDate);
       InstrumentDetails details;
       try {
-        details = client.discovery().getInstrument(requestedSymbol);
+        details = discovery
+          .map(feature -> feature.getInstrument(requestedSymbol))
+          .orElseGet(() ->
+            new InstrumentDetails(requestedSymbol, Optional.empty(), Optional.empty(), Optional.empty())
+          );
       } catch (MarketDataException exception) {
         LOGGER.log(
           System.Logger.Level.WARNING,
@@ -145,64 +152,13 @@ public final class MarketDataController implements MarketDataSession {
     });
   }
 
-  /** Loads a logo independently of history, interrupting any previous logo request. */
-  @Override
-  public synchronized CompletionStage<Optional<byte[]>> loadLogo(InstrumentLogo logo) {
-    Objects.requireNonNull(logo, "logo");
-    cancelLogoLoad();
-    CompletableFuture<Optional<byte[]>> result = new CompletableFuture<>();
-    FutureTask<Optional<byte[]>> task = new FutureTask<>(() -> client.instrumentLogos().load(logo)) {
-      @Override
-      protected void done() {
-        synchronized (MarketDataController.this) {
-          if (logoTask == this) {
-            logoTask = null;
-          }
-        }
-        try {
-          result.complete(get());
-        } catch (CancellationException exception) {
-          result.cancel(false);
-        } catch (ExecutionException exception) {
-          result.completeExceptionally(exception.getCause());
-        } catch (InterruptedException exception) {
-          Thread.currentThread().interrupt();
-          result.completeExceptionally(exception);
-        }
-      }
-    };
-    logoTask = task;
-    try {
-      executor.execute(task);
-    } catch (RejectedExecutionException exception) {
-      task.cancel(false);
-      throw exception;
-    }
-    return result;
-  }
-
-  /** Interrupts the pending logo task and cancels its returned stage; safe when none is pending. */
-  @Override
-  public synchronized void cancelLogoLoad() {
-    FutureTask<Optional<byte[]>> task = logoTask;
-    logoTask = null;
-    if (task != null) {
-      task.cancel(true);
-    }
-  }
-
   @Override
   public void close() {
-    synchronized (this) {
-      // Reject new submissions before cancellation callbacks can attempt another logo load.
-      executor.shutdown();
-      cancelLogoLoad();
-    }
     executor.close();
   }
 
   private List<DailyBar> loadPage(String symbol, LocalDate startDate, LocalDate endDate) {
-    return client.historicalBars().getDailyBars(new DailyBarRequest(symbol, startDate, endDate));
+    return history.getDailyBars(new DailyBarRequest(symbol, startDate, endDate));
   }
 
   private static String normalizeSymbol(String symbol) {

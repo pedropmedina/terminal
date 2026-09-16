@@ -41,7 +41,7 @@ class TiingoMarketDataClientDiscoveryTest {
     };
     MarketDataClient client = new TiingoMarketDataClient("test-token", BASE_URI, transport);
 
-    InstrumentDetails details = client.discovery().getInstrument("  brk-a  ");
+    InstrumentDetails details = client.discovery().orElseThrow().getInstrument("  brk-a  ");
 
     assertEquals("https://example.test/tiingo/daily/BRK-A", requestedUri.get().toString());
     assertEquals("application/json", requestedHeaders.get().get("Accept"));
@@ -62,7 +62,7 @@ class TiingoMarketDataClientDiscoveryTest {
         );
       MarketDataClient client = new TiingoMarketDataClient("test-token", BASE_URI, transport);
 
-      InstrumentDetails details = client.discovery().getInstrument("AAPL");
+      InstrumentDetails details = client.discovery().orElseThrow().getInstrument("AAPL");
 
       assertEquals("AAPL", details.symbol());
       assertEquals(Optional.of("Apple Inc"), details.name());
@@ -81,7 +81,7 @@ class TiingoMarketDataClientDiscoveryTest {
     MarketDataClient client = new TiingoMarketDataClient("test-token", BASE_URI, transport);
 
     for (String symbol : new String[] { null, "", " ", "\t\n" }) {
-      assertThrows(IllegalArgumentException.class, () -> client.discovery().getInstrument(symbol));
+      assertThrows(IllegalArgumentException.class, () -> client.discovery().orElseThrow().getInstrument(symbol));
     }
 
     assertEquals(0, requests.get());
@@ -99,8 +99,8 @@ class TiingoMarketDataClientDiscoveryTest {
     assertEquals("tiingo", client.provider());
     assertNotNull(client.historicalBars());
     assertNotNull(client.discovery());
-    assertSame(client.historicalBars(), client.historicalBars());
-    assertSame(client.discovery(), client.discovery());
+    assertSame(client.historicalBars().orElseThrow(), client.historicalBars().orElseThrow());
+    assertSame(client.discovery().orElseThrow(), client.discovery().orElseThrow());
     assertEquals(0, requests.get());
   }
 
@@ -128,7 +128,7 @@ class TiingoMarketDataClientDiscoveryTest {
       MarketDataClient client = new TiingoMarketDataClient("test-token", BASE_URI, transport);
 
       MarketDataException exception = assertThrows(MarketDataException.class, () ->
-        client.discovery().getInstrument("AAPL")
+        client.discovery().orElseThrow().getInstrument("AAPL")
       );
 
       assertEquals(MarketDataException.Code.INVALID_RESPONSE, exception.code(), json);
@@ -140,7 +140,7 @@ class TiingoMarketDataClientDiscoveryTest {
     MarketDataClient client = new TiingoMarketDataClient("test-token", BASE_URI, transport);
 
     MarketDataException exception = assertThrows(MarketDataException.class, () ->
-      client.discovery().getInstrument("AAPL")
+      client.discovery().orElseThrow().getInstrument("AAPL")
     );
 
     assertEquals(expectedCode, exception.code());

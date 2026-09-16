@@ -4,7 +4,7 @@ The chart loads company/instrument logos from [Elbstream](https://elbstream.com/
 
 ## Behavior
 
-- An initial-letter fallback occupies the logo slot while loading, when metadata is unavailable, or when a logo is missing or cannot be loaded.
+- An initial-letter fallback occupies the logo slot while loading or when a logo cannot be resolved or loaded. If metadata is unavailable, lookup uses the selected symbol.
 - The status line displays the logo beside the instrument name. Symbol selection and OHLCV interactions are unchanged.
 - The symbol-selection tooltip includes the non-interactive **Logos by Elbstream** attribution at 12pt whenever the logo is displayed.
 - Only selected instruments are requested, not the ticker catalog. Loading prices and earlier history never waits for a logo download.
@@ -13,7 +13,9 @@ The chart loads company/instrument logos from [Elbstream](https://elbstream.com/
 
 ## Integration
 
-`LogoMarketDataClient` composes a market-data client with the provider-neutral `InstrumentLogos` feature. Discovery returns `InstrumentDetails` containing an optional `InstrumentLogo` reference and attribution. Existing clients without branding continue to work through the no-op default feature.
+Market logo support lives in `com.acteque.terminal.marketlogos`, independently of `marketdata`. Neither subsystem imports the other. The package currently supports instrument logos; the broader name leaves room for exchange and broker logos. `InstrumentLogos` is the provider contract; `LogoRequest` carries symbol and exchange hints without depending on market-data models. `InstrumentLogo` carries the image reference and attribution, and `LogoException` normalizes provider failures.
+
+`App` injects a market-data session and a separate `LogoSession` into the chart. The chart maps loaded metadata into a `LogoRequest`; logos are no longer part of `InstrumentDetails` or `MarketDataClient`. A chart without logo support uses `LogoSession.NONE`.
 
 `ElbstreamInstrumentLogos` owns URL construction, transport, response validation, and error normalization. It requests:
 
@@ -23,9 +25,11 @@ https://api.elbstream.com/logos/symbol/{encoded-symbol}?format=png&size=64
 
 This is best-effort ticker matching. Symbols remain provider-scoped in our metadata, and Elbstream's symbol lookup does not disambiguate exchanges. The integration preserves ticker punctuation and does not guess exchange suffixes or company domains. ISIN-based matching would be preferable if a future metadata source supplies a stable ISIN.
 
-`MarketDataController.loadLogo` downloads separately from price loading through the chart's `ChartLogoSource` port. The status-line interactor owns decoding, stale-result suppression, cancellation, and JavaFX-thread model updates. The chart owns image presentation and does not perform HTTP requests.
+`DefaultLogoSession` wraps any `InstrumentLogos` implementation and owns its executor and cancellable download task. Each chart owns its own session and closes it on shutdown. Providers may be shared between sessions; closing one session does not close or cancel another. The status-line interactor owns decoding, stale-result suppression, and JavaFX-thread model updates. The chart owns image presentation and does not perform HTTP requests.
 
-Requests have connection and whole-body timeouts, a 1 MiB streamed payload limit, PNG validation, a fixed endpoint allowlist, and no redirects or automatic retries. A 404 means no logo; other failures use normalized market-data errors and leave the fallback in place. No Tiingo credentials are sent to Elbstream.
+To add a provider, implement `InstrumentLogos` under `marketlogos/provider/<name>/`, keeping URLs, transport, parsing, and provider-specific mapping there. Reference resolution must be local and fast; `load` performs blocking I/O on the session's executor. Implementations must support concurrent calls from independent sessions. Inject the new implementation into `DefaultLogoSession` at the application boundary. No chart or market-data changes are required. Provider selection is explicit dependency injection; dynamic plugin discovery is not implemented.
+
+Requests have connection and whole-body timeouts, a 1 MiB streamed payload limit, PNG validation, a fixed endpoint allowlist, and no redirects or automatic retries. A 404 means no logo; other failures use `LogoException` codes and leave the fallback in place. No Tiingo credentials are sent to Elbstream.
 
 ## External service and terms
 
@@ -43,10 +47,10 @@ References checked during implementation:
 
 ## Validation
 
-Provider tests use injected transports and local HTTP fixtures, not live provider endpoints. Tests cover metadata enrichment, error normalization, bounded downloads, async loading, stale completions, decoding failures, fallback display, tooltip attribution, theme sizing, and view refreshes.
+Provider tests use injected transports and local HTTP fixtures, not live provider endpoints. Tests cover provider substitution, session isolation, metadata preservation, error normalization, bounded downloads, async loading, stale completions, decoding failures, fallback display, tooltip attribution, theme sizing, and view refreshes.
 
 ```sh
-./gradlew test --tests 'com.acteque.terminal.marketdata.*'
+./gradlew test --tests 'com.acteque.terminal.marketlogos.*' --tests 'com.acteque.terminal.marketdata.DefaultMarketDataSession*'
 ./gradlew test --tests 'com.acteque.terminal.chart.statusline.ChartStatusLineLogoInteractorTest' --tests 'com.acteque.terminal.chart.statusline.ChartStatusLineTest'
 ./gradlew test
 ```

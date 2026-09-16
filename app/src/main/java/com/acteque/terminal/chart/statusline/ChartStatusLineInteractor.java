@@ -1,9 +1,9 @@
 package com.acteque.terminal.chart.statusline;
 
 import com.acteque.terminal.chart.ChartInterval;
-import com.acteque.terminal.chart.ChartLogoSource;
 import com.acteque.terminal.chart.PricePoint;
-import com.acteque.terminal.marketdata.InstrumentLogo;
+import com.acteque.terminal.marketlogos.InstrumentLogo;
+import com.acteque.terminal.marketlogos.LogoSession;
 import java.io.ByteArrayInputStream;
 import java.util.Objects;
 import java.util.Optional;
@@ -15,15 +15,15 @@ final class ChartStatusLineInteractor {
 
   private static final System.Logger LOGGER = System.getLogger(ChartStatusLineInteractor.class.getName());
   private final ChartStatusLineModel model;
-  private final ChartLogoSource logoSource;
+  private final LogoSession logoSource;
   private final Executor uiExecutor;
   private long logoGeneration;
 
   ChartStatusLineInteractor(ChartStatusLineModel model) {
-    this(model, ignored -> java.util.concurrent.CompletableFuture.completedFuture(Optional.empty()), Runnable::run);
+    this(model, LogoSession.NONE, Runnable::run);
   }
 
-  ChartStatusLineInteractor(ChartStatusLineModel model, ChartLogoSource logoSource, Executor uiExecutor) {
+  ChartStatusLineInteractor(ChartStatusLineModel model, LogoSession logoSource, Executor uiExecutor) {
     this.model = Objects.requireNonNull(model, "model");
     this.logoSource = Objects.requireNonNull(logoSource, "logoSource");
     this.uiExecutor = Objects.requireNonNull(uiExecutor, "uiExecutor");

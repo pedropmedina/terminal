@@ -12,8 +12,10 @@
 
 - Application code: `app/src/main/java/com/acteque/terminal/`
 - JavaFX charting and interaction: `chart/`
-- Provider-neutral market-data contracts: `marketdata/`
-- Provider integrations: `marketdata/provider/`
+- Provider-neutral market-data contracts, factories, registry, and sessions: `marketdata/`
+- Market-data provider integrations: `marketdata/provider/`
+- Independent market logo contracts and sessions: `marketlogos/`
+- Market logo provider integrations: `marketlogos/provider/`
 - Truly reusable JavaFX components and behaviors: `ui/`
 - Development-only hot-reload code: `app/src/hotreload/`
 - Tests: `app/src/test/java/`
@@ -23,8 +25,11 @@
 
 - Keep provider-specific URLs, authentication, transport, parsing, and response handling inside the corresponding provider package.
 - Keep shared market-data types independent of any provider.
+- Construct market-data providers through registered factories. Keep environment access at the application boundary; factories validate provider-specific configuration.
+- Each chart owns a `DefaultMarketDataSession`; the application registry owns shared provider clients and closes them after sessions.
 - Do not make one provider privileged in shared interfaces, domain models, or UI behavior.
-- Normalize provider results through `MarketDataClient` before passing them to application or chart code.
+- Normalize market-data provider results through `MarketDataClient` before passing them to application or chart code.
+- Keep instrument logos independent of market data. Plug logo providers in through `InstrumentLogos`; each chart owns its own `LogoSession`.
 - Preserve `BigDecimal` values in market-data models; convert to drawing-friendly primitives only at the chart boundary.
 - Perform JavaFX UI updates on the JavaFX application thread. Use `Platform.runLater` when completing background work.
 - Keep styling separate from application logic. Define colors, spacing, typography, borders, and other presentation rules in CSS resources; Java code should manage structure, state, and behavior.

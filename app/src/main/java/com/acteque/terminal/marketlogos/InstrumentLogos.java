@@ -1,14 +1,14 @@
-package com.acteque.terminal.marketdata;
+package com.acteque.terminal.marketlogos;
 
 import java.util.Objects;
 import java.util.Optional;
 
-/** Optional logo references and uncached image loading, independent of price-history loading. */
+/** Pluggable instrument logo provider. Implementations must support concurrent calls from independent sessions. */
 public interface InstrumentLogos {
   InstrumentLogos NONE = new InstrumentLogos() {
     @Override
-    public Optional<InstrumentLogo> findLogo(InstrumentDetails details) {
-      Objects.requireNonNull(details, "details");
+    public Optional<InstrumentLogo> findLogo(LogoRequest request) {
+      Objects.requireNonNull(request, "request");
       return Optional.empty();
     }
 
@@ -20,11 +20,11 @@ public interface InstrumentLogos {
   };
 
   /** Resolves a best-effort reference only; must not perform network access. */
-  Optional<InstrumentLogo> findLogo(InstrumentDetails details);
+  Optional<InstrumentLogo> findLogo(LogoRequest request);
 
   /**
    * Loads image bytes without caching. A missing image (HTTP 404) is empty;
-   * transport, status, and invalid-response failures throw {@link MarketDataException}.
+   * transport, status, and invalid-response failures throw {@link LogoException}.
    * Implementations must reject references outside their supported endpoints.
    */
   Optional<byte[]> load(InstrumentLogo logo);

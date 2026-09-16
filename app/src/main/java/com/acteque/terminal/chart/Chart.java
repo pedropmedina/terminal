@@ -6,9 +6,12 @@ import com.acteque.terminal.chart.menu.ChartMenu;
 import com.acteque.terminal.chart.statusline.ChartStatusLine;
 import com.acteque.terminal.marketdata.DailyBar;
 import com.acteque.terminal.marketdata.InstrumentCatalog;
-import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.marketdata.LoadedInstrument;
 import com.acteque.terminal.marketdata.MarketDataSession;
+import com.acteque.terminal.marketlogos.InstrumentLogo;
+import com.acteque.terminal.marketlogos.LogoException;
+import com.acteque.terminal.marketlogos.LogoRequest;
+import com.acteque.terminal.marketlogos.LogoSession;
 import com.acteque.terminal.search.InstrumentSearch;
 import com.acteque.terminal.ui.core.dialog.Dialog;
 import java.util.List;
@@ -23,6 +26,7 @@ import javafx.scene.layout.StackPane;
 /** Composes and exposes the chart's MVCI feature. */
 public final class Chart implements AutoCloseable {
 
+  private final LogoSession logoSource;
   private final ChartInteractor interactor;
   private final InstrumentSearch instrumentSearch;
   private final ChartCanvas canvas;
@@ -38,15 +42,7 @@ public final class Chart implements AutoCloseable {
     ChartInterval interval,
     InstrumentCatalog instrumentCatalog
   ) {
-    this(
-      pricePoints,
-      symbol,
-      interval,
-      instrumentCatalog,
-      ignored -> java.util.concurrent.CompletableFuture.completedFuture(Optional.empty()),
-      ForkJoinPool.commonPool(),
-      Runnable::run
-    );
+    this(pricePoints, symbol, interval, instrumentCatalog, LogoSession.NONE, ForkJoinPool.commonPool(), Runnable::run);
   }
 
   public Chart(
@@ -54,7 +50,7 @@ public final class Chart implements AutoCloseable {
     String symbol,
     ChartInterval interval,
     InstrumentCatalog instrumentCatalog,
-    ChartLogoSource logoSource,
+    LogoSession logoSource,
     Executor uiExecutor
   ) {
     this(pricePoints, symbol, interval, instrumentCatalog, logoSource, null, ForkJoinPool.commonPool(), uiExecutor);
@@ -65,7 +61,7 @@ public final class Chart implements AutoCloseable {
     String symbol,
     ChartInterval interval,
     InstrumentCatalog instrumentCatalog,
-    ChartLogoSource logoSource,
+    LogoSession logoSource,
     Executor backgroundExecutor,
     Executor uiExecutor
   ) {
@@ -85,7 +81,29 @@ public final class Chart implements AutoCloseable {
       symbol,
       interval,
       instrumentCatalog,
-      logoSource(marketData),
+      LogoSession.NONE,
+      Objects.requireNonNull(marketData, "marketData"),
+      ForkJoinPool.commonPool(),
+      uiExecutor
+    );
+  }
+
+  /** Owns both supplied sessions; provider instances may be shared through separate sessions. */
+  public Chart(
+    List<PricePoint> pricePoints,
+    String symbol,
+    ChartInterval interval,
+    InstrumentCatalog instrumentCatalog,
+    MarketDataSession marketData,
+    LogoSession logos,
+    Executor uiExecutor
+  ) {
+    this(
+      pricePoints,
+      symbol,
+      interval,
+      instrumentCatalog,
+      logos,
       Objects.requireNonNull(marketData, "marketData"),
       ForkJoinPool.commonPool(),
       uiExecutor
@@ -97,7 +115,7 @@ public final class Chart implements AutoCloseable {
     String symbol,
     ChartInterval interval,
     InstrumentCatalog instrumentCatalog,
-    ChartLogoSource logoSource,
+    LogoSession logoSource,
     MarketDataSession marketData,
     Executor backgroundExecutor,
     Executor uiExecutor
@@ -105,6 +123,7 @@ public final class Chart implements AutoCloseable {
     Objects.requireNonNull(symbol, "symbol");
     Objects.requireNonNull(interval, "interval");
     Objects.requireNonNull(instrumentCatalog, "instrumentCatalog");
+    this.logoSource = Objects.requireNonNull(logoSource, "logoSource");
     initialSymbol = symbol;
     ownsMarketData = marketData != null;
     ChartModel model = new ChartModel();
@@ -214,7 +233,11 @@ public final class Chart implements AutoCloseable {
   @Override
   public void close() {
     statusLine.cancelLogoLoad();
-    interactor.close();
+    try {
+      logoSource.close();
+    } finally {
+      interactor.close();
+    }
   }
 
   private void applySelectedInterval(ChartInterval interval, ChartIntervalSelection intervalSelection) {
@@ -225,22 +248,17 @@ public final class Chart implements AutoCloseable {
   }
 
   private void applyLoadedInstrument(LoadedInstrument instrument) {
-    setInstrument(instrument.symbol(), instrument.displayName(), instrument.bars(), instrument.details().logo());
-  }
-
-  private static ChartLogoSource logoSource(MarketDataSession marketData) {
-    Objects.requireNonNull(marketData, "marketData");
-    return new ChartLogoSource() {
-      @Override
-      public java.util.concurrent.CompletionStage<Optional<byte[]>> load(InstrumentLogo logo) {
-        return marketData.loadLogo(logo);
-      }
-
-      @Override
-      public void cancel() {
-        marketData.cancelLogoLoad();
-      }
-    };
+    Optional<InstrumentLogo> logo = Optional.empty();
+    try {
+      logo = logoSource.findLogo(new LogoRequest(instrument.details().symbol(), instrument.details().exchange()));
+    } catch (LogoException failure) {
+      System.getLogger(Chart.class.getName()).log(
+        System.Logger.Level.WARNING,
+        "Could not resolve instrument logo; keeping fallback icon",
+        failure
+      );
+    }
+    setInstrument(instrument.symbol(), instrument.displayName(), instrument.bars(), logo);
   }
 
   private static void reportEarlierHistoryLoadFailure(Throwable failure) {

@@ -1,10 +1,10 @@
-package com.acteque.terminal.marketdata.provider.elbstream;
+package com.acteque.terminal.marketlogos.provider.elbstream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.acteque.terminal.marketdata.InstrumentDetails;
-import com.acteque.terminal.marketdata.InstrumentLogo;
-import com.acteque.terminal.marketdata.MarketDataException;
+import com.acteque.terminal.marketlogos.InstrumentLogo;
+import com.acteque.terminal.marketlogos.LogoException;
+import com.acteque.terminal.marketlogos.LogoRequest;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Optional;
@@ -15,8 +15,8 @@ class ElbstreamInstrumentLogosTest {
 
   private static final byte[] PNG = { (byte) 137, 80, 78, 71, 13, 10, 26, 10, 0 };
 
-  private static InstrumentDetails details(String symbol) {
-    return new InstrumentDetails(symbol, Optional.empty(), Optional.of("not-used"), Optional.empty());
+  private static LogoRequest details(String symbol) {
+    return new LogoRequest(symbol, Optional.of("not-used"));
   }
 
   private static InstrumentLogo logo(ElbstreamInstrumentLogos logos) {
@@ -65,12 +65,12 @@ class ElbstreamInstrumentLogosTest {
       ElbstreamInstrumentLogos logos = new ElbstreamInstrumentLogos(uri ->
         new ElbstreamHttpTransport.Response(status, "image/png", PNG)
       );
-      MarketDataException.Code expected = switch (status) {
-        case 401, 403 -> MarketDataException.Code.AUTHENTICATION;
-        case 429 -> MarketDataException.Code.RATE_LIMITED;
-        default -> MarketDataException.Code.PROVIDER_ERROR;
+      LogoException.Code expected = switch (status) {
+        case 401, 403 -> LogoException.Code.AUTHENTICATION;
+        case 429 -> LogoException.Code.RATE_LIMITED;
+        default -> LogoException.Code.PROVIDER_ERROR;
       };
-      assertEquals(expected, assertThrows(MarketDataException.class, () -> logos.load(logo(logos))).code());
+      assertEquals(expected, assertThrows(LogoException.class, () -> logos.load(logo(logos))).code());
     }
     for (ElbstreamHttpTransport.Response response : new ElbstreamHttpTransport.Response[] {
       new ElbstreamHttpTransport.Response(200, "text/html", PNG),
@@ -81,8 +81,8 @@ class ElbstreamInstrumentLogosTest {
     }) {
       ElbstreamInstrumentLogos logos = new ElbstreamInstrumentLogos(uri -> response);
       assertEquals(
-        MarketDataException.Code.INVALID_RESPONSE,
-        assertThrows(MarketDataException.class, () -> logos.load(logo(logos))).code()
+        LogoException.Code.INVALID_RESPONSE,
+        assertThrows(LogoException.class, () -> logos.load(logo(logos))).code()
       );
     }
   }
@@ -92,17 +92,14 @@ class ElbstreamInstrumentLogosTest {
     ElbstreamInstrumentLogos broken = new ElbstreamInstrumentLogos(uri -> {
       throw new IOException("offline");
     });
-    assertEquals(
-      MarketDataException.Code.NETWORK,
-      assertThrows(MarketDataException.class, () -> broken.load(logo(broken))).code()
-    );
+    assertEquals(LogoException.Code.NETWORK, assertThrows(LogoException.class, () -> broken.load(logo(broken))).code());
     ElbstreamInstrumentLogos interrupted = new ElbstreamInstrumentLogos(uri -> {
       throw new InterruptedException("cancelled");
     });
     try {
       assertEquals(
-        MarketDataException.Code.NETWORK,
-        assertThrows(MarketDataException.class, () -> interrupted.load(logo(interrupted))).code()
+        LogoException.Code.NETWORK,
+        assertThrows(LogoException.class, () -> interrupted.load(logo(interrupted))).code()
       );
       assertTrue(Thread.currentThread().isInterrupted());
     } finally {

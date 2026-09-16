@@ -6,12 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.marketdata.DailyBar;
-import com.acteque.terminal.marketdata.InstrumentLogo;
 import com.acteque.terminal.marketdata.LoadedInstrument;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
@@ -164,14 +162,6 @@ class ChartInteractorTest {
     public CompletableFuture<List<DailyBar>> loadEarlier() {
       return earlier;
     }
-
-    @Override
-    public CompletableFuture<Optional<byte[]>> loadLogo(InstrumentLogo logo) {
-      return CompletableFuture.completedFuture(Optional.empty());
-    }
-
-    @Override
-    public void cancelLogoLoad() {}
 
     @Override
     public void close() {

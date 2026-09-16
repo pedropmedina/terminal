@@ -1,18 +1,26 @@
 package com.acteque.terminal.marketdata;
 
-/** Provider-neutral entry point for market-data features. */
-public interface MarketDataClient {
+import java.util.Optional;
+
+/** Provider-neutral capabilities. Instances may be shared by independent sessions. */
+public interface MarketDataClient extends AutoCloseable {
   /** Stable, lowercase identifier for the backing provider. */
   String provider();
 
-  /** Returns this client's non-null, reusable historical-bar feature. */
-  HistoricalBarData historicalBars();
-
-  /** Returns this client's non-null, reusable instrument-discovery feature. */
-  InstrumentDiscovery discovery();
-
-  /** Returns this client's non-null, reusable logo feature (unsupported by default). */
-  default InstrumentLogos instrumentLogos() {
-    return InstrumentLogos.NONE;
+  /** Empty means unsupported, not supported with no results. Present capabilities are reusable. */
+  default Optional<HistoricalBarData> historicalBars() {
+    return Optional.empty();
   }
+
+  default Optional<InstrumentDiscovery> discovery() {
+    return Optional.empty();
+  }
+
+  default Optional<InstrumentCatalog> catalog() {
+    return Optional.empty();
+  }
+
+  /** Called by the provider owner after all sessions close. Must be idempotent. */
+  @Override
+  default void close() {}
 }

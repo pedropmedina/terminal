@@ -1,9 +1,9 @@
 package com.acteque.terminal.chart.statusline;
 
 import com.acteque.terminal.chart.ChartInterval;
-import com.acteque.terminal.chart.ChartLogoSource;
 import com.acteque.terminal.chart.PricePoint;
-import com.acteque.terminal.marketdata.InstrumentLogo;
+import com.acteque.terminal.marketlogos.InstrumentLogo;
+import com.acteque.terminal.marketlogos.LogoSession;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executor;
@@ -32,7 +32,7 @@ public final class ChartStatusLine {
       tooltipsSuppressed,
       instrumentSelectionAction,
       intervalSelectionAction,
-      ignored -> java.util.concurrent.CompletableFuture.completedFuture(Optional.empty()),
+      LogoSession.NONE,
       Runnable::run
     );
   }
@@ -43,7 +43,7 @@ public final class ChartStatusLine {
     ObservableBooleanValue tooltipsSuppressed,
     Runnable instrumentSelectionAction,
     Runnable intervalSelectionAction,
-    ChartLogoSource logoSource,
+    LogoSession logoSource,
     Executor uiExecutor
   ) {
     this.instrumentSelectionAction = Objects.requireNonNull(instrumentSelectionAction, "instrumentSelectionAction");

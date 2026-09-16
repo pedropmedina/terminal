@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.PricePoint;
-import com.acteque.terminal.marketdata.InstrumentLogo;
+import com.acteque.terminal.marketlogos.InstrumentLogo;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;

@@ -3,7 +3,6 @@ package com.acteque.terminal.chart;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.acteque.terminal.marketdata.provider.tiingo.TiingoMarketDataClient;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
@@ -46,8 +45,7 @@ class ChartTest {
   @Test
   void opensTheIntervalDialogFromItsPlatformShortcut() {
     FxTestSupport.runAndWait(() -> {
-      TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
-      try (Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.instrumentCatalog)) {
+      try (Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, List::of)) {
         StackPane chart = chartController.getView();
         Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
 
@@ -62,8 +60,7 @@ class ChartTest {
   @Test
   void dismissesTheStatusTooltipWhenAShortcutOpensAModal() {
     FxTestSupport.runAndWait(() -> {
-      TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
-      try (Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.instrumentCatalog)) {
+      try (Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, List::of)) {
         StackPane chart = chartController.getView();
         Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
         Stage stage = new Stage();
@@ -100,8 +97,7 @@ class ChartTest {
     AtomicReference<Chart> chartControllerReference = new AtomicReference<>();
 
     FxTestSupport.runAndWait(() -> {
-      TiingoMarketDataClient client = new TiingoMarketDataClient("test-token");
-      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, client.instrumentCatalog);
+      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, List::of);
       StackPane chart = chartController.getView();
       Stage stage = new Stage();
       stage.setX(200.0);

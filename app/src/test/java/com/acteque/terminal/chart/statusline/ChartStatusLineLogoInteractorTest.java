@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.acteque.terminal.chart.ChartLogoSource;
-import com.acteque.terminal.marketdata.InstrumentLogo;
+import com.acteque.terminal.marketlogos.InstrumentLogo;
+import com.acteque.terminal.marketlogos.LogoSession;
 import com.acteque.terminal.test.FxTestSupport;
 import java.net.URI;
 import java.util.ArrayList;
@@ -82,7 +82,7 @@ class ChartStatusLineLogoInteractorTest {
       AtomicInteger cancellations = new AtomicInteger();
       ChartStatusLineInteractor interactor = new ChartStatusLineInteractor(
         model,
-        new ChartLogoSource() {
+        new LogoSession() {
           @Override
           public CompletableFuture<Optional<byte[]>> load(InstrumentLogo logo) {
             return pending;

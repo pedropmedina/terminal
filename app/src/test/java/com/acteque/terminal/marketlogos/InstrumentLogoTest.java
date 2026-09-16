@@ -1,9 +1,8 @@
-package com.acteque.terminal.marketdata;
+package com.acteque.terminal.marketlogos;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.net.URI;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class InstrumentLogoTest {
@@ -38,21 +37,5 @@ class InstrumentLogoTest {
     assertThrows(NullPointerException.class, () -> new InstrumentLogo(null, "Logos", ATTRIBUTION));
     assertThrows(NullPointerException.class, () -> new InstrumentLogo(IMAGE, null, ATTRIBUTION));
     assertThrows(NullPointerException.class, () -> new InstrumentLogo(IMAGE, "Logos", null));
-  }
-
-  @Test
-  void existingDetailsConstructorDefaultsToNoLogoAndHelperPreservesMetadata() {
-    InstrumentDetails original = new InstrumentDetails(
-      "Ab.C",
-      Optional.of("Name"),
-      Optional.of("Exchange"),
-      Optional.of("Description")
-    );
-    InstrumentLogo logo = new InstrumentLogo(IMAGE, "Logos", ATTRIBUTION);
-    assertTrue(original.logo().isEmpty());
-    InstrumentDetails enriched = original.withLogo(Optional.of(logo));
-    assertEquals(original, enriched.withLogo(Optional.empty()));
-    assertSame(logo, enriched.logo().orElseThrow());
-    assertThrows(NullPointerException.class, () -> original.withLogo(null));
   }
 }

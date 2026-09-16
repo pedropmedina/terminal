@@ -1,6 +1,6 @@
-package com.acteque.terminal.marketdata.provider.elbstream;
+package com.acteque.terminal.marketlogos.provider.elbstream;
 
-import com.acteque.terminal.marketdata.MarketDataException;
+import com.acteque.terminal.marketlogos.LogoException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -50,7 +50,7 @@ interface ElbstreamHttpTransport {
         Throwable cause = exception.getCause();
         // HttpClient wraps subscriber failures in IOException; preserve our payload error code.
         for (Throwable nested = cause; nested != null; nested = nested.getCause()) {
-          if (nested instanceof MarketDataException failure) {
+          if (nested instanceof LogoException failure) {
             throw failure;
           }
         }
@@ -92,10 +92,7 @@ interface ElbstreamHttpTransport {
       for (ByteBuffer buffer : buffers) {
         if (buffer.remaining() > ElbstreamInstrumentLogos.MAX_BYTES - bytes.size()) {
           body.completeExceptionally(
-            new MarketDataException(
-              MarketDataException.Code.INVALID_RESPONSE,
-              "Elbstream logo exceeds the 1 MiB payload limit"
-            )
+            new LogoException(LogoException.Code.INVALID_RESPONSE, "Elbstream logo exceeds the 1 MiB payload limit")
           );
           subscription.cancel();
           return;
