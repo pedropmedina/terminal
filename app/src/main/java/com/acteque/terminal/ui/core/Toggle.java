@@ -45,12 +45,12 @@ public class Toggle extends javafx.scene.control.ToggleButton {
   private final ObjectProperty<Variant> variant = new ObjectPropertyBase<>(Variant.DEFAULT) {
     @Override
     public void set(Variant value) {
-      super.set(Objects.requireNonNull(value, "variant"));
+      super.set(Objects.requireNonNull(value, "variant cannot be null"));
     }
 
     @Override
     protected void invalidated() {
-      applyVariant(Objects.requireNonNull(get(), "variant"));
+      applyVariant(Objects.requireNonNull(get(), "variant cannot be null"));
     }
 
     @Override
@@ -67,12 +67,12 @@ public class Toggle extends javafx.scene.control.ToggleButton {
   private final ObjectProperty<Size> size = new ObjectPropertyBase<>(Size.DEFAULT) {
     @Override
     public void set(Size value) {
-      super.set(Objects.requireNonNull(value, "size"));
+      super.set(Objects.requireNonNull(value, "size cannot be null"));
     }
 
     @Override
     protected void invalidated() {
-      applySize(Objects.requireNonNull(get(), "size"));
+      applySize(Objects.requireNonNull(get(), "size cannot be null"));
     }
 
     @Override
@@ -137,7 +137,7 @@ public class Toggle extends javafx.scene.control.ToggleButton {
   }
 
   public final void setVariant(Variant value) {
-    variant.set(Objects.requireNonNull(value, "variant"));
+    variant.set(Objects.requireNonNull(value, "variant cannot be null"));
   }
 
   public final ObjectProperty<Size> sizeProperty() {
@@ -149,7 +149,7 @@ public class Toggle extends javafx.scene.control.ToggleButton {
   }
 
   public final void setSize(Size value) {
-    size.set(Objects.requireNonNull(value, "size"));
+    size.set(Objects.requireNonNull(value, "size cannot be null"));
   }
 
   /** Whether this toggle currently fails validation. */

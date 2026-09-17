@@ -27,8 +27,11 @@ final class ChartMenuViewBuilder implements Builder<Region>, RefreshableView {
   private final HBox root = new HBox();
 
   ChartMenuViewBuilder(ChartMenuModel model, Consumer<Item> actionRequestedHandler) {
-    this.model = Objects.requireNonNull(model, "model");
-    this.actionRequestedHandler = Objects.requireNonNull(actionRequestedHandler, "actionRequestedHandler");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
+    this.actionRequestedHandler = Objects.requireNonNull(
+      actionRequestedHandler,
+      "actionRequestedHandler cannot be null"
+    );
 
     root.getStyleClass().add("chart-menu");
     root.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);

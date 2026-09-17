@@ -1,7 +1,7 @@
 package com.acteque.terminal.search;
 
+import com.acteque.terminal.marketdata.Instrument;
 import com.acteque.terminal.marketdata.InstrumentCatalog;
-import com.acteque.terminal.marketdata.InstrumentDetails;
 import com.acteque.terminal.ui.core.dialog.Dialog;
 import java.util.Objects;
 import java.util.concurrent.Executor;
@@ -28,7 +28,7 @@ public final class InstrumentSearch {
     interactor.initialize(currentSymbol);
     viewBuilder = new InstrumentSearchViewBuilder(
       model,
-      Objects.requireNonNull(open, "open"),
+      Objects.requireNonNull(open, "open cannot be null"),
       interactor::setQuery,
       interactor::loadCatalog,
       this::select,
@@ -45,14 +45,14 @@ public final class InstrumentSearch {
   }
 
   public void onInstrumentSelected(Consumer<String> callback) {
-    instrumentSelectedHandler = Objects.requireNonNull(callback, "callback");
+    instrumentSelectedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   public void onRequestClose(Runnable callback) {
-    closeRequestHandler = Objects.requireNonNull(callback, "callback");
+    closeRequestHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
-  private void select(InstrumentDetails instrument) {
+  private void select(Instrument instrument) {
     interactor.select(instrument);
     viewBuilder.close();
     instrumentSelectedHandler.accept(instrument.symbol());

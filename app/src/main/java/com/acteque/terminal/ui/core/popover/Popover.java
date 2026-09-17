@@ -74,7 +74,7 @@ public final class Popover {
   }
 
   public void show(Node anchor) {
-    this.anchor = Objects.requireNonNull(anchor, "anchor");
+    this.anchor = Objects.requireNonNull(anchor, "anchor cannot be null");
     if (isOpen()) {
       showPopup();
     } else {

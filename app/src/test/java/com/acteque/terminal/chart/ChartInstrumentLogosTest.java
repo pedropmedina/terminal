@@ -2,9 +2,10 @@ package com.acteque.terminal.chart;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.acteque.terminal.marketdata.DailyBar;
-import com.acteque.terminal.marketdata.InstrumentDetails;
-import com.acteque.terminal.marketdata.LoadedInstrument;
+import com.acteque.terminal.StubInstrumentCatalog;
+import com.acteque.terminal.marketdata.CalendarData;
+import com.acteque.terminal.marketdata.Instrument;
+import com.acteque.terminal.marketdata.InstrumentLoadResult;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import com.acteque.terminal.marketlogos.InstrumentLogo;
 import com.acteque.terminal.marketlogos.LogoException;
@@ -27,7 +28,15 @@ class ChartInstrumentLogosTest {
         StubMarketData marketData = new StubMarketData();
         StubLogos logos = new StubLogos(outcome);
         try (
-          Chart chart = new Chart(List.of(), "IBM", ChartInterval.DAILY, List::of, marketData, logos, Runnable::run)
+          Chart chart = new Chart(
+            List.of(),
+            "IBM",
+            ChartInterval.DAILY,
+            new StubInstrumentCatalog(List::of),
+            marketData,
+            logos,
+            Runnable::run
+          )
         ) {
           var view = chart.getView();
           chart.loadInitialInstrument();
@@ -49,22 +58,22 @@ class ChartInstrumentLogosTest {
 
     private boolean closed;
 
-    public CompletableFuture<LoadedInstrument> loadInitial() {
+    public CompletableFuture<InstrumentLoadResult> loadInitial() {
       return CompletableFuture.completedFuture(
-        new LoadedInstrument(
+        new InstrumentLoadResult(
           "IBM",
           "Provider Name",
           List.of(),
-          new InstrumentDetails("Provider:Ab.C", Optional.of("Provider Name"), Optional.of("Market"), Optional.empty())
+          new Instrument("Provider:Ab.C", Optional.of("Provider Name"), Optional.of("Market"), Optional.empty())
         )
       );
     }
 
-    public CompletableFuture<LoadedInstrument> loadInstrument(String symbol) {
+    public CompletableFuture<InstrumentLoadResult> loadInstrument(String symbol) {
       return loadInitial();
     }
 
-    public CompletableFuture<List<DailyBar>> loadEarlier() {
+    public CompletableFuture<List<CalendarData>> loadEarlier() {
       return CompletableFuture.completedFuture(List.of());
     }
 

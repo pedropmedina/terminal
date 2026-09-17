@@ -48,12 +48,12 @@ public final class ButtonGroup extends Pane {
   private final ObjectProperty<Orientation> orientation = new ObjectPropertyBase<>(Orientation.HORIZONTAL) {
     @Override
     public void set(Orientation value) {
-      super.set(Objects.requireNonNull(value, "orientation"));
+      super.set(Objects.requireNonNull(value, "orientation cannot be null"));
     }
 
     @Override
     protected void invalidated() {
-      applyOrientation(Objects.requireNonNull(get(), "orientation"));
+      applyOrientation(Objects.requireNonNull(get(), "orientation cannot be null"));
       requestLayout();
     }
 
@@ -94,7 +94,7 @@ public final class ButtonGroup extends Pane {
   }
 
   public final void setOrientation(Orientation value) {
-    orientation.set(Objects.requireNonNull(value, "orientation"));
+    orientation.set(Objects.requireNonNull(value, "orientation cannot be null"));
   }
 
   @Override

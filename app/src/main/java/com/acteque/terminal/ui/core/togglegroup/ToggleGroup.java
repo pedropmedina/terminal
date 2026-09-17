@@ -86,12 +86,12 @@ public final class ToggleGroup extends Pane {
   private final ObjectProperty<Orientation> orientation = new ObjectPropertyBase<>(Orientation.HORIZONTAL) {
     @Override
     public void set(Orientation value) {
-      super.set(Objects.requireNonNull(value, "orientation"));
+      super.set(Objects.requireNonNull(value, "orientation cannot be null"));
     }
 
     @Override
     protected void invalidated() {
-      applyOrientation(Objects.requireNonNull(get(), "orientation"));
+      applyOrientation(Objects.requireNonNull(get(), "orientation cannot be null"));
       requestLayout();
     }
 
@@ -109,12 +109,12 @@ public final class ToggleGroup extends Pane {
   private final ObjectProperty<Toggle.Variant> variant = new ObjectPropertyBase<>(Toggle.Variant.DEFAULT) {
     @Override
     public void set(Toggle.Variant value) {
-      super.set(Objects.requireNonNull(value, "variant"));
+      super.set(Objects.requireNonNull(value, "variant cannot be null"));
     }
 
     @Override
     protected void invalidated() {
-      applyVariant(Objects.requireNonNull(get(), "variant"));
+      applyVariant(Objects.requireNonNull(get(), "variant cannot be null"));
       refreshItems();
     }
 
@@ -132,12 +132,12 @@ public final class ToggleGroup extends Pane {
   private final ObjectProperty<Toggle.Size> size = new ObjectPropertyBase<>(Toggle.Size.DEFAULT) {
     @Override
     public void set(Toggle.Size value) {
-      super.set(Objects.requireNonNull(value, "size"));
+      super.set(Objects.requireNonNull(value, "size cannot be null"));
     }
 
     @Override
     protected void invalidated() {
-      applySize(Objects.requireNonNull(get(), "size"));
+      applySize(Objects.requireNonNull(get(), "size cannot be null"));
       refreshItems();
     }
 
@@ -199,7 +199,7 @@ public final class ToggleGroup extends Pane {
   }
 
   public final void setOrientation(Orientation value) {
-    orientation.set(Objects.requireNonNull(value, "orientation"));
+    orientation.set(Objects.requireNonNull(value, "orientation cannot be null"));
   }
 
   public final ObjectProperty<Toggle.Variant> variantProperty() {
@@ -211,7 +211,7 @@ public final class ToggleGroup extends Pane {
   }
 
   public final void setVariant(Toggle.Variant value) {
-    variant.set(Objects.requireNonNull(value, "variant"));
+    variant.set(Objects.requireNonNull(value, "variant cannot be null"));
   }
 
   public final ObjectProperty<Toggle.Size> sizeProperty() {
@@ -223,7 +223,7 @@ public final class ToggleGroup extends Pane {
   }
 
   public final void setSize(Toggle.Size value) {
-    size.set(Objects.requireNonNull(value, "size"));
+    size.set(Objects.requireNonNull(value, "size cannot be null"));
   }
 
   /** Whether more than one item may be selected at a time. */

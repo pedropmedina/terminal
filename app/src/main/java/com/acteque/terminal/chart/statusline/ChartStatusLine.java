@@ -46,14 +46,20 @@ public final class ChartStatusLine {
     LogoSession logoSource,
     Executor uiExecutor
   ) {
-    this.instrumentSelectionAction = Objects.requireNonNull(instrumentSelectionAction, "instrumentSelectionAction");
-    this.intervalSelectionAction = Objects.requireNonNull(intervalSelectionAction, "intervalSelectionAction");
+    this.instrumentSelectionAction = Objects.requireNonNull(
+      instrumentSelectionAction,
+      "instrumentSelectionAction cannot be null"
+    );
+    this.intervalSelectionAction = Objects.requireNonNull(
+      intervalSelectionAction,
+      "intervalSelectionAction cannot be null"
+    );
     ChartStatusLineModel model = new ChartStatusLineModel();
     interactor = new ChartStatusLineInteractor(model, logoSource, uiExecutor);
     interactor.initialize(instrumentName, interval);
     viewBuilder = new ChartStatusLineViewBuilder(
       model,
-      Objects.requireNonNull(tooltipsSuppressed, "tooltipsSuppressed"),
+      Objects.requireNonNull(tooltipsSuppressed, "tooltipsSuppressed cannot be null"),
       this::selectInstrument,
       this::selectInterval
     );

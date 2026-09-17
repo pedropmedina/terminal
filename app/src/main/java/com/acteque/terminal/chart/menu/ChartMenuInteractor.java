@@ -12,7 +12,7 @@ final class ChartMenuInteractor {
   private Consumer<Item> actionRequestedHandler = ignored -> {};
 
   ChartMenuInteractor(ChartMenuModel model) {
-    this.model = Objects.requireNonNull(model, "model");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
   }
 
   void initialize() {
@@ -20,11 +20,11 @@ final class ChartMenuInteractor {
   }
 
   void onActionRequested(Consumer<Item> callback) {
-    actionRequestedHandler = Objects.requireNonNull(callback, "callback");
+    actionRequestedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   void request(Item item) {
-    Objects.requireNonNull(item, "item");
+    Objects.requireNonNull(item, "item cannot be null");
     if (!model.getItems().contains(item)) {
       throw new IllegalArgumentException("Item is not available: " + item);
     }

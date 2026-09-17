@@ -17,4 +17,4 @@ plugins {
 }
 
 rootProject.name = "emulator"
-include("app", "marketdata:core", "marketdata:tiingo", "marketlogos:core", "marketlogos:elbstream")
+include("app", "market-data:core", "market-data:tiingo", "market-logos:core", "market-logos:elbstream")

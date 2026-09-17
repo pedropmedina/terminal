@@ -1,7 +1,7 @@
 package com.acteque.terminal.chart;
 
-import com.acteque.terminal.marketdata.DailyBar;
-import com.acteque.terminal.marketdata.LoadedInstrument;
+import com.acteque.terminal.marketdata.CalendarData;
+import com.acteque.terminal.marketdata.InstrumentLoadResult;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import java.util.List;
 import java.util.Objects;
@@ -20,8 +20,8 @@ final class ChartInteractor implements AutoCloseable {
   private final Executor uiExecutor;
   private Consumer<ChartInterval> intervalSelectedHandler = ignored -> {};
   private Runnable instrumentLoadStartedHandler = () -> {};
-  private Consumer<LoadedInstrument> instrumentLoadedHandler = ignored -> {};
-  private Consumer<List<DailyBar>> earlierHistoryLoadedHandler = ignored -> {};
+  private Consumer<InstrumentLoadResult> instrumentLoadedHandler = ignored -> {};
+  private Consumer<List<CalendarData>> earlierHistoryLoadedHandler = ignored -> {};
   private BiConsumer<String, Throwable> instrumentLoadFailedHandler = (symbol, failure) -> {};
   private Consumer<Throwable> earlierHistoryLoadFailedHandler = ignored -> {};
   private long instrumentLoadGeneration;
@@ -32,13 +32,13 @@ final class ChartInteractor implements AutoCloseable {
   }
 
   ChartInteractor(ChartModel model, MarketDataSession marketData, Executor uiExecutor) {
-    this.model = Objects.requireNonNull(model, "model");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
     this.marketData = marketData;
-    this.uiExecutor = Objects.requireNonNull(uiExecutor, "uiExecutor");
+    this.uiExecutor = Objects.requireNonNull(uiExecutor, "uiExecutor cannot be null");
   }
 
   void initialize(ChartInterval interval) {
-    model.setInterval(Objects.requireNonNull(interval, "interval"));
+    model.setInterval(Objects.requireNonNull(interval, "interval cannot be null"));
   }
 
   void openInstrumentSearch() {
@@ -62,42 +62,42 @@ final class ChartInteractor implements AutoCloseable {
   }
 
   void onIntervalSelected(Consumer<ChartInterval> callback) {
-    intervalSelectedHandler = Objects.requireNonNull(callback, "callback");
+    intervalSelectedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   void selectInterval(ChartInterval interval) {
-    ChartInterval selectedInterval = Objects.requireNonNull(interval, "interval");
+    ChartInterval selectedInterval = Objects.requireNonNull(interval, "interval cannot be null");
     model.setInterval(selectedInterval);
     closeIntervalSelection();
     intervalSelectedHandler.accept(selectedInterval);
   }
 
   void onInstrumentLoadStarted(Runnable callback) {
-    instrumentLoadStartedHandler = Objects.requireNonNull(callback, "callback");
+    instrumentLoadStartedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
-  void onInstrumentLoaded(Consumer<LoadedInstrument> callback) {
-    instrumentLoadedHandler = Objects.requireNonNull(callback, "callback");
+  void onInstrumentLoaded(Consumer<InstrumentLoadResult> callback) {
+    instrumentLoadedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
-  void onEarlierHistoryLoaded(Consumer<List<DailyBar>> callback) {
-    earlierHistoryLoadedHandler = Objects.requireNonNull(callback, "callback");
+  void onEarlierHistoryLoaded(Consumer<List<CalendarData>> callback) {
+    earlierHistoryLoadedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   void onInstrumentLoadFailed(BiConsumer<String, Throwable> callback) {
-    instrumentLoadFailedHandler = Objects.requireNonNull(callback, "callback");
+    instrumentLoadFailedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   void onEarlierHistoryLoadFailed(Consumer<Throwable> callback) {
-    earlierHistoryLoadFailedHandler = Objects.requireNonNull(callback, "callback");
+    earlierHistoryLoadFailedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   void loadInitialInstrument(String symbol) {
-    displayInstrumentLoad(Objects.requireNonNull(symbol, "symbol"), requireMarketData().loadInitial());
+    displayInstrumentLoad(Objects.requireNonNull(symbol, "symbol cannot be null"), requireMarketData().loadInitial());
   }
 
   void selectInstrument(String symbol) {
-    String selectedSymbol = Objects.requireNonNull(symbol, "symbol");
+    String selectedSymbol = Objects.requireNonNull(symbol, "symbol cannot be null");
     displayInstrumentLoad(selectedSymbol, requireMarketData().loadInstrument(selectedSymbol));
   }
 
@@ -131,7 +131,7 @@ final class ChartInteractor implements AutoCloseable {
     }
   }
 
-  private void displayInstrumentLoad(String symbol, CompletionStage<LoadedInstrument> load) {
+  private void displayInstrumentLoad(String symbol, CompletionStage<InstrumentLoadResult> load) {
     long generation = ++instrumentLoadGeneration;
     instrumentLoadStartedHandler.run();
     load.whenComplete((instrument, failure) ->

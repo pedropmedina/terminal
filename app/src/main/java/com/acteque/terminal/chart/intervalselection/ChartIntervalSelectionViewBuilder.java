@@ -56,13 +56,16 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Refres
     Runnable soleMatchRequestedHandler,
     Runnable closeRequestHandler
   ) {
-    this.model = Objects.requireNonNull(model, "model");
-    this.intervalSelectedHandler = Objects.requireNonNull(intervalSelectedHandler, "intervalSelectedHandler");
-    Objects.requireNonNull(queryChangedHandler, "queryChangedHandler");
-    Objects.requireNonNull(intervalAddedHandler, "intervalAddedHandler");
-    Objects.requireNonNull(soleMatchRequestedHandler, "soleMatchRequestedHandler");
-    Objects.requireNonNull(closeRequestHandler, "closeRequestHandler");
-    Objects.requireNonNull(open, "open");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
+    this.intervalSelectedHandler = Objects.requireNonNull(
+      intervalSelectedHandler,
+      "intervalSelectedHandler cannot be null"
+    );
+    Objects.requireNonNull(queryChangedHandler, "queryChangedHandler cannot be null");
+    Objects.requireNonNull(intervalAddedHandler, "intervalAddedHandler cannot be null");
+    Objects.requireNonNull(soleMatchRequestedHandler, "soleMatchRequestedHandler cannot be null");
+    Objects.requireNonNull(closeRequestHandler, "closeRequestHandler cannot be null");
+    Objects.requireNonNull(open, "open cannot be null");
 
     root.getStyleClass().add("chart-interval-selection-dialog");
     intervalField.getStyleClass().add("chart-interval-search-field");

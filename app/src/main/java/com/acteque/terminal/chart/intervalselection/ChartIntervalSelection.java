@@ -20,7 +20,7 @@ public final class ChartIntervalSelection {
     interactor.initialize(currentInterval);
     viewBuilder = new ChartIntervalSelectionViewBuilder(
       model,
-      Objects.requireNonNull(open, "open"),
+      Objects.requireNonNull(open, "open cannot be null"),
       interactor::setQuery,
       interactor::addInterval,
       this::select,
@@ -38,11 +38,11 @@ public final class ChartIntervalSelection {
   }
 
   public void onIntervalSelected(Consumer<ChartInterval> callback) {
-    intervalSelectedHandler = Objects.requireNonNull(callback, "callback");
+    intervalSelectedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   public void onRequestClose(Runnable callback) {
-    closeRequestHandler = Objects.requireNonNull(callback, "callback");
+    closeRequestHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   private void select(ChartInterval interval) {

@@ -9,11 +9,11 @@ import javafx.scene.layout.HBox;
 public final class TooltipContent extends HBox {
 
   public TooltipContent(String text) {
-    this(new Label(Objects.requireNonNull(text, "text")));
+    this(new Label(Objects.requireNonNull(text, "text cannot be null")));
   }
 
   public TooltipContent(Node... children) {
     getStyleClass().add("core-tooltip-popup");
-    getChildren().addAll(Objects.requireNonNull(children, "children"));
+    getChildren().addAll(Objects.requireNonNull(children, "children cannot be null"));
   }
 }

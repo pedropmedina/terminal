@@ -46,10 +46,10 @@ public final class LucideIcon extends Region {
   }
 
   public LucideIcon(LucideGlyph glyph, double iconSize) {
-    this.glyph = Objects.requireNonNull(glyph, "glyph");
+    this.glyph = Objects.requireNonNull(glyph, "glyph cannot be null");
     requirePositiveFinite(glyph.width(), "glyph.width");
     requirePositiveFinite(glyph.height(), "glyph.height");
-    path.setContent(Objects.requireNonNull(glyph.pathData(), "glyph.pathData"));
+    path.setContent(Objects.requireNonNull(glyph.pathData(), "glyph.pathData cannot be null"));
     if (glyph.pathData().isBlank()) {
       throw new IllegalArgumentException("glyph.pathData must not be blank");
     }

@@ -22,12 +22,12 @@ public final class InputGroupAddon extends HBox {
   ) {
     @Override
     public void set(InputGroupAlignment value) {
-      super.set(Objects.requireNonNull(value, "alignment"));
+      super.set(Objects.requireNonNull(value, "alignment cannot be null"));
     }
 
     @Override
     protected void invalidated() {
-      applyAlignment(Objects.requireNonNull(get(), "alignment"));
+      applyAlignment(Objects.requireNonNull(get(), "alignment cannot be null"));
     }
 
     @Override
@@ -67,7 +67,7 @@ public final class InputGroupAddon extends HBox {
   }
 
   public final void setAlignmentPosition(InputGroupAlignment value) {
-    alignment.set(Objects.requireNonNull(value, "alignment"));
+    alignment.set(Objects.requireNonNull(value, "alignment cannot be null"));
   }
 
   private void applyAlignment(InputGroupAlignment selectedAlignment) {

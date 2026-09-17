@@ -56,12 +56,12 @@ public final class Select<T> extends javafx.scene.control.ChoiceBox<T> {
   private final ObjectProperty<Size> size = new ObjectPropertyBase<>(Size.DEFAULT) {
     @Override
     public void set(Size value) {
-      super.set(Objects.requireNonNull(value, "size"));
+      super.set(Objects.requireNonNull(value, "size cannot be null"));
     }
 
     @Override
     protected void invalidated() {
-      applySize(Objects.requireNonNull(get(), "size"));
+      applySize(Objects.requireNonNull(get(), "size cannot be null"));
     }
 
     @Override
@@ -99,7 +99,7 @@ public final class Select<T> extends javafx.scene.control.ChoiceBox<T> {
   }
 
   public Select(ObservableList<T> items) {
-    super(Objects.requireNonNull(items, "items"));
+    super(Objects.requireNonNull(items, "items cannot be null"));
     getStyleClass().add(ROOT_STYLE_CLASS);
     applySize(Size.DEFAULT);
     valueProperty().addListener(ignored -> refreshPlaceholderState());
@@ -116,7 +116,7 @@ public final class Select<T> extends javafx.scene.control.ChoiceBox<T> {
   }
 
   public final void setSize(Size value) {
-    size.set(Objects.requireNonNull(value, "size"));
+    size.set(Objects.requireNonNull(value, "size cannot be null"));
   }
 
   /** Whether this select currently fails validation. */

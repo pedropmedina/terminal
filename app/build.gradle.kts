@@ -27,10 +27,10 @@ val hotReload = sourceSets.create("hotreload") {
 
 dependencies {
     implementation("org.apache.commons:commons-text")
-    implementation(project(":marketdata:core"))
-    implementation(project(":marketdata:tiingo"))
-    implementation(project(":marketlogos:core"))
-    implementation(project(":marketlogos:elbstream"))
+    implementation(project(":market-data:core"))
+    implementation(project(":market-data:tiingo"))
+    implementation(project(":market-logos:core"))
+    implementation(project(":market-logos:elbstream"))
     implementation("io.github.cdimascio:dotenv-java:3.0.0")
 
     // Only development sources compile against the agent API. HotswapAgent supplies its
@@ -62,7 +62,7 @@ val hotResourcesDirectory = layout.buildDirectory.dir("resources/hot")
 
 // Compile library sources with the same Java 25 compiler as the app. Normal library
 // artifacts target Java 26 and must never enter the hot-reload runtime.
-val libraryPaths = listOf("marketdata/core", "marketdata/tiingo", "marketlogos/core", "marketlogos/elbstream")
+val libraryPaths = listOf("market-data/core", "market-data/tiingo", "market-logos/core", "market-logos/elbstream")
 val externalCompileClasspath = configurations.compileClasspath.get().incoming.artifactView {
     componentFilter { it !is org.gradle.api.artifacts.component.ProjectComponentIdentifier }
 }.files

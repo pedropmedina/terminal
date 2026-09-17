@@ -22,7 +22,7 @@ final class TooltipPopup extends Region {
   private String appliedSideStyleClass;
 
   TooltipPopup(TooltipContent content) {
-    this.content = Objects.requireNonNull(content, "content");
+    this.content = Objects.requireNonNull(content, "content cannot be null");
     getStyleClass().add("core-tooltip-content");
     arrow.getStyleClass().add("core-tooltip-arrow");
     arrow.setManaged(false);
@@ -48,7 +48,7 @@ final class TooltipPopup extends Region {
   }
 
   void setResolvedSide(Tooltip.Side side) {
-    resolvedSide = Objects.requireNonNull(side, "side");
+    resolvedSide = Objects.requireNonNull(side, "side cannot be null");
     if (appliedSideStyleClass != null) {
       getStyleClass().remove(appliedSideStyleClass);
     }

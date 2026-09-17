@@ -12,23 +12,26 @@
 
 - Application code: `app/src/main/java/com/acteque/terminal/`
 - JavaFX charting and interaction: `chart/`
-- Provider-neutral market-data contracts, factories, registry, and sessions: `marketdata/core/`
-- Market-data provider integrations: `marketdata/tiingo/` (one module per provider)
-- Independent market logo contracts and sessions: `marketlogos/core/`
-- Market logo provider integrations: `marketlogos/elbstream/` (one module per provider)
+- Provider-neutral market-data contracts, factories, registry, and sessions: `market-data/core/`
+- Market-data provider integrations: `market-data/tiingo/` (one module per provider)
+- Independent market logo contracts and sessions: `market-logos/core/`
+- Market logo provider integrations: `market-logos/elbstream/` (one module per provider)
 - Truly reusable JavaFX components and behaviors: `ui/`
 - Development-only hot-reload code: `app/src/hotreload/`
-- Tests: each module’s `src/test/java/`; shared provider contracts in `marketdata/core/src/testFixtures/java/`
+- Tests: each module’s `src/test/java/`; shared provider contracts in `market-data/core/src/test-fixtures/java/`
 - Shared Gradle conventions: `build-logic/`
 
 # Implementation Rules
 
+- Use lowercase kebab-case for project and non-package directory names (for example, `market-data`, `market-logos`, and `test-fixtures`). Java package directories must follow valid lowercase Java package names without hyphens. Keep Gradle source-set identifiers such as `testFixtures` and explicitly configure their kebab-case source directories.
+- Name classes and other types with the primary domain concept first, followed by a suffix describing their purpose, role, or specialization. Choose the shared prefix based on semantics so related types appear together in alphabetical file listings and autocomplete. For example, use `Instrument.java` and `InstrumentLoadResult.java` rather than `LoadedInstrument.java`.
+- Group related variable declarations and initialization together when it improves readability, using blank lines to separate distinct logical groups. Preserve required execution ordering, especially validation before state changes, and avoid widening variable scope unnecessarily.
 - Keep provider-specific URLs, authentication, transport, parsing, and response handling inside the corresponding provider package.
 - Keep shared market-data types independent of any provider.
 - Keep library modules independent of JavaFX and `app`; provider modules depend on their corresponding core only.
 - Keep concrete provider registration and shared resource ownership in `ApplicationServices`; `App` loads environment configuration and manages JavaFX.
 - Construct market-data providers through registered factories. Keep environment access at the application boundary; factories validate provider-specific configuration.
-- Each chart owns a `DefaultMarketDataSession`; the application registry owns shared provider clients and closes them after sessions.
+- Each chart owns a `MarketDataSessionDefault`; the application registry owns shared provider clients and closes them after sessions.
 - Do not make one provider privileged in shared interfaces, domain models, or UI behavior.
 - Normalize market-data provider results through `MarketDataClient` before passing them to application or chart code.
 - Keep instrument logos independent of market data. Plug logo providers in through `InstrumentLogos`; each chart owns its own `LogoSession`.

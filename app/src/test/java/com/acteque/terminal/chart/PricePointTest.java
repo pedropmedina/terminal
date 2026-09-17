@@ -2,7 +2,7 @@ package com.acteque.terminal.chart;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.acteque.terminal.marketdata.DailyBar;
+import com.acteque.terminal.marketdata.CalendarData;
 import com.acteque.terminal.marketdata.Ohlcv;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,7 +14,7 @@ class PricePointTest {
   @Test
   void convertsProviderNeutralDecimalsAtTheChartBoundary() {
     LocalDate date = LocalDate.of(2026, 9, 14);
-    DailyBar bar = new DailyBar(
+    CalendarData bar = new CalendarData(
       "ACME",
       date,
       new Ohlcv(

@@ -10,12 +10,12 @@ public final class FieldLegend extends com.acteque.terminal.ui.core.Label {
   private final ObjectProperty<FieldLegendVariant> variant = new ObjectPropertyBase<>(FieldLegendVariant.LEGEND) {
     @Override
     public void set(FieldLegendVariant value) {
-      super.set(Objects.requireNonNull(value, "variant"));
+      super.set(Objects.requireNonNull(value, "variant cannot be null"));
     }
 
     @Override
     protected void invalidated() {
-      applyVariant(Objects.requireNonNull(get(), "variant"));
+      applyVariant(Objects.requireNonNull(get(), "variant cannot be null"));
     }
 
     @Override
@@ -53,7 +53,7 @@ public final class FieldLegend extends com.acteque.terminal.ui.core.Label {
   }
 
   public final void setVariant(FieldLegendVariant value) {
-    variant.set(Objects.requireNonNull(value, "variant"));
+    variant.set(Objects.requireNonNull(value, "variant cannot be null"));
   }
 
   private void applyVariant(FieldLegendVariant selectedVariant) {

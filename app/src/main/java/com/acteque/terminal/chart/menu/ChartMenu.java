@@ -26,15 +26,15 @@ public final class ChartMenu {
   }
 
   public void onInstrumentSelectionRequested(Runnable callback) {
-    instrumentSelectionAction = Objects.requireNonNull(callback, "callback");
+    instrumentSelectionAction = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   public void onIntervalSelectionRequested(Runnable callback) {
-    intervalSelectionAction = Objects.requireNonNull(callback, "callback");
+    intervalSelectionAction = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   public void onChartTypeSelectionRequested(Runnable callback) {
-    chartTypeSelectionAction = Objects.requireNonNull(callback, "callback");
+    chartTypeSelectionAction = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   private void requestAction(Item item) {

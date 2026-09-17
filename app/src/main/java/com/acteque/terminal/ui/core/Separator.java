@@ -13,7 +13,7 @@ public final class Separator extends javafx.scene.control.Separator {
   }
 
   public Separator(Orientation orientation) {
-    super(Objects.requireNonNull(orientation, "orientation"));
+    super(Objects.requireNonNull(orientation, "orientation cannot be null"));
     getStyleClass().add(ROOT_STYLE_CLASS);
   }
 }

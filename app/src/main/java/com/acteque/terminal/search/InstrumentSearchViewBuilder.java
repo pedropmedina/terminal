@@ -1,6 +1,6 @@
 package com.acteque.terminal.search;
 
-import com.acteque.terminal.marketdata.InstrumentDetails;
+import com.acteque.terminal.marketdata.Instrument;
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.KineticListView;
 import com.acteque.terminal.ui.RefreshableView;
@@ -28,25 +28,28 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, RefreshableV
   private static final PseudoClass GLIDING_PSEUDO_CLASS = PseudoClass.getPseudoClass("gliding");
 
   private final InstrumentSearchModel model;
-  private final Consumer<InstrumentDetails> instrumentSelectedHandler;
+  private final Consumer<Instrument> instrumentSelectedHandler;
   private final Dialog root = new Dialog();
   private final Input symbolField = new Input();
-  private final KineticListView<InstrumentDetails> instruments = new KineticListView<>();
+  private final KineticListView<Instrument> instruments = new KineticListView<>();
 
   InstrumentSearchViewBuilder(
     InstrumentSearchModel model,
     ObservableBooleanValue open,
     Consumer<String> queryChangedHandler,
     Runnable catalogRequestedHandler,
-    Consumer<InstrumentDetails> instrumentSelectedHandler,
+    Consumer<Instrument> instrumentSelectedHandler,
     Runnable closeRequestHandler
   ) {
-    this.model = Objects.requireNonNull(model, "model");
-    this.instrumentSelectedHandler = Objects.requireNonNull(instrumentSelectedHandler, "instrumentSelectedHandler");
-    Objects.requireNonNull(open, "open");
-    Objects.requireNonNull(queryChangedHandler, "queryChangedHandler");
-    Objects.requireNonNull(catalogRequestedHandler, "catalogRequestedHandler");
-    Objects.requireNonNull(closeRequestHandler, "closeRequestHandler");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
+    this.instrumentSelectedHandler = Objects.requireNonNull(
+      instrumentSelectedHandler,
+      "instrumentSelectedHandler cannot be null"
+    );
+    Objects.requireNonNull(open, "open cannot be null");
+    Objects.requireNonNull(queryChangedHandler, "queryChangedHandler cannot be null");
+    Objects.requireNonNull(catalogRequestedHandler, "catalogRequestedHandler cannot be null");
+    Objects.requireNonNull(closeRequestHandler, "closeRequestHandler cannot be null");
 
     root.getStyleClass().add("instrument-search-dialog");
     instruments.getStyleClass().add("instrument-list");
@@ -131,7 +134,7 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, RefreshableV
     );
   }
 
-  private final class InstrumentCell extends ListCell<InstrumentDetails> {
+  private final class InstrumentCell extends ListCell<Instrument> {
 
     private final Label symbol = new Label();
     private final Label description = new Label();
@@ -156,7 +159,7 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, RefreshableV
     }
 
     @Override
-    protected void updateItem(InstrumentDetails instrument, boolean empty) {
+    protected void updateItem(Instrument instrument, boolean empty) {
       super.updateItem(instrument, empty);
       setText(null);
       if (empty || instrument == null) {

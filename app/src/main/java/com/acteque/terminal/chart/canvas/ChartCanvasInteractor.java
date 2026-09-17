@@ -20,18 +20,18 @@ final class ChartCanvasInteractor {
   private Runnable earlierHistoryRequested = () -> {};
 
   ChartCanvasInteractor(ChartCanvasModel model) {
-    this.model = Objects.requireNonNull(model, "model");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
   }
 
   void initialize(List<PricePoint> pricePoints, ChartInterval interval) {
-    model.interval = Objects.requireNonNull(interval, "interval");
+    model.interval = Objects.requireNonNull(interval, "interval cannot be null");
     model.pricePoints = List.copyOf(pricePoints);
     model.visiblePricePointCount = model.pricePoints.size();
     publishCurrentPoint();
   }
 
   void onEarlierHistoryRequested(Runnable callback) {
-    earlierHistoryRequested = Objects.requireNonNull(callback, "callback");
+    earlierHistoryRequested = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   void setPricePoints(List<PricePoint> updatedPoints) {
@@ -67,7 +67,7 @@ final class ChartCanvasInteractor {
   }
 
   void setInterval(ChartInterval interval) {
-    ChartInterval replacement = Objects.requireNonNull(interval, "interval");
+    ChartInterval replacement = Objects.requireNonNull(interval, "interval cannot be null");
     if (replacement.equals(model.interval)) {
       return;
     }
@@ -152,7 +152,7 @@ final class ChartCanvasInteractor {
 
   private void togglePriceRangeAutoscale(PriceRange displayedPriceRange) {
     if (model.lockedPriceRange == null) {
-      model.lockedPriceRange = Objects.requireNonNull(displayedPriceRange, "displayedPriceRange");
+      model.lockedPriceRange = Objects.requireNonNull(displayedPriceRange, "displayedPriceRange cannot be null");
     } else {
       model.yZoomScale = 1.0;
       model.lockedPriceRange = null;

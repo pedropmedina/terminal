@@ -13,14 +13,14 @@ public final class ThemeManager implements RefreshableView {
 
   private static final String STYLESHEET = Objects.requireNonNull(
     ThemeManager.class.getResource("/com/acteque/terminal/app.css"),
-    "app.css"
+    "app.css stylesheet resource was not found"
   ).toExternalForm();
 
   private final Scene scene;
   private final ObjectProperty<AppTheme> theme = new SimpleObjectProperty<>(this, "theme");
 
   public ThemeManager(Scene scene, AppTheme initialTheme) {
-    this.scene = Objects.requireNonNull(scene, "scene");
+    this.scene = Objects.requireNonNull(scene, "scene cannot be null");
     if (!scene.getStylesheets().contains(STYLESHEET)) {
       scene.getStylesheets().add(STYLESHEET);
     }
@@ -41,7 +41,7 @@ public final class ThemeManager implements RefreshableView {
   }
 
   public void setTheme(AppTheme selectedTheme) {
-    AppTheme requiredTheme = Objects.requireNonNull(selectedTheme, "selectedTheme");
+    AppTheme requiredTheme = Objects.requireNonNull(selectedTheme, "selectedTheme cannot be null");
     if (Platform.isFxApplicationThread()) {
       theme.set(requiredTheme);
     } else {

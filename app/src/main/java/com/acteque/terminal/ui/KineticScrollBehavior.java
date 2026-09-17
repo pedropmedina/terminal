@@ -49,9 +49,9 @@ final class KineticScrollBehavior implements AutoCloseable {
   private boolean momentumAnimationRunning;
 
   KineticScrollBehavior(Node eventSource, PixelScrollTarget scrollTarget, ReadOnlyBooleanWrapper gliding) {
-    this.eventSource = Objects.requireNonNull(eventSource, "eventSource");
-    this.scrollTarget = Objects.requireNonNull(scrollTarget, "scrollTarget");
-    this.gliding = Objects.requireNonNull(gliding, "gliding");
+    this.eventSource = Objects.requireNonNull(eventSource, "eventSource cannot be null");
+    this.scrollTarget = Objects.requireNonNull(scrollTarget, "scrollTarget cannot be null");
+    this.gliding = Objects.requireNonNull(gliding, "gliding cannot be null");
     momentumAnimation = new AnimationTimer() {
       @Override
       public void handle(long now) {

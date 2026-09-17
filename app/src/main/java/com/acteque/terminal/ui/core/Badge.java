@@ -40,12 +40,12 @@ public class Badge extends javafx.scene.control.Label {
   private final ObjectProperty<Variant> variant = new ObjectPropertyBase<>(Variant.DEFAULT) {
     @Override
     public void set(Variant value) {
-      super.set(Objects.requireNonNull(value, "variant"));
+      super.set(Objects.requireNonNull(value, "variant cannot be null"));
     }
 
     @Override
     protected void invalidated() {
-      applyVariant(Objects.requireNonNull(get(), "variant"));
+      applyVariant(Objects.requireNonNull(get(), "variant cannot be null"));
     }
 
     @Override
@@ -130,7 +130,7 @@ public class Badge extends javafx.scene.control.Label {
   }
 
   public final void setVariant(Variant value) {
-    variant.set(Objects.requireNonNull(value, "variant"));
+    variant.set(Objects.requireNonNull(value, "variant cannot be null"));
   }
 
   /** Whether this badge represents an interactive target, analogous to rendering the React badge as a link. */

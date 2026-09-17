@@ -24,18 +24,18 @@ final class ChartStatusLineInteractor {
   }
 
   ChartStatusLineInteractor(ChartStatusLineModel model, LogoSession logoSource, Executor uiExecutor) {
-    this.model = Objects.requireNonNull(model, "model");
-    this.logoSource = Objects.requireNonNull(logoSource, "logoSource");
-    this.uiExecutor = Objects.requireNonNull(uiExecutor, "uiExecutor");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
+    this.logoSource = Objects.requireNonNull(logoSource, "logoSource cannot be null");
+    this.uiExecutor = Objects.requireNonNull(uiExecutor, "uiExecutor cannot be null");
   }
 
   void initialize(String instrumentName, ChartInterval interval) {
-    model.setInstrumentName(Objects.requireNonNull(instrumentName, "instrumentName"));
-    model.setInterval(Objects.requireNonNull(interval, "interval"));
+    model.setInstrumentName(Objects.requireNonNull(instrumentName, "instrumentName cannot be null"));
+    model.setInterval(Objects.requireNonNull(interval, "interval cannot be null"));
   }
 
   void setPricePoint(PricePoint point) {
-    model.setPricePoint(Objects.requireNonNull(point, "point"));
+    model.setPricePoint(Objects.requireNonNull(point, "point cannot be null"));
   }
 
   void clearPricePoint() {
@@ -44,13 +44,13 @@ final class ChartStatusLineInteractor {
 
   void setInstrumentName(String instrumentName) {
     cancelLogoLoad();
-    model.setInstrumentName(Objects.requireNonNull(instrumentName, "instrumentName"));
+    model.setInstrumentName(Objects.requireNonNull(instrumentName, "instrumentName cannot be null"));
     model.setLogoState(null);
   }
 
   void setInstrument(String instrumentName, Optional<InstrumentLogo> logo) {
     setInstrumentName(instrumentName);
-    loadInstrumentLogo(Objects.requireNonNull(logo, "logo"));
+    loadInstrumentLogo(Objects.requireNonNull(logo, "logo cannot be null"));
   }
 
   void cancelLogoLoad() {
@@ -88,8 +88,8 @@ final class ChartStatusLineInteractor {
   }
 
   void setInstrumentLogo(InstrumentLogo logo, Image image) {
-    Objects.requireNonNull(logo, "logo");
-    Objects.requireNonNull(image, "image");
+    Objects.requireNonNull(logo, "logo cannot be null");
+    Objects.requireNonNull(image, "image cannot be null");
     if (image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0) {
       model.setLogoState(null);
       return;
@@ -98,6 +98,6 @@ final class ChartStatusLineInteractor {
   }
 
   void setInterval(ChartInterval interval) {
-    model.setInterval(Objects.requireNonNull(interval, "interval"));
+    model.setInterval(Objects.requireNonNull(interval, "interval cannot be null"));
   }
 }

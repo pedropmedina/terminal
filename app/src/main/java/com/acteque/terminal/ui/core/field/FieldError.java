@@ -44,7 +44,7 @@ public final class FieldError extends VBox {
   }
 
   public final void setErrors(Collection<String> values) {
-    errors.setAll(Objects.requireNonNull(values, "errors"));
+    errors.setAll(Objects.requireNonNull(values, "errors cannot be null"));
   }
 
   public final ObjectProperty<Node> contentProperty() {

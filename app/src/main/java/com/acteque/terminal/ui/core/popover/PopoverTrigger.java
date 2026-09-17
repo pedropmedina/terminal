@@ -27,7 +27,7 @@ public final class PopoverTrigger extends Button {
   }
 
   public void setPopover(Popover value) {
-    popover.set(Objects.requireNonNull(value, "popover"));
+    popover.set(Objects.requireNonNull(value, "popover cannot be null"));
   }
 
   public ObjectProperty<Popover> popoverProperty() {

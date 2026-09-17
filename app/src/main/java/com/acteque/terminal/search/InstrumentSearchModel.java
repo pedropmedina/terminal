@@ -1,6 +1,6 @@
 package com.acteque.terminal.search;
 
-import com.acteque.terminal.marketdata.InstrumentDetails;
+import com.acteque.terminal.marketdata.Instrument;
 import java.util.List;
 import javafx.beans.property.ReadOnlyListProperty;
 import javafx.beans.property.ReadOnlyListWrapper;
@@ -22,12 +22,12 @@ final class InstrumentSearchModel {
 
   private final ReadOnlyStringWrapper currentSymbol = new ReadOnlyStringWrapper(this, "currentSymbol", "");
   private final ReadOnlyStringWrapper query = new ReadOnlyStringWrapper(this, "query", "");
-  private final ReadOnlyListWrapper<InstrumentDetails> instruments = new ReadOnlyListWrapper<>(
+  private final ReadOnlyListWrapper<Instrument> instruments = new ReadOnlyListWrapper<>(
     this,
     "instruments",
     FXCollections.observableArrayList()
   );
-  private final ReadOnlyListWrapper<InstrumentDetails> matchingInstruments = new ReadOnlyListWrapper<>(
+  private final ReadOnlyListWrapper<Instrument> matchingInstruments = new ReadOnlyListWrapper<>(
     this,
     "matchingInstruments",
     FXCollections.observableArrayList()
@@ -58,19 +58,19 @@ final class InstrumentSearchModel {
     query.set(value);
   }
 
-  ReadOnlyListProperty<InstrumentDetails> instrumentsProperty() {
+  ReadOnlyListProperty<Instrument> instrumentsProperty() {
     return instruments.getReadOnlyProperty();
   }
 
-  void setInstruments(List<InstrumentDetails> values) {
+  void setInstruments(List<Instrument> values) {
     instruments.setAll(values);
   }
 
-  ReadOnlyListProperty<InstrumentDetails> matchingInstrumentsProperty() {
+  ReadOnlyListProperty<Instrument> matchingInstrumentsProperty() {
     return matchingInstruments.getReadOnlyProperty();
   }
 
-  void setMatchingInstruments(List<InstrumentDetails> values) {
+  void setMatchingInstruments(List<Instrument> values) {
     matchingInstruments.setAll(values);
   }
 

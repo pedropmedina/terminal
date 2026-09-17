@@ -9,7 +9,7 @@ public final class ChartIntervalText {
   private ChartIntervalText() {}
 
   public static String classificationName(ChartInterval.Classification classification) {
-    Objects.requireNonNull(classification, "classification");
+    Objects.requireNonNull(classification, "classification cannot be null");
     return switch (classification) {
       case TICKS -> "Ticks";
       case SECONDS -> "Seconds";
@@ -22,7 +22,7 @@ public final class ChartIntervalText {
   }
 
   public static String category(ChartInterval interval) {
-    Objects.requireNonNull(interval, "interval");
+    Objects.requireNonNull(interval, "interval cannot be null");
     return switch (interval.classification()) {
       case WEEKS, MONTHS -> "Days";
       default -> classificationName(interval.classification());
@@ -30,7 +30,7 @@ public final class ChartIntervalText {
   }
 
   public static String displayName(ChartInterval interval) {
-    Objects.requireNonNull(interval, "interval");
+    Objects.requireNonNull(interval, "interval cannot be null");
     if (interval.amount() == 1) {
       return switch (interval.classification()) {
         case DAYS -> "Daily";
@@ -47,8 +47,8 @@ public final class ChartIntervalText {
   }
 
   public static boolean matches(ChartInterval interval, String normalizedQuery) {
-    Objects.requireNonNull(interval, "interval");
-    Objects.requireNonNull(normalizedQuery, "normalizedQuery");
+    Objects.requireNonNull(interval, "interval cannot be null");
+    Objects.requireNonNull(normalizedQuery, "normalizedQuery cannot be null");
     return (
       normalizedQuery.isEmpty() ||
       interval.name().toLowerCase(Locale.ROOT).equals(normalizedQuery) ||

@@ -82,7 +82,7 @@ public record ChartInterval(int amount, Classification classification) {
     if (amount <= 0) {
       throw new IllegalArgumentException("amount must be greater than zero");
     }
-    Objects.requireNonNull(classification, "classification");
+    Objects.requireNonNull(classification, "classification cannot be null");
   }
 
   public static ChartInterval of(int amount, Classification classification) {

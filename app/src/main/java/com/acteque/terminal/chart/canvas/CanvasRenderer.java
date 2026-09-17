@@ -30,8 +30,8 @@ final class CanvasRenderer {
   private final CrosshairRenderer crosshair;
 
   CanvasRenderer(Canvas canvas, ChartCanvasModel model) {
-    this.canvas = Objects.requireNonNull(canvas, "canvas");
-    this.model = Objects.requireNonNull(model, "model");
+    this.canvas = Objects.requireNonNull(canvas, "canvas cannot be null");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
     crosshair = new CrosshairRenderer();
   }
 

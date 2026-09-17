@@ -14,7 +14,7 @@ public final class ChartCanvas {
   private final ChartCanvasViewBuilder viewBuilder;
 
   public ChartCanvas(List<PricePoint> pricePoints, ChartInterval interval, ChartStatusLine statusLine) {
-    Objects.requireNonNull(statusLine, "statusLine");
+    Objects.requireNonNull(statusLine, "statusLine cannot be null");
     ChartCanvasModel model = new ChartCanvasModel();
     interactor = new ChartCanvasInteractor(model);
     interactor.initialize(pricePoints, interval);

@@ -23,7 +23,7 @@ class ApplicationServicesTest {
       Map.of("MARKET_DATA_PROVIDER", " data ", "MARKET_LOGO_PROVIDER", " logos ")
     );
     try (services) {
-      assertTrue(services.catalog().getSupportedInstruments().isEmpty());
+      assertTrue(services.catalog().getInstruments().isEmpty());
       try (
         var first = services.newMarketDataSession("IBM");
         var second = services.newMarketDataSession("AAPL");
@@ -113,18 +113,18 @@ class ApplicationServicesTest {
     }
 
     public Optional<InstrumentCatalog> catalog() {
-      return Optional.of(List::of);
+      return Optional.of(new StubInstrumentCatalog(List::of));
     }
 
-    public Optional<HistoricalBarData> historicalBars() {
+    public Optional<HistoricalData> historical() {
       return hasHistory
         ? Optional.of(
-            new HistoricalBarData() {
-              public List<DailyBar> getDailyBars(DailyBarRequest request) {
+            new HistoricalData() {
+              public List<CalendarData> getCalendarData(CalendarRequest request) {
                 return List.of();
               }
 
-              public List<IntradayBar> getIntradayBars(IntradayBarRequest request) {
+              public List<IntradayData> getIntradayData(IntradayRequest request) {
                 return List.of();
               }
             }

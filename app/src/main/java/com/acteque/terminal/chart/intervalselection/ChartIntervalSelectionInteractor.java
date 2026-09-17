@@ -16,17 +16,17 @@ final class ChartIntervalSelectionInteractor {
   private final ChartIntervalSelectionModel model;
 
   ChartIntervalSelectionInteractor(ChartIntervalSelectionModel model) {
-    this.model = Objects.requireNonNull(model, "model");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
   }
 
   void initialize(ChartInterval currentInterval) {
-    model.setCurrentInterval(Objects.requireNonNull(currentInterval, "currentInterval"));
+    model.setCurrentInterval(Objects.requireNonNull(currentInterval, "currentInterval cannot be null"));
     model.setIntervals(List.of(ChartInterval.values()));
     setQuery("");
   }
 
   void setCurrentInterval(ChartInterval interval) {
-    model.setCurrentInterval(Objects.requireNonNull(interval, "interval"));
+    model.setCurrentInterval(Objects.requireNonNull(interval, "interval cannot be null"));
   }
 
   void setQuery(String query) {
@@ -48,12 +48,12 @@ final class ChartIntervalSelectionInteractor {
   }
 
   void addInterval(ChartInterval interval) {
-    model.addInterval(Objects.requireNonNull(interval, "interval"));
+    model.addInterval(Objects.requireNonNull(interval, "interval cannot be null"));
     setQuery(model.getQuery());
   }
 
   void select(ChartInterval interval) {
-    model.setCurrentInterval(Objects.requireNonNull(interval, "interval"));
+    model.setCurrentInterval(Objects.requireNonNull(interval, "interval cannot be null"));
   }
 
   ChartInterval soleMatch() {

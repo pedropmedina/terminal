@@ -58,7 +58,7 @@ public final class PopoverContent extends VBox {
   }
 
   public void setAlign(Align value) {
-    align.set(Objects.requireNonNull(value, "align"));
+    align.set(Objects.requireNonNull(value, "align cannot be null"));
   }
 
   public ObjectProperty<Align> alignProperty() {
@@ -70,7 +70,7 @@ public final class PopoverContent extends VBox {
   }
 
   public void setSide(Side value) {
-    side.set(Objects.requireNonNull(value, "side"));
+    side.set(Objects.requireNonNull(value, "side cannot be null"));
   }
 
   public ObjectProperty<Side> sideProperty() {
@@ -128,7 +128,7 @@ public final class PopoverContent extends VBox {
     return new ObjectPropertyBase<>(initialValue) {
       @Override
       public void set(T value) {
-        super.set(Objects.requireNonNull(value, name));
+        super.set(Objects.requireNonNull(value, name + " cannot be null"));
       }
 
       @Override

@@ -27,7 +27,7 @@ public final class DialogTrigger extends Button {
   }
 
   public void setDialog(Dialog value) {
-    dialog.set(Objects.requireNonNull(value, "dialog"));
+    dialog.set(Objects.requireNonNull(value, "dialog cannot be null"));
   }
 
   public ObjectProperty<Dialog> dialogProperty() {

@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.acteque.terminal.marketdata.DailyBar;
-import com.acteque.terminal.marketdata.LoadedInstrument;
+import com.acteque.terminal.marketdata.CalendarData;
+import com.acteque.terminal.marketdata.InstrumentLoadResult;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,11 +68,11 @@ class ChartInteractorTest {
     StubMarketDataSession marketData = new StubMarketDataSession();
     List<Runnable> uiQueue = new ArrayList<>();
     try (ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add)) {
-      AtomicReference<LoadedInstrument> displayed = new AtomicReference<>();
+      AtomicReference<InstrumentLoadResult> displayed = new AtomicReference<>();
       interactor.onInstrumentLoaded(displayed::set);
 
       interactor.loadInitialInstrument("IBM");
-      LoadedInstrument loaded = new LoadedInstrument("IBM", "IBM", List.of());
+      InstrumentLoadResult loaded = new InstrumentLoadResult("IBM", "IBM", List.of());
       marketData.initial.complete(loaded);
 
       assertNull(displayed.get());
@@ -86,15 +86,15 @@ class ChartInteractorTest {
     StubMarketDataSession marketData = new StubMarketDataSession();
     List<Runnable> uiQueue = new ArrayList<>();
     try (ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add)) {
-      AtomicReference<LoadedInstrument> displayed = new AtomicReference<>();
+      AtomicReference<InstrumentLoadResult> displayed = new AtomicReference<>();
       interactor.onInstrumentLoaded(displayed::set);
 
       interactor.selectInstrument("IBM");
-      CompletableFuture<LoadedInstrument> ibmLoad = marketData.instrumentLoads.getFirst();
-      ibmLoad.complete(new LoadedInstrument("IBM", "IBM", List.of()));
+      CompletableFuture<InstrumentLoadResult> ibmLoad = marketData.instrumentLoads.getFirst();
+      ibmLoad.complete(new InstrumentLoadResult("IBM", "IBM", List.of()));
       interactor.selectInstrument("AAPL");
-      CompletableFuture<LoadedInstrument> appleLoad = marketData.instrumentLoads.getLast();
-      LoadedInstrument apple = new LoadedInstrument("AAPL", "Apple", List.of());
+      CompletableFuture<InstrumentLoadResult> appleLoad = marketData.instrumentLoads.getLast();
+      InstrumentLoadResult apple = new InstrumentLoadResult("AAPL", "Apple", List.of());
       appleLoad.complete(apple);
 
       uiQueue.removeFirst().run();
@@ -109,7 +109,7 @@ class ChartInteractorTest {
     StubMarketDataSession marketData = new StubMarketDataSession();
     List<Runnable> uiQueue = new ArrayList<>();
     try (ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add)) {
-      AtomicReference<List<DailyBar>> displayed = new AtomicReference<>();
+      AtomicReference<List<CalendarData>> displayed = new AtomicReference<>();
       interactor.onEarlierHistoryLoaded(displayed::set);
 
       interactor.loadEarlierHistory();
@@ -126,11 +126,11 @@ class ChartInteractorTest {
     StubMarketDataSession marketData = new StubMarketDataSession();
     List<Runnable> uiQueue = new ArrayList<>();
     try (ChartInteractor interactor = new ChartInteractor(new ChartModel(), marketData, uiQueue::add)) {
-      AtomicReference<LoadedInstrument> displayed = new AtomicReference<>();
+      AtomicReference<InstrumentLoadResult> displayed = new AtomicReference<>();
       interactor.onInstrumentLoaded(displayed::set);
 
       interactor.loadInitialInstrument("IBM");
-      marketData.initial.complete(new LoadedInstrument("IBM", "IBM", List.of()));
+      marketData.initial.complete(new InstrumentLoadResult("IBM", "IBM", List.of()));
       interactor.close();
       uiQueue.removeFirst().run();
 
@@ -141,25 +141,25 @@ class ChartInteractorTest {
 
   private static final class StubMarketDataSession implements MarketDataSession {
 
-    private final CompletableFuture<LoadedInstrument> initial = new CompletableFuture<>();
-    private final List<CompletableFuture<LoadedInstrument>> instrumentLoads = new ArrayList<>();
-    private final CompletableFuture<List<DailyBar>> earlier = new CompletableFuture<>();
+    private final CompletableFuture<InstrumentLoadResult> initial = new CompletableFuture<>();
+    private final List<CompletableFuture<InstrumentLoadResult>> instrumentLoads = new ArrayList<>();
+    private final CompletableFuture<List<CalendarData>> earlier = new CompletableFuture<>();
     private boolean closed;
 
     @Override
-    public CompletableFuture<LoadedInstrument> loadInitial() {
+    public CompletableFuture<InstrumentLoadResult> loadInitial() {
       return initial;
     }
 
     @Override
-    public CompletableFuture<LoadedInstrument> loadInstrument(String symbol) {
-      CompletableFuture<LoadedInstrument> load = new CompletableFuture<>();
+    public CompletableFuture<InstrumentLoadResult> loadInstrument(String symbol) {
+      CompletableFuture<InstrumentLoadResult> load = new CompletableFuture<>();
       instrumentLoads.add(load);
       return load;
     }
 
     @Override
-    public CompletableFuture<List<DailyBar>> loadEarlier() {
+    public CompletableFuture<List<CalendarData>> loadEarlier() {
       return earlier;
     }
 

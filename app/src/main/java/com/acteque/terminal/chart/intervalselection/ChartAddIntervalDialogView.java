@@ -100,7 +100,7 @@ final class ChartAddIntervalDialogView extends Dialog {
   }
 
   void onIntervalAdded(Consumer<ChartInterval> callback) {
-    intervalAddedHandler = Objects.requireNonNull(callback, "callback");
+    intervalAddedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   private void refreshAddButton() {

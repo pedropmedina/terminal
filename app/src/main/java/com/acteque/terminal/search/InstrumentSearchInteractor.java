@@ -1,7 +1,7 @@
 package com.acteque.terminal.search;
 
+import com.acteque.terminal.marketdata.Instrument;
 import com.acteque.terminal.marketdata.InstrumentCatalog;
-import com.acteque.terminal.marketdata.InstrumentDetails;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -22,10 +22,10 @@ final class InstrumentSearchInteractor {
     Executor backgroundExecutor,
     Executor uiExecutor
   ) {
-    this.model = Objects.requireNonNull(model, "model");
-    this.catalog = Objects.requireNonNull(catalog, "catalog");
-    this.backgroundExecutor = Objects.requireNonNull(backgroundExecutor, "backgroundExecutor");
-    this.uiExecutor = Objects.requireNonNull(uiExecutor, "uiExecutor");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
+    this.catalog = Objects.requireNonNull(catalog, "catalog cannot be null");
+    this.backgroundExecutor = Objects.requireNonNull(backgroundExecutor, "backgroundExecutor cannot be null");
+    this.uiExecutor = Objects.requireNonNull(uiExecutor, "uiExecutor cannot be null");
   }
 
   void initialize(String currentSymbol) {
@@ -33,7 +33,7 @@ final class InstrumentSearchInteractor {
   }
 
   void setCurrentSymbol(String symbol) {
-    String value = Objects.requireNonNull(symbol, "symbol");
+    String value = Objects.requireNonNull(symbol, "symbol cannot be null");
     model.setCurrentSymbol(value);
     setQuery(value);
   }
@@ -56,25 +56,24 @@ final class InstrumentSearchInteractor {
     }
     model.setLoadState(InstrumentSearchModel.LoadState.LOADING);
 
-    CompletableFuture.supplyAsync(catalog::getSupportedInstruments, backgroundExecutor).whenComplete(
-      (instruments, failure) ->
-        uiExecutor.execute(() -> {
-          if (failure != null) {
-            model.setLoadState(InstrumentSearchModel.LoadState.FAILED);
-            return;
-          }
-          model.setInstruments(List.copyOf(instruments));
-          setQuery(model.getQuery());
-          model.setLoadState(InstrumentSearchModel.LoadState.LOADED);
-        })
+    CompletableFuture.supplyAsync(catalog::getInstruments, backgroundExecutor).whenComplete((instruments, failure) ->
+      uiExecutor.execute(() -> {
+        if (failure != null) {
+          model.setLoadState(InstrumentSearchModel.LoadState.FAILED);
+          return;
+        }
+        model.setInstruments(List.copyOf(instruments));
+        setQuery(model.getQuery());
+        model.setLoadState(InstrumentSearchModel.LoadState.LOADED);
+      })
     );
   }
 
-  void select(InstrumentDetails instrument) {
-    setCurrentSymbol(Objects.requireNonNull(instrument, "instrument").symbol());
+  void select(Instrument instrument) {
+    setCurrentSymbol(Objects.requireNonNull(instrument, "instrument cannot be null").symbol());
   }
 
-  private static boolean matches(InstrumentDetails instrument, String normalizedQuery) {
+  private static boolean matches(Instrument instrument, String normalizedQuery) {
     return (
       normalizedQuery.isEmpty() ||
       instrument.symbol().toLowerCase(Locale.ROOT).contains(normalizedQuery) ||

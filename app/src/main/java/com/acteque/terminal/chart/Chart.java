@@ -4,9 +4,9 @@ import com.acteque.terminal.chart.canvas.ChartCanvas;
 import com.acteque.terminal.chart.intervalselection.ChartIntervalSelection;
 import com.acteque.terminal.chart.menu.ChartMenu;
 import com.acteque.terminal.chart.statusline.ChartStatusLine;
-import com.acteque.terminal.marketdata.DailyBar;
+import com.acteque.terminal.marketdata.CalendarData;
 import com.acteque.terminal.marketdata.InstrumentCatalog;
-import com.acteque.terminal.marketdata.LoadedInstrument;
+import com.acteque.terminal.marketdata.InstrumentLoadResult;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import com.acteque.terminal.marketlogos.InstrumentLogo;
 import com.acteque.terminal.marketlogos.LogoException;
@@ -82,7 +82,7 @@ public final class Chart implements AutoCloseable {
       interval,
       instrumentCatalog,
       LogoSession.NONE,
-      Objects.requireNonNull(marketData, "marketData"),
+      Objects.requireNonNull(marketData, "marketData cannot be null"),
       ForkJoinPool.commonPool(),
       uiExecutor
     );
@@ -104,7 +104,7 @@ public final class Chart implements AutoCloseable {
       interval,
       instrumentCatalog,
       logos,
-      Objects.requireNonNull(marketData, "marketData"),
+      Objects.requireNonNull(marketData, "marketData cannot be null"),
       ForkJoinPool.commonPool(),
       uiExecutor
     );
@@ -120,15 +120,15 @@ public final class Chart implements AutoCloseable {
     Executor backgroundExecutor,
     Executor uiExecutor
   ) {
-    Objects.requireNonNull(symbol, "symbol");
-    Objects.requireNonNull(interval, "interval");
-    Objects.requireNonNull(instrumentCatalog, "instrumentCatalog");
-    this.logoSource = Objects.requireNonNull(logoSource, "logoSource");
+    Objects.requireNonNull(symbol, "symbol cannot be null");
+    Objects.requireNonNull(interval, "interval cannot be null");
+    Objects.requireNonNull(instrumentCatalog, "instrumentCatalog cannot be null");
+    this.logoSource = Objects.requireNonNull(logoSource, "logoSource cannot be null");
     initialSymbol = symbol;
     ownsMarketData = marketData != null;
     ChartModel model = new ChartModel();
     interactor = ownsMarketData
-      ? new ChartInteractor(model, marketData, Objects.requireNonNull(uiExecutor, "uiExecutor"))
+      ? new ChartInteractor(model, marketData, Objects.requireNonNull(uiExecutor, "uiExecutor cannot be null"))
       : new ChartInteractor(model);
     interactor.initialize(interval);
 
@@ -136,8 +136,8 @@ public final class Chart implements AutoCloseable {
       symbol,
       model.instrumentSearchOpenProperty(),
       instrumentCatalog,
-      Objects.requireNonNull(backgroundExecutor, "backgroundExecutor"),
-      Objects.requireNonNull(uiExecutor, "uiExecutor")
+      Objects.requireNonNull(backgroundExecutor, "backgroundExecutor cannot be null"),
+      Objects.requireNonNull(uiExecutor, "uiExecutor cannot be null")
     );
     instrumentSearch.onRequestClose(interactor::closeInstrumentSearch);
 
@@ -200,15 +200,15 @@ public final class Chart implements AutoCloseable {
   }
 
   public void setOnIntervalSelected(Consumer<ChartInterval> callback) {
-    intervalSelectedHandler = Objects.requireNonNull(callback, "callback");
+    intervalSelectedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
   public void beginInstrumentLoad() {
     statusLine.cancelLogoLoad();
   }
 
-  public void setInstrument(String symbol, String displayName, List<DailyBar> bars, Optional<InstrumentLogo> logo) {
-    Objects.requireNonNull(symbol, "symbol");
+  public void setInstrument(String symbol, String displayName, List<CalendarData> bars, Optional<InstrumentLogo> logo) {
+    Objects.requireNonNull(symbol, "symbol cannot be null");
     statusLine.setInstrument(displayName, logo);
     instrumentSearch.setCurrentSymbol(symbol);
     canvas.setInstrumentPricePoints(toPricePoints(bars));
@@ -218,7 +218,7 @@ public final class Chart implements AutoCloseable {
     canvas.setPricePoints(pricePoints);
   }
 
-  public void setBars(List<DailyBar> bars) {
+  public void setBars(List<CalendarData> bars) {
     canvas.setPricePoints(toPricePoints(bars));
   }
 
@@ -247,7 +247,7 @@ public final class Chart implements AutoCloseable {
     intervalSelectedHandler.accept(interval);
   }
 
-  private void applyLoadedInstrument(LoadedInstrument instrument) {
+  private void applyLoadedInstrument(InstrumentLoadResult instrument) {
     Optional<InstrumentLogo> logo = Optional.empty();
     try {
       logo = logoSource.findLogo(new LogoRequest(instrument.details().symbol(), instrument.details().exchange()));
@@ -258,7 +258,7 @@ public final class Chart implements AutoCloseable {
         failure
       );
     }
-    setInstrument(instrument.symbol(), instrument.displayName(), instrument.bars(), logo);
+    setInstrument(instrument.symbol(), instrument.displayName(), instrument.calendarData(), logo);
   }
 
   private static void reportEarlierHistoryLoadFailure(Throwable failure) {
@@ -269,8 +269,8 @@ public final class Chart implements AutoCloseable {
     System.err.println("Unable to load " + symbol + ": " + failure.getMessage());
   }
 
-  private static List<PricePoint> toPricePoints(List<DailyBar> bars) {
-    Objects.requireNonNull(bars, "bars");
+  private static List<PricePoint> toPricePoints(List<CalendarData> bars) {
+    Objects.requireNonNull(bars, "bars cannot be null");
     return bars.stream().map(PricePoint::from).toList();
   }
 }

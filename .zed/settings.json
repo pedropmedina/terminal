@@ -1,13 +1,11 @@
 {
   "lsp": {
     "jdtls": {
-      "settings": {
-        "initialization_options": {
-          "settings": {
-            "java": {
-              "configuration": {
-                "updateBuildConfiguration": "automatic"
-              }
+      "initialization_options": {
+        "settings": {
+          "java": {
+            "configuration": {
+              "updateBuildConfiguration": "automatic"
             }
           }
         }

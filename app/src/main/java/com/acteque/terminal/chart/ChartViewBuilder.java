@@ -45,19 +45,25 @@ final class ChartViewBuilder implements Builder<StackPane>, RefreshableView {
     Runnable instrumentSearchRequestedHandler,
     Runnable intervalSelectionRequestedHandler
   ) {
-    this.model = Objects.requireNonNull(model, "model");
-    this.canvas = Objects.requireNonNull(canvas, "canvas");
-    this.menu = Objects.requireNonNull(menu, "menu");
-    this.statusLine = Objects.requireNonNull(statusLine, "statusLine");
-    this.instrumentSearchDialog = Objects.requireNonNull(instrumentSearchDialog, "instrumentSearchDialog");
-    this.intervalSelectionDialog = Objects.requireNonNull(intervalSelectionDialog, "intervalSelectionDialog");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
+    this.canvas = Objects.requireNonNull(canvas, "canvas cannot be null");
+    this.menu = Objects.requireNonNull(menu, "menu cannot be null");
+    this.statusLine = Objects.requireNonNull(statusLine, "statusLine cannot be null");
+    this.instrumentSearchDialog = Objects.requireNonNull(
+      instrumentSearchDialog,
+      "instrumentSearchDialog cannot be null"
+    );
+    this.intervalSelectionDialog = Objects.requireNonNull(
+      intervalSelectionDialog,
+      "intervalSelectionDialog cannot be null"
+    );
     this.instrumentSearchRequestedHandler = Objects.requireNonNull(
       instrumentSearchRequestedHandler,
-      "instrumentSearchRequestedHandler"
+      "instrumentSearchRequestedHandler cannot be null"
     );
     this.intervalSelectionRequestedHandler = Objects.requireNonNull(
       intervalSelectionRequestedHandler,
-      "intervalSelectionRequestedHandler"
+      "intervalSelectionRequestedHandler cannot be null"
     );
     root = new ChartPane(instrumentSearchDialog, intervalSelectionDialog);
 

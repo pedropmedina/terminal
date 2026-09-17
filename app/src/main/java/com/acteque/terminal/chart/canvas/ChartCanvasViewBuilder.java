@@ -142,8 +142,8 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
   private boolean redrawScheduled;
 
   ChartCanvasViewBuilder(ChartCanvasModel model, ChartCanvasInteractor interactor) {
-    this.model = Objects.requireNonNull(model, "model");
-    this.interactor = Objects.requireNonNull(interactor, "interactor");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
+    this.interactor = Objects.requireNonNull(interactor, "interactor cannot be null");
     renderer = new CanvasRenderer(this, model);
 
     getStyleClass().add("chart-canvas");

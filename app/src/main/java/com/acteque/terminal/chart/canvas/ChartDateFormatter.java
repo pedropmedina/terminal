@@ -16,18 +16,18 @@ final class ChartDateFormatter {
   private ChartDateFormatter() {}
 
   static String month(LocalDate date) {
-    return Objects.requireNonNull(date, "date").format(MONTH);
+    return Objects.requireNonNull(date, "date cannot be null").format(MONTH);
   }
 
   static String day(LocalDate date) {
-    return Objects.requireNonNull(date, "date").format(DAY);
+    return Objects.requireNonNull(date, "date cannot be null").format(DAY);
   }
 
   static String year(LocalDate date) {
-    return Objects.requireNonNull(date, "date").format(YEAR);
+    return Objects.requireNonNull(date, "date cannot be null").format(YEAR);
   }
 
   static String crosshair(LocalDate date) {
-    return Objects.requireNonNull(date, "date").format(CROSSHAIR);
+    return Objects.requireNonNull(date, "date cannot be null").format(CROSSHAIR);
   }
 }

@@ -57,12 +57,12 @@ public final class Field extends Pane {
   private final ObjectProperty<FieldOrientation> orientation = new ObjectPropertyBase<>(FieldOrientation.VERTICAL) {
     @Override
     public void set(FieldOrientation value) {
-      super.set(Objects.requireNonNull(value, "orientation"));
+      super.set(Objects.requireNonNull(value, "orientation cannot be null"));
     }
 
     @Override
     protected void invalidated() {
-      applyOrientation(Objects.requireNonNull(get(), "orientation"));
+      applyOrientation(Objects.requireNonNull(get(), "orientation cannot be null"));
       requestLayout();
     }
 
@@ -103,7 +103,7 @@ public final class Field extends Pane {
   }
 
   public final void setOrientation(FieldOrientation value) {
-    orientation.set(Objects.requireNonNull(value, "orientation"));
+    orientation.set(Objects.requireNonNull(value, "orientation cannot be null"));
   }
 
   public final boolean isInvalid() {

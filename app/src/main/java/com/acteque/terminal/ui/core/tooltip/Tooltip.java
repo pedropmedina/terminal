@@ -61,8 +61,8 @@ public final class Tooltip extends StackPane {
   private boolean pointerInside;
 
   public Tooltip(TooltipTrigger trigger, TooltipContent content) {
-    this.trigger = Objects.requireNonNull(trigger, "trigger");
-    tooltipContent = Objects.requireNonNull(content, "content");
+    this.trigger = Objects.requireNonNull(trigger, "trigger cannot be null");
+    tooltipContent = Objects.requireNonNull(content, "content cannot be null");
     popupContent = new TooltipPopup(tooltipContent);
     getStyleClass().add("core-tooltip");
     getChildren().setAll(trigger);
@@ -166,7 +166,7 @@ public final class Tooltip extends StackPane {
   }
 
   public void setShowDelay(Duration value) {
-    showDelay = Objects.requireNonNull(value, "showDelay");
+    showDelay = Objects.requireNonNull(value, "showDelay cannot be null");
   }
 
   public Duration getShowDuration() {
@@ -404,7 +404,7 @@ public final class Tooltip extends StackPane {
     return new ObjectPropertyBase<>(initialValue) {
       @Override
       public void set(T value) {
-        super.set(Objects.requireNonNull(value, name));
+        super.set(Objects.requireNonNull(value, name + " cannot be null"));
       }
 
       @Override

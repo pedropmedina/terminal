@@ -29,9 +29,9 @@ final class CrosshairRenderer {
     LocalDate date,
     RenderStyle style
   ) {
-    Objects.requireNonNull(graphics, "graphics");
-    Objects.requireNonNull(date, "date");
-    Objects.requireNonNull(style, "style");
+    Objects.requireNonNull(graphics, "graphics cannot be null");
+    Objects.requireNonNull(date, "date cannot be null");
+    Objects.requireNonNull(style, "style cannot be null");
 
     graphics.save();
     graphics.setStroke(style.crosshair());
@@ -64,6 +64,6 @@ final class CrosshairRenderer {
   }
 
   String dateText(LocalDate date) {
-    return ChartDateFormatter.crosshair(Objects.requireNonNull(date, "date"));
+    return ChartDateFormatter.crosshair(Objects.requireNonNull(date, "date cannot be null"));
   }
 }

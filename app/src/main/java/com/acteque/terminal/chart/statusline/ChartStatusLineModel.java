@@ -15,8 +15,8 @@ final class ChartStatusLineModel {
 
   record LogoState(InstrumentLogo logo, Image image) {
     LogoState {
-      Objects.requireNonNull(logo, "logo");
-      Objects.requireNonNull(image, "image");
+      Objects.requireNonNull(logo, "logo cannot be null");
+      Objects.requireNonNull(image, "image cannot be null");
     }
   }
 

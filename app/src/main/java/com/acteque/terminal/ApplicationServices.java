@@ -44,7 +44,7 @@ public final class ApplicationServices implements AutoCloseable {
               " does not support the instrument catalog required by this application"
           )
         );
-      if (marketData.historicalBars().isEmpty()) {
+      if (marketData.historical().isEmpty()) {
         throw new IllegalStateException("Provider " + marketData.provider() + " does not support historical bars");
       }
       logos = logoProviders.create(selected(configuration, "MARKET_LOGO_PROVIDER", "elbstream"), configuration);
@@ -70,7 +70,7 @@ public final class ApplicationServices implements AutoCloseable {
   /** The caller owns the returned session. Providers remain shared. */
   public synchronized MarketDataSession newMarketDataSession(String symbol) {
     requireOpen();
-    return new DefaultMarketDataSession(marketData, symbol);
+    return new MarketDataSessionDefault(marketData, symbol);
   }
 
   /** The caller owns the returned session. Providers remain shared. */

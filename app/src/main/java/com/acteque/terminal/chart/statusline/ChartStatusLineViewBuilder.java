@@ -45,10 +45,13 @@ final class ChartStatusLineViewBuilder implements Builder<Region>, RefreshableVi
     Runnable instrumentClickHandler,
     Runnable intervalClickHandler
   ) {
-    this.model = Objects.requireNonNull(model, "model");
-    this.instrumentClickHandler = Objects.requireNonNull(instrumentClickHandler, "instrumentClickHandler");
-    this.intervalClickHandler = Objects.requireNonNull(intervalClickHandler, "intervalClickHandler");
-    Objects.requireNonNull(tooltipsSuppressed, "tooltipsSuppressed");
+    this.model = Objects.requireNonNull(model, "model cannot be null");
+    this.instrumentClickHandler = Objects.requireNonNull(
+      instrumentClickHandler,
+      "instrumentClickHandler cannot be null"
+    );
+    this.intervalClickHandler = Objects.requireNonNull(intervalClickHandler, "intervalClickHandler cannot be null");
+    Objects.requireNonNull(tooltipsSuppressed, "tooltipsSuppressed cannot be null");
 
     root.getStyleClass().add("chart-status-line");
     root.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);

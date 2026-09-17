@@ -3,7 +3,8 @@ package com.acteque.terminal.search;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-import com.acteque.terminal.marketdata.InstrumentDetails;
+import com.acteque.terminal.StubInstrumentCatalog;
+import com.acteque.terminal.marketdata.Instrument;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -12,8 +13,8 @@ import org.junit.jupiter.api.Test;
 
 class InstrumentSearchInteractorTest {
 
-  private static final InstrumentDetails APPLE = instrument("AAPL", "NASDAQ");
-  private static final InstrumentDetails IBM = instrument("IBM", "NYSE");
+  private static final Instrument APPLE = instrument("AAPL", "NASDAQ");
+  private static final Instrument IBM = instrument("IBM", "NYSE");
 
   @Test
   void initializesAndFiltersNormalizedQueriesBySymbolOrExchange() {
@@ -42,10 +43,10 @@ class InstrumentSearchInteractorTest {
     AtomicInteger loads = new AtomicInteger();
     InstrumentSearchInteractor interactor = new InstrumentSearchInteractor(
       model,
-      () -> {
+      new StubInstrumentCatalog(() -> {
         loads.incrementAndGet();
         return List.of(APPLE);
-      },
+      }),
       Runnable::run,
       Runnable::run
     );
@@ -63,7 +64,7 @@ class InstrumentSearchInteractorTest {
     List<Runnable> successfulUiQueue = new ArrayList<>();
     InstrumentSearchInteractor successful = new InstrumentSearchInteractor(
       successfulModel,
-      () -> List.of(APPLE),
+      new StubInstrumentCatalog(() -> List.of(APPLE)),
       Runnable::run,
       successfulUiQueue::add
     );
@@ -77,9 +78,9 @@ class InstrumentSearchInteractorTest {
     List<Runnable> failedUiQueue = new ArrayList<>();
     InstrumentSearchInteractor failed = new InstrumentSearchInteractor(
       failedModel,
-      () -> {
+      new StubInstrumentCatalog(() -> {
         throw new IllegalStateException("Test catalog failure");
-      },
+      }),
       Runnable::run,
       failedUiQueue::add
     );
@@ -101,14 +102,16 @@ class InstrumentSearchInteractorTest {
     assertEquals("aapl", model.getQuery());
   }
 
-  private static InstrumentSearchInteractor interactor(
-    InstrumentSearchModel model,
-    List<InstrumentDetails> instruments
-  ) {
-    return new InstrumentSearchInteractor(model, () -> instruments, Runnable::run, Runnable::run);
+  private static InstrumentSearchInteractor interactor(InstrumentSearchModel model, List<Instrument> instruments) {
+    return new InstrumentSearchInteractor(
+      model,
+      new StubInstrumentCatalog(() -> instruments),
+      Runnable::run,
+      Runnable::run
+    );
   }
 
-  private static InstrumentDetails instrument(String symbol, String exchange) {
-    return new InstrumentDetails(symbol, Optional.empty(), Optional.of(exchange), Optional.empty());
+  private static Instrument instrument(String symbol, String exchange) {
+    return new Instrument(symbol, Optional.empty(), Optional.of(exchange), Optional.empty());
   }
 }

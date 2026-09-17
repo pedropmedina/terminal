@@ -20,7 +20,7 @@ public final class TooltipTrigger extends StackPane {
   private final ObjectProperty<Node> target = new ObjectPropertyBase<>() {
     @Override
     public void set(Node value) {
-      super.set(Objects.requireNonNull(value, "target"));
+      super.set(Objects.requireNonNull(value, "target cannot be null"));
     }
 
     @Override
@@ -46,7 +46,7 @@ public final class TooltipTrigger extends StackPane {
   }
 
   public void setTarget(Node value) {
-    target.set(Objects.requireNonNull(value, "target"));
+    target.set(Objects.requireNonNull(value, "target cannot be null"));
   }
 
   public ObjectProperty<Node> targetProperty() {

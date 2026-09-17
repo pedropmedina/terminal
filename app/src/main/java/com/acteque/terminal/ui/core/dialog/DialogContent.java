@@ -59,7 +59,7 @@ public final class DialogContent extends VBox {
   }
 
   void setCloseAction(Runnable action) {
-    closeAction = Objects.requireNonNull(action, "action");
+    closeAction = Objects.requireNonNull(action, "action cannot be null");
   }
 
   @Override
