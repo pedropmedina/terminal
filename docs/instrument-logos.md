@@ -27,7 +27,7 @@ This is best-effort ticker matching. Symbols remain provider-scoped in our metad
 
 `DefaultLogoSession` wraps any `InstrumentLogos` implementation and owns its executor and cancellable download task. Each chart owns its own session and closes it on shutdown. Providers may be shared between sessions; closing one session does not close or cancel another. The status-line interactor owns decoding, stale-result suppression, and JavaFX-thread model updates. The chart owns image presentation and does not perform HTTP requests.
 
-To add a provider, implement `InstrumentLogos` under `marketlogos/provider/<name>/`, keeping URLs, transport, parsing, and provider-specific mapping there. Reference resolution must be local and fast; `load` performs blocking I/O on the session's executor. Implementations must support concurrent calls from independent sessions. Inject the new implementation into `DefaultLogoSession` at the application boundary. No chart or market-data changes are required. Provider selection is explicit dependency injection; dynamic plugin discovery is not implemented.
+To add a provider, implement `LogoProvider` and `LogoProviderFactory` in a `marketlogos/<name>/` module, keeping URLs, transport, parsing, and provider-specific mapping there. Reference resolution must be local and fast; `load` performs blocking I/O on the session's executor. Implementations must support concurrent calls from independent sessions. Register its factory in `ApplicationServices`, which creates shared providers and independent sessions. No chart or market-data changes are required. Provider selection is explicit dependency injection; dynamic plugin discovery is not implemented.
 
 Requests have connection and whole-body timeouts, a 1 MiB streamed payload limit, PNG validation, a fixed endpoint allowlist, and no redirects or automatic retries. A 404 means no logo; other failures use `LogoException` codes and leave the fallback in place. No Tiingo credentials are sent to Elbstream.
 
@@ -50,7 +50,17 @@ References checked during implementation:
 Provider tests use injected transports and local HTTP fixtures, not live provider endpoints. Tests cover provider substitution, session isolation, metadata preservation, error normalization, bounded downloads, async loading, stale completions, decoding failures, fallback display, tooltip attribution, theme sizing, and view refreshes.
 
 ```sh
-./gradlew test --tests 'com.acteque.terminal.marketlogos.*' --tests 'com.acteque.terminal.marketdata.DefaultMarketDataSession*'
-./gradlew test --tests 'com.acteque.terminal.chart.statusline.ChartStatusLineLogoInteractorTest' --tests 'com.acteque.terminal.chart.statusline.ChartStatusLineTest'
+./gradlew :marketlogos:core:test :marketlogos:elbstream:test :marketdata:core:test
+./gradlew :app:test --tests 'com.acteque.terminal.chart.statusline.ChartStatusLineLogoInteractorTest' --tests 'com.acteque.terminal.chart.statusline.ChartStatusLineTest'
 ./gradlew test
 ```
+
+## Library modules and provider selection
+
+`marketlogos/core` contains contracts, domain objects, asynchronous sessions, and the logo factory registry. `marketlogos/elbstream` contains the Elbstream adapter and factory. Neither library depends on JavaFX or market data. The application decodes image bytes and updates the UI.
+
+`ApplicationServices` registers `ElbstreamProviderFactory`. `MARKET_LOGO_PROVIDER` selects the provider and defaults to `elbstream`. To add a provider, create a module depending on logo core, implement `LogoProvider` and `LogoProviderFactory`, and register the factory in `ApplicationServices`. Include the module in settings, app dependencies, and hot-reload library paths.
+
+The registry owns providers; each chart owns its sessions. Close sessions before application services. Elbstream closes its owned HTTP client; injected HTTP clients remain owned by the caller.
+
+Run library tests with `./gradlew :marketlogos:core:test :marketlogos:elbstream:test`. Cross-subsystem isolation coverage stays in the app tests.

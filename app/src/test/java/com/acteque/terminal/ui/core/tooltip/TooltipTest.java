@@ -58,7 +58,7 @@ class TooltipTest {
     FxTestSupport.runAndWait(() -> {
       Tooltip tooltip = tooltip(new Button(), new TooltipContent());
 
-      assertEquals(Duration.millis(350.0), tooltip.getShowDelay());
+      assertEquals(Duration.millis(200.0), tooltip.getShowDelay());
       assertEquals(Duration.INDEFINITE, tooltip.getShowDuration());
       assertEquals(Tooltip.Align.CENTER, tooltip.getAlign());
       assertEquals(Tooltip.Side.TOP, tooltip.getSide());

@@ -27,7 +27,10 @@ val hotReload = sourceSets.create("hotreload") {
 
 dependencies {
     implementation("org.apache.commons:commons-text")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
+    implementation(project(":marketdata:core"))
+    implementation(project(":marketdata:tiingo"))
+    implementation(project(":marketlogos:core"))
+    implementation(project(":marketlogos:elbstream"))
     implementation("io.github.cdimascio:dotenv-java:3.0.0")
 
     // Only development sources compile against the agent API. HotswapAgent supplies its
@@ -57,13 +60,24 @@ val compiledHotClassesDirectory = layout.dir(providers.provider {
 val hotClassesDirectory = layout.buildDirectory.dir("classes/java/hot")
 val hotResourcesDirectory = layout.buildDirectory.dir("resources/hot")
 
+// Compile library sources with the same Java 25 compiler as the app. Normal library
+// artifacts target Java 26 and must never enter the hot-reload runtime.
+val libraryPaths = listOf("marketdata/core", "marketdata/tiingo", "marketlogos/core", "marketlogos/elbstream")
+val externalCompileClasspath = configurations.compileClasspath.get().incoming.artifactView {
+    componentFilter { it !is org.gradle.api.artifacts.component.ProjectComponentIdentifier }
+}.files
+val externalRuntimeClasspath = configurations.runtimeClasspath.get().incoming.artifactView {
+    componentFilter { it !is org.gradle.api.artifacts.component.ProjectComponentIdentifier }
+}.files
+
 val compileHotJava = tasks.register<JavaCompile>("compileHotJava") {
     group = "application"
     description = "Compiles Java 25-compatible classes for HotswapAgent."
 
     source(sourceSets.main.get().java)
     source(hotReload.java)
-    classpath = sourceSets.main.get().compileClasspath + hotReload.compileClasspath
+    libraryPaths.forEach { source(rootProject.file("$it/src/main/java")) }
+    classpath = externalCompileClasspath + externalRuntimeClasspath + configurations.getByName(hotReload.compileClasspathConfigurationName)
     destinationDirectory.set(compiledHotClassesDirectory)
     javaCompiler.set(javaToolchains.compilerFor {
         languageVersion.set(JavaLanguageVersion.of(25))
@@ -114,6 +128,7 @@ val processHotResources = tasks.register<Copy>("processHotResources") {
 
     from(sourceSets.main.get().resources)
     from(hotReload.resources)
+    libraryPaths.forEach { from(rootProject.file("$it/src/main/resources")) }
     into(hotResourcesDirectory)
 }
 
@@ -141,7 +156,7 @@ tasks.register<JavaExec>("hotRun") {
     )
 
     doFirst {
-        val runtimeFiles = configurations.runtimeClasspath.get().files
+        val runtimeFiles = externalRuntimeClasspath.files
         val javaFxFiles = runtimeFiles.filter { it.name.startsWith("javafx-") }
         val applicationFiles = runtimeFiles - javaFxFiles.toSet()
 

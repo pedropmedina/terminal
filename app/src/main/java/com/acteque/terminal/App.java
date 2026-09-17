@@ -2,13 +2,8 @@ package com.acteque.terminal;
 
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
-import com.acteque.terminal.marketdata.DefaultMarketDataSession;
-import com.acteque.terminal.marketdata.InstrumentCatalog;
-import com.acteque.terminal.marketdata.MarketDataClient;
-import com.acteque.terminal.marketdata.MarketDataProviderRegistry;
-import com.acteque.terminal.marketdata.provider.tiingo.TiingoProviderFactory;
-import com.acteque.terminal.marketlogos.DefaultLogoSession;
-import com.acteque.terminal.marketlogos.provider.elbstream.ElbstreamInstrumentLogos;
+import com.acteque.terminal.marketdata.MarketDataSession;
+import com.acteque.terminal.marketlogos.LogoSession;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.ThemeManager;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -33,7 +28,7 @@ public class App extends Application {
   private static final double MIN_CANVAS_HEIGHT = 760.0;
 
   private Chart chartView;
-  private MarketDataProviderRegistry providers;
+  private ApplicationServices services;
 
   public static void main(String[] args) {
     launch(args);
@@ -42,9 +37,9 @@ public class App extends Application {
   @Override
   public void start(Stage stage) {
     Dotenv configuration = Dotenv.configure().ignoreIfMissing().load();
-    providers = new MarketDataProviderRegistry(List.of(new TiingoProviderFactory()));
+    services = ApplicationServices.create(configuration::get);
     try {
-      startChart(stage, configuration);
+      startChart(stage);
     } catch (RuntimeException | Error failure) {
       try {
         stop();
@@ -55,27 +50,32 @@ public class App extends Application {
     }
   }
 
-  private void startChart(Stage stage, Dotenv configuration) {
-    String selectedProvider = configuration.get("MARKET_DATA_PROVIDER");
-    MarketDataClient client = providers.create(
-      selectedProvider == null ? "tiingo" : selectedProvider.strip(),
-      configuration::get
-    );
-    InstrumentCatalog catalog = client
-      .catalog()
-      .orElseThrow(() ->
-        new IllegalStateException(
-          "Provider " + client.provider() + " does not support the instrument catalog required by this application"
-        )
-      );
-    DefaultMarketDataSession marketData = new DefaultMarketDataSession(client, SYMBOL);
-    DefaultLogoSession logos = new DefaultLogoSession(ElbstreamInstrumentLogos.create());
-
+  private void startChart(Stage stage) {
+    MarketDataSession marketData = services.newMarketDataSession(SYMBOL);
+    LogoSession logos;
     try {
-      chartView = new Chart(List.of(), SYMBOL, INTERVAL, catalog, marketData, logos, Platform::runLater);
+      logos = services.newLogoSession();
     } catch (RuntimeException | Error failure) {
-      logos.close();
-      marketData.close();
+      try {
+        marketData.close();
+      } catch (RuntimeException closeFailure) {
+        failure.addSuppressed(closeFailure);
+      }
+      throw failure;
+    }
+    try {
+      chartView = new Chart(List.of(), SYMBOL, INTERVAL, services.catalog(), marketData, logos, Platform::runLater);
+    } catch (RuntimeException | Error failure) {
+      try {
+        logos.close();
+      } catch (RuntimeException closeFailure) {
+        failure.addSuppressed(closeFailure);
+      }
+      try {
+        marketData.close();
+      } catch (RuntimeException closeFailure) {
+        failure.addSuppressed(closeFailure);
+      }
       throw failure;
     }
 
@@ -101,8 +101,8 @@ public class App extends Application {
         chartView.close();
       }
     } finally {
-      if (providers != null) {
-        providers.close();
+      if (services != null) {
+        services.close();
       }
     }
   }
