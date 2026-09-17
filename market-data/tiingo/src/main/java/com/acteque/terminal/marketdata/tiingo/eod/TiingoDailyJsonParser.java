@@ -24,15 +24,15 @@ final class TiingoDailyJsonParser {
 
   private TiingoDailyJsonParser() {}
 
-  static List<CalendarData> parseBars(String symbol, String json) {
+  static List<CalendarData> parseCalendarData(String symbol, String json) {
     List<DailyPriceResponse> responses = readList(json, DAILY_PRICES, "daily prices");
     try {
-      List<CalendarData> bars = new ArrayList<>(responses.size());
+      List<CalendarData> calendarData = new ArrayList<>(responses.size());
       for (DailyPriceResponse response : responses) {
-        bars.add(response.toCalendarData(symbol));
+        calendarData.add(response.toCalendarData(symbol));
       }
-      bars.sort(Comparator.comparing(CalendarData::date));
-      return List.copyOf(bars);
+      calendarData.sort(Comparator.comparing(CalendarData::date));
+      return List.copyOf(calendarData);
     } catch (RuntimeException exception) {
       throw invalidResponse("Invalid Tiingo daily price", exception);
     }

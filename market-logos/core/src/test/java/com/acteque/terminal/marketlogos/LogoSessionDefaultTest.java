@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
-class DefaultLogoSessionTest {
+class LogoSessionDefaultTest {
 
   private static final InstrumentLogo LOGO = new InstrumentLogo(
     URI.create("https://images.example.com/a.png"),
@@ -35,10 +35,10 @@ class DefaultLogoSessionTest {
         return Optional.empty();
       }
     };
-    try (LogoSession session = new DefaultLogoSession(provider)) {
+    try (LogoSession session = new LogoSessionDefault(provider)) {
       assertSame(LOGO, session.findLogo(request).orElseThrow());
     }
-    try (LogoSession session = new DefaultLogoSession(InstrumentLogos.NONE)) {
+    try (LogoSession session = new LogoSessionDefault(InstrumentLogos.NONE)) {
       assertTrue(session.findLogo(request).isEmpty());
       assertTrue(session.load(LOGO).toCompletableFuture().join().isEmpty());
     }
@@ -54,7 +54,7 @@ class DefaultLogoSessionTest {
       await(release);
       return Optional.of(bytes);
     });
-    try (LogoSession first = new DefaultLogoSession(provider); LogoSession second = new DefaultLogoSession(provider)) {
+    try (LogoSession first = new LogoSessionDefault(provider); LogoSession second = new LogoSessionDefault(provider)) {
       try {
         var pending = second.load(LOGO).toCompletableFuture();
         assertTrue(started.await(5, TimeUnit.SECONDS));
@@ -82,7 +82,7 @@ class DefaultLogoSessionTest {
     executor.submit(() -> {
       await(release);
     });
-    try (DefaultLogoSession controller = new DefaultLogoSession(provider, executor)) {
+    try (LogoSessionDefault controller = new LogoSessionDefault(provider, executor)) {
       try {
         var pending = controller.load(LOGO).toCompletableFuture();
         assertFalse(pending.isDone());
@@ -109,7 +109,7 @@ class DefaultLogoSessionTest {
       }
       return Optional.of(replacementBytes);
     });
-    try (DefaultLogoSession controller = new DefaultLogoSession(provider)) {
+    try (LogoSessionDefault controller = new LogoSessionDefault(provider)) {
       try {
         var previous = controller.load(LOGO).toCompletableFuture();
         assertTrue(started.await(5, TimeUnit.SECONDS));
@@ -134,7 +134,7 @@ class DefaultLogoSessionTest {
     InstrumentLogos provider = logos(logo -> {
       return loads.getAndIncrement() == 0 ? waitForLogoBody(started, interrupted, release) : Optional.empty();
     });
-    try (DefaultLogoSession controller = new DefaultLogoSession(provider)) {
+    try (LogoSessionDefault controller = new LogoSessionDefault(provider)) {
       try {
         controller.cancel();
         var pending = controller.load(LOGO).toCompletableFuture();
@@ -165,7 +165,7 @@ class DefaultLogoSessionTest {
       executorStarted.countDown();
       await(release);
     });
-    try (DefaultLogoSession controller = new DefaultLogoSession(provider, executor)) {
+    try (LogoSessionDefault controller = new LogoSessionDefault(provider, executor)) {
       try {
         assertTrue(executorStarted.await(5, TimeUnit.SECONDS));
         var pending = controller.load(LOGO).toCompletableFuture();
@@ -187,7 +187,7 @@ class DefaultLogoSessionTest {
     CountDownLatch release = new CountDownLatch(1);
     InstrumentLogos provider = logos(logo -> waitForLogoBody(started, interrupted, release));
     try (
-      DefaultLogoSession controller = new DefaultLogoSession(provider);
+      LogoSessionDefault controller = new LogoSessionDefault(provider);
       var closer = Executors.newSingleThreadExecutor()
     ) {
       try {
@@ -216,7 +216,7 @@ class DefaultLogoSessionTest {
         }
         throw (RuntimeException) failure;
       });
-      try (DefaultLogoSession controller = new DefaultLogoSession(provider)) {
+      try (LogoSessionDefault controller = new LogoSessionDefault(provider)) {
         var pending = controller.load(LOGO).toCompletableFuture();
         assertSame(failure, assertThrows(CompletionException.class, pending::join).getCause());
       }

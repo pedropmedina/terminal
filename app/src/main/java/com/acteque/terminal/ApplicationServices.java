@@ -76,7 +76,7 @@ public final class ApplicationServices implements AutoCloseable {
   /** The caller owns the returned session. Providers remain shared. */
   public synchronized LogoSession newLogoSession() {
     requireOpen();
-    return new DefaultLogoSession(logos);
+    return new LogoSessionDefault(logos);
   }
 
   private void requireOpen() {

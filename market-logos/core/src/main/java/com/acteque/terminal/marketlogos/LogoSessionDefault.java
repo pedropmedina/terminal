@@ -12,18 +12,18 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.RejectedExecutionException;
 
 /** Owns cancellable background logo work for one consumer; the provider can be shared. */
-public final class DefaultLogoSession implements LogoSession {
+public final class LogoSessionDefault implements LogoSession {
 
   private final InstrumentLogos provider;
   private final ExecutorService executor;
   private FutureTask<Optional<byte[]>> logoTask;
 
-  public DefaultLogoSession(InstrumentLogos provider) {
+  public LogoSessionDefault(InstrumentLogos provider) {
     this(provider, Executors.newVirtualThreadPerTaskExecutor());
   }
 
   /** The session owns the supplied executor and closes it when the session closes. */
-  public DefaultLogoSession(InstrumentLogos provider, ExecutorService executor) {
+  public LogoSessionDefault(InstrumentLogos provider, ExecutorService executor) {
     this.provider = Objects.requireNonNull(provider, "provider cannot be null");
     this.executor = Objects.requireNonNull(executor, "executor cannot be null");
   }
@@ -42,7 +42,7 @@ public final class DefaultLogoSession implements LogoSession {
     FutureTask<Optional<byte[]>> task = new FutureTask<>(() -> provider.load(logo)) {
       @Override
       protected void done() {
-        synchronized (DefaultLogoSession.this) {
+        synchronized (LogoSessionDefault.this) {
           if (logoTask == this) {
             logoTask = null;
           }

@@ -48,7 +48,7 @@ class TiingoEndpointModulesTest {
         transport
       )
     ) {
-      tiingo.daily.getBars(
+      tiingo.daily.getCalendarData(
         "aapl",
         LocalDate.parse("2024-01-01"),
         LocalDate.parse("2024-12-31"),

@@ -42,7 +42,7 @@ class TiingoMarketDataClientDailyTest {
         transport
       )
     ) {
-      List<CalendarData> bars = client
+      List<CalendarData> calendarData = client
         .historical()
         .orElseThrow()
         .getCalendarData(new CalendarRequest("aapl", LocalDate.parse("2024-01-02"), LocalDate.parse("2024-01-03")));
@@ -55,8 +55,8 @@ class TiingoMarketDataClientDailyTest {
       assertEquals("Token test-token", requestedHeaders.get().get("Authorization"));
       assertEquals("application/json", requestedHeaders.get().get("Accept"));
 
-      assertEquals(2, bars.size());
-      CalendarData first = bars.getFirst();
+      assertEquals(2, calendarData.size());
+      CalendarData first = calendarData.getFirst();
       assertEquals("AAPL", first.symbol());
       assertEquals(LocalDate.parse("2024-01-02"), first.date());
       assertEquals(new BigDecimal("99"), first.prices().open());

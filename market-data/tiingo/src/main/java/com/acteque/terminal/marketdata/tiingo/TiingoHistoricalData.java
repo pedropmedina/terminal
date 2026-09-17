@@ -22,7 +22,7 @@ final class TiingoHistoricalData implements HistoricalData {
 
   @Override
   public List<CalendarData> getCalendarData(CalendarRequest request) {
-    return daily.getBars(request);
+    return daily.getCalendarData(request);
   }
 
   @Override
