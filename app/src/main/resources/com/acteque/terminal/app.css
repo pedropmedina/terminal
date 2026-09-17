@@ -1,5 +1,3 @@
-@import "ui/theme.css";
-@import "ui/components.css";
-@import "chart/chart.css";
-@import "chart/chart-interval-selection-dialog.css";
-@import "search/instrument-search-dialog.css";
+@import "chart.css";
+@import "chart-interval-selection.css";
+@import "instrument-search.css";

@@ -16,7 +16,7 @@
 - Market-data provider integrations: `market-data/tiingo/` (one module per provider)
 - Independent market logo contracts and sessions: `market-logos/core/`
 - Market logo provider integrations: `market-logos/elbstream/` (one module per provider)
-- Truly reusable JavaFX components and behaviors: `ui/`
+- Reusable JavaFX controls and styles: `ui/core/`; independent Lucide icon components and assets: `ui/icons/`
 - Development-only hot-reload code: `app/src/hotreload/`
 - Tests: each module’s `src/test/java/`; shared provider contracts in `market-data/core/src/test-fixtures/java/`
 - Shared Gradle conventions: `build-logic/`
@@ -28,8 +28,8 @@
 - Group related variable declarations and initialization together when it improves readability, using blank lines to separate distinct logical groups. Preserve required execution ordering, especially validation before state changes, and avoid widening variable scope unnecessarily.
 - Keep provider-specific URLs, authentication, transport, parsing, and response handling inside the corresponding provider package.
 - Keep shared market-data types independent of any provider.
-- Keep library modules independent of JavaFX and `app`; provider modules depend on their corresponding core only.
-- Keep concrete provider registration and shared resource ownership in `ApplicationServices`; `App` loads environment configuration and manages JavaFX.
+- Keep market-data and market-logo library modules independent of JavaFX and `app`; provider modules depend on their corresponding core only. Keep `ui/core` and `ui/icons` independent of `app`.
+- Keep concrete provider registration and shared resource ownership in `AppService`; `App` loads environment configuration and manages JavaFX.
 - Construct market-data providers through registered factories. Keep environment access at the application boundary; factories validate provider-specific configuration.
 - Each chart owns a `MarketDataSessionDefault`; the application registry owns shared provider clients and closes them after sessions.
 - Do not make one provider privileged in shared interfaces, domain models, or UI behavior.

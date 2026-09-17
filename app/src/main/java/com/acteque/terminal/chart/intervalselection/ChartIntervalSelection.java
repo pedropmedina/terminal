@@ -1,7 +1,7 @@
 package com.acteque.terminal.chart.intervalselection;
 
 import com.acteque.terminal.chart.ChartInterval;
-import com.acteque.terminal.ui.core.dialog.Dialog;
+import com.acteque.terminal.ui.dialog.Dialog;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.beans.value.ObservableBooleanValue;

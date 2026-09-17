@@ -1,0 +1,106 @@
+:root,
+:root.theme-light {
+  -app-background: #ffffff;
+  -app-foreground: #0a0a0a;
+  -app-card: #ffffff;
+  -app-card-foreground: #0a0a0a;
+  -app-popover: #ffffff;
+  -app-popover-foreground: #0a0a0a;
+  -app-primary: #171717;
+  -app-primary-foreground: #fafafa;
+  -app-secondary: #f5f5f5;
+  -app-secondary-foreground: #171717;
+  -app-muted: #f5f5f5;
+  -app-muted-foreground: #737373;
+  -app-accent: #f5f5f5;
+  -app-accent-foreground: #171717;
+  -app-destructive: #e7000b;
+  -app-border: #e5e5e5;
+  -app-input: #e5e5e5;
+  -app-ring: #a1a1a1;
+  -app-badge-focus-ring: rgba(161, 161, 161, 0.5);
+  -app-badge-invalid-border: #e7000b;
+  -app-badge-invalid-ring: rgba(231, 0, 11, 0.2);
+  -app-badge-primary-hover: rgba(23, 23, 23, 0.8);
+  -app-badge-secondary-hover: rgba(245, 245, 245, 0.8);
+  -app-badge-destructive-background: rgba(231, 0, 11, 0.1);
+  -app-badge-destructive-hover: rgba(231, 0, 11, 0.2);
+  -app-badge-destructive-ring: rgba(231, 0, 11, 0.2);
+  -app-badge-ghost-hover: -app-muted;
+  -app-input-background: transparent;
+  -app-input-disabled-background: rgba(229, 229, 229, 0.5);
+  -app-input-focus-ring: rgba(161, 161, 161, 0.5);
+  -app-input-invalid-border: #e7000b;
+  -app-input-invalid-ring: rgba(231, 0, 11, 0.2);
+  -app-button-focus-ring: rgba(161, 161, 161, 0.5);
+  -app-button-primary-hover: rgba(23, 23, 23, 0.8);
+  -app-button-secondary-hover: #e9e9e9;
+  -app-button-outline-background: -app-background;
+  -app-button-outline-border: -app-border;
+  -app-button-outline-hover: -app-muted;
+  -app-button-ghost-hover: -app-muted;
+  -app-button-destructive-background: rgba(231, 0, 11, 0.1);
+  -app-button-destructive-hover: rgba(231, 0, 11, 0.2);
+  -app-button-destructive-border: rgba(231, 0, 11, 0.4);
+  -app-button-destructive-ring: rgba(231, 0, 11, 0.2);
+  -app-dialog-overlay: rgba(0, 0, 0, 0.1);
+  -app-dialog-ring: rgba(10, 10, 10, 0.1);
+  -app-dialog-footer-background: rgba(245, 245, 245, 0.5);
+  -app-overlay: rgba(10, 10, 10, 0.28);
+}
+
+:root.theme-dark {
+  -app-background: #0a0a0a;
+  -app-foreground: #fafafa;
+  -app-card: #171717;
+  -app-card-foreground: #fafafa;
+  -app-popover: #171717;
+  -app-popover-foreground: #fafafa;
+  -app-primary: #e5e5e5;
+  -app-primary-foreground: #171717;
+  -app-secondary: #262626;
+  -app-secondary-foreground: #fafafa;
+  -app-muted: #262626;
+  -app-muted-foreground: #a1a1a1;
+  -app-accent: #262626;
+  -app-accent-foreground: #fafafa;
+  -app-destructive: #ff6467;
+  -app-border: rgba(255, 255, 255, 0.1);
+  -app-input: rgba(255, 255, 255, 0.15);
+  -app-ring: #737373;
+  -app-badge-focus-ring: rgba(115, 115, 115, 0.5);
+  -app-badge-invalid-border: #ff6467;
+  -app-badge-invalid-ring: rgba(255, 100, 103, 0.4);
+  -app-badge-primary-hover: rgba(229, 229, 229, 0.8);
+  -app-badge-secondary-hover: rgba(38, 38, 38, 0.8);
+  -app-badge-destructive-background: rgba(255, 100, 103, 0.2);
+  -app-badge-destructive-hover: rgba(255, 100, 103, 0.2);
+  -app-badge-destructive-ring: rgba(255, 100, 103, 0.4);
+  -app-badge-ghost-hover: rgba(38, 38, 38, 0.5);
+  -app-input-background: rgba(255, 255, 255, 0.045);
+  -app-input-disabled-background: rgba(255, 255, 255, 0.12);
+  -app-input-focus-ring: rgba(115, 115, 115, 0.5);
+  -app-input-invalid-border: rgba(255, 100, 103, 0.5);
+  -app-input-invalid-ring: rgba(255, 100, 103, 0.4);
+  -app-button-focus-ring: rgba(115, 115, 115, 0.5);
+  -app-button-primary-hover: rgba(229, 229, 229, 0.8);
+  -app-button-secondary-hover: #313131;
+  -app-button-outline-background: rgba(255, 255, 255, 0.045);
+  -app-button-outline-border: -app-input;
+  -app-button-outline-hover: rgba(255, 255, 255, 0.075);
+  -app-button-ghost-hover: rgba(38, 38, 38, 0.5);
+  -app-button-destructive-background: rgba(255, 100, 103, 0.2);
+  -app-button-destructive-hover: rgba(255, 100, 103, 0.3);
+  -app-button-destructive-border: rgba(255, 100, 103, 0.5);
+  -app-button-destructive-ring: rgba(255, 100, 103, 0.4);
+  -app-dialog-overlay: rgba(0, 0, 0, 0.1);
+  -app-dialog-ring: rgba(250, 250, 250, 0.1);
+  -app-dialog-footer-background: rgba(38, 38, 38, 0.5);
+  -app-overlay: rgba(0, 0, 0, 0.56);
+}
+
+:root {
+  -fx-background-color: -app-background;
+  -fx-font-family: "System";
+  -fx-font-size: 13px;
+}

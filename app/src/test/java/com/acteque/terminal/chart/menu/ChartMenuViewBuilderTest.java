@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import com.acteque.terminal.test.FxTestSupport;
-import com.acteque.terminal.ui.core.Button;
-import com.acteque.terminal.ui.core.Button.Size;
-import com.acteque.terminal.ui.core.Button.Variant;
-import com.acteque.terminal.ui.core.buttongroup.ButtonGroup;
+import com.acteque.terminal.ui.Button;
+import com.acteque.terminal.ui.Button.Size;
+import com.acteque.terminal.ui.Button.Variant;
+import com.acteque.terminal.ui.buttongroup.ButtonGroup;
 import java.util.List;
 import javafx.scene.layout.Region;
 import org.junit.jupiter.api.Test;

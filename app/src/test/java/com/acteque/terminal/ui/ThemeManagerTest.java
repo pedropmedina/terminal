@@ -21,14 +21,14 @@ class ThemeManagerTest {
       assertFalse(root.getStyleClass().contains("app-root"));
       assertTrue(root.getStyleClass().contains("theme-light"));
       assertFalse(root.getStyleClass().contains("theme-dark"));
-      assertEquals(1, scene.getStylesheets().size());
+      assertEquals(4, scene.getStylesheets().size());
 
       themes.setTheme(AppTheme.DARK);
 
       assertEquals(AppTheme.DARK, themes.getTheme());
       assertFalse(root.getStyleClass().contains("theme-light"));
       assertTrue(root.getStyleClass().contains("theme-dark"));
-      assertEquals(1, scene.getStylesheets().size());
+      assertEquals(4, scene.getStylesheets().size());
     });
   }
 }

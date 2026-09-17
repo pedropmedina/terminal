@@ -11,18 +11,22 @@ import javafx.scene.Scene;
 /** Owns the scene-level stylesheet and applies one semantic theme to the root node. */
 public final class ThemeManager implements RefreshableView {
 
-  private static final String STYLESHEET = Objects.requireNonNull(
-    ThemeManager.class.getResource("/com/acteque/terminal/app.css"),
-    "app.css stylesheet resource was not found"
-  ).toExternalForm();
+  private static final String[] STYLESHEETS = {
+    stylesheet("/com/acteque/terminal/theme.css"),
+    stylesheet("/com/acteque/terminal/ui/core.css"),
+    stylesheet("/com/acteque/terminal/ui/icons/icon.css"),
+    stylesheet("/com/acteque/terminal/app.css"),
+  };
 
   private final Scene scene;
   private final ObjectProperty<AppTheme> theme = new SimpleObjectProperty<>(this, "theme");
 
   public ThemeManager(Scene scene, AppTheme initialTheme) {
     this.scene = Objects.requireNonNull(scene, "scene cannot be null");
-    if (!scene.getStylesheets().contains(STYLESHEET)) {
-      scene.getStylesheets().add(STYLESHEET);
+    for (String stylesheet : STYLESHEETS) {
+      if (!scene.getStylesheets().contains(stylesheet)) {
+        scene.getStylesheets().add(stylesheet);
+      }
     }
 
     theme.addListener((ignored, previous, current) -> applyTheme(current));
@@ -56,8 +60,15 @@ public final class ThemeManager implements RefreshableView {
 
   @Override
   public void refreshStylesheets() {
-    scene.getStylesheets().remove(STYLESHEET);
-    scene.getStylesheets().add(STYLESHEET);
+    scene.getStylesheets().removeAll(STYLESHEETS);
+    scene.getStylesheets().addAll(STYLESHEETS);
+  }
+
+  private static String stylesheet(String path) {
+    return Objects.requireNonNull(
+      ThemeManager.class.getResource(path),
+      path + " stylesheet resource was not found"
+    ).toExternalForm();
   }
 
   private void applyTheme(AppTheme selectedTheme) {

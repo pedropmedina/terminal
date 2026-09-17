@@ -1,0 +1,26 @@
+@import "badge.css";
+@import "button.css";
+@import "button-group.css";
+@import "dialog.css";
+@import "field.css";
+@import "input.css";
+@import "label.css";
+@import "popover.css";
+@import "select.css";
+@import "separator.css";
+@import "textarea.css";
+@import "input-group.css";
+@import "toggle.css";
+@import "toggle-group.css";
+@import "tooltip.css";
+
+.surface {
+  -fx-background-color: -app-card;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-border;
+  -fx-border-radius: 8px;
+}
+
+:root .label {
+  -fx-text-fill: -app-foreground;
+}

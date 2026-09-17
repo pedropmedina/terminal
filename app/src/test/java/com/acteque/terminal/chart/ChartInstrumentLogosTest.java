@@ -12,7 +12,7 @@ import com.acteque.terminal.marketlogos.LogoException;
 import com.acteque.terminal.marketlogos.LogoRequest;
 import com.acteque.terminal.marketlogos.LogoSession;
 import com.acteque.terminal.test.FxTestSupport;
-import com.acteque.terminal.ui.core.Button;
+import com.acteque.terminal.ui.Button;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;

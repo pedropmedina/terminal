@@ -2,7 +2,7 @@ package com.acteque.terminal.chart;
 
 import com.acteque.terminal.ui.ChartReloadHooks;
 import com.acteque.terminal.ui.RefreshableView;
-import com.acteque.terminal.ui.core.dialog.Dialog;
+import com.acteque.terminal.ui.dialog.Dialog;
 import java.util.List;
 import java.util.Objects;
 import javafx.scene.canvas.Canvas;

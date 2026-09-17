@@ -28,7 +28,7 @@ public class App extends Application {
   private static final double MIN_CANVAS_HEIGHT = 760.0;
 
   private Chart chartView;
-  private ApplicationServices services;
+  private AppService services;
 
   public static void main(String[] args) {
     launch(args);
@@ -37,7 +37,7 @@ public class App extends Application {
   @Override
   public void start(Stage stage) {
     Dotenv configuration = Dotenv.configure().ignoreIfMissing().load();
-    services = ApplicationServices.create(configuration::get);
+    services = AppService.create(configuration::get);
     try {
       startChart(stage);
     } catch (RuntimeException | Error failure) {
@@ -51,10 +51,10 @@ public class App extends Application {
   }
 
   private void startChart(Stage stage) {
-    MarketDataSession marketData = services.newMarketDataSession(SYMBOL);
+    MarketDataSession marketData = services.createMarketDataSession(SYMBOL);
     LogoSession logos;
     try {
-      logos = services.newLogoSession();
+      logos = services.createLogoSession();
     } catch (RuntimeException | Error failure) {
       try {
         marketData.close();
@@ -63,6 +63,7 @@ public class App extends Application {
       }
       throw failure;
     }
+
     try {
       chartView = new Chart(List.of(), SYMBOL, INTERVAL, services.catalog(), marketData, logos, Platform::runLater);
     } catch (RuntimeException | Error failure) {

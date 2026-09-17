@@ -18,7 +18,7 @@ Calendar results retain the provider's date labels and optional adjusted prices 
 
 ## Application configuration
 
-`App` loads environment configuration. Plain Java `ApplicationServices` registers built-in factories and owns shared providers. `MARKET_DATA_PROVIDER` selects the factory and defaults to `tiingo` when omitted. Tiingo's factory requires `TIINGO_API_KEY`. The current chart requires history and a catalog; startup rejects providers lacking either.
+`App` loads environment configuration. Plain Java `AppService` registers built-in factories and owns shared providers. `MARKET_DATA_PROVIDER` selects the factory and defaults to `tiingo` when omitted. Tiingo's factory requires `TIINGO_API_KEY`. The current chart requires history and a catalog; startup rejects providers lacking either.
 
 Tiingo owns and closes the HTTP client it constructs. Its test constructor borrows an injected transport, which remains owned by the test.
 
@@ -27,7 +27,7 @@ Tiingo owns and closes the HTTP client it constructs. Its test constructor borro
 1. Implement the relevant capability interfaces in a new `market-data/<name>/` library module, depending on `market-data/core/`. Preserve shared ordering, symbol normalization, decimal precision, and error semantics. Symbols remain provider scoped; no automatic cross-provider instrument mapping or fallback is performed.
 2. Implement `MarketDataClient`, returning a present optional for each supported capability and closing owned resources idempotently.
 3. Implement `MarketDataProviderFactory`, with a stable lowercase identifier matching its clients and explicit validation of required configuration. Never include credential values in errors or logs.
-4. Add the module to settings and the app dependencies. Register the factory in `ApplicationServices`, then select its identifier through `MARKET_DATA_PROVIDER`. No chart or session changes are needed.
+4. Add the module to settings and the app dependencies. Register the factory in `AppService`, then select its identifier through `MARKET_DATA_PROVIDER`. No chart or session changes are needed.
 5. Extend `HistoricalMarketDataContract` for historical providers using injected fixture transports, and add provider-specific tests for other capabilities, responses, and errors.
 
 Selection uses explicit registration, not runtime plugin installation. Multiple accounts can use separate clients from the same factory. Multiple charts can share a client while keeping independent sessions.
