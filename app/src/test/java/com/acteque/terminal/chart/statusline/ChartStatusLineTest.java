@@ -7,12 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.acteque.terminal.AppTheme;
+import com.acteque.terminal.AppThemeManager;
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.marketlogos.InstrumentLogo;
 import com.acteque.terminal.test.FxTestSupport;
-import com.acteque.terminal.ui.AppTheme;
-import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.Button.Size;
 import com.acteque.terminal.ui.Button.Variant;
@@ -55,7 +55,7 @@ class ChartStatusLineTest {
       HBox statusLine = view(feature);
       StackPane root = new StackPane(statusLine);
       Scene scene = new Scene(root, 800, 500);
-      ThemeManager themes = new ThemeManager(scene, AppTheme.LIGHT);
+      AppThemeManager themes = new AppThemeManager(scene, AppTheme.LIGHT);
       root.applyCss();
       root.layout();
       Button symbol = triggerTarget(symbolTooltip(statusLine));

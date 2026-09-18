@@ -1,7 +1,7 @@
 package com.acteque.terminal.chart;
 
-import com.acteque.terminal.ui.ChartReloadHooks;
-import com.acteque.terminal.ui.RefreshableView;
+import com.acteque.terminal.reload.ReloadHooks;
+import com.acteque.terminal.reload.ReloadTarget;
 import com.acteque.terminal.ui.dialog.Dialog;
 import java.util.List;
 import java.util.Objects;
@@ -16,7 +16,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Builder;
 
 /** Builds the reactive JavaFX view for the chart. */
-final class ChartViewBuilder implements Builder<StackPane>, RefreshableView {
+final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
 
   private static final List<KeyCombination> INSTRUMENT_SEARCH_SHORTCUTS = List.of(
     shortcut(KeyCode.F),
@@ -73,7 +73,7 @@ final class ChartViewBuilder implements Builder<StackPane>, RefreshableView {
     canvas.heightProperty().bind(root.heightProperty());
 
     refreshView();
-    ChartReloadHooks.register(this);
+    ReloadHooks.register(this);
   }
 
   @Override

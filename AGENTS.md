@@ -17,7 +17,7 @@
 - Independent market logo contracts and sessions: `market-logos/core/`
 - Market logo provider integrations: `market-logos/elbstream/` (one module per provider)
 - Reusable JavaFX controls and styles: `ui/core/`; independent Lucide icon components and assets: `ui/icons/`
-- Development-only hot-reload code: `app/src/hotreload/`
+- Development-only hot-reload code and Gradle tasks: `hot-reload/`
 - Tests: each module’s `src/test/java/`; shared provider contracts in `market-data/core/src/test-fixtures/java/`
 - Shared Gradle conventions: `build-logic/`
 

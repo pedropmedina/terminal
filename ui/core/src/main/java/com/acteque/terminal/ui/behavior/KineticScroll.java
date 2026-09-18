@@ -1,4 +1,4 @@
-package com.acteque.terminal.ui;
+package com.acteque.terminal.ui.behavior;
 
 import java.util.Objects;
 import javafx.animation.AnimationTimer;
@@ -8,10 +8,10 @@ import javafx.scene.Node;
 import javafx.scene.input.ScrollEvent;
 
 /** Adds velocity-based vertical scrolling to any node backed by a pixel scroll target. */
-final class KineticScrollBehavior implements AutoCloseable {
+public final class KineticScroll implements AutoCloseable {
 
   @FunctionalInterface
-  interface PixelScrollTarget {
+  public interface PixelScrollTarget {
     /** Scrolls by the requested pixels and returns the distance actually moved. */
     double scrollBy(double requestedPixels);
   }
@@ -48,7 +48,7 @@ final class KineticScrollBehavior implements AutoCloseable {
   private double momentumDurationSeconds;
   private boolean momentumAnimationRunning;
 
-  KineticScrollBehavior(Node eventSource, PixelScrollTarget scrollTarget, ReadOnlyBooleanWrapper gliding) {
+  public KineticScroll(Node eventSource, PixelScrollTarget scrollTarget, ReadOnlyBooleanWrapper gliding) {
     this.eventSource = Objects.requireNonNull(eventSource, "eventSource cannot be null");
     this.scrollTarget = Objects.requireNonNull(scrollTarget, "scrollTarget cannot be null");
     this.gliding = Objects.requireNonNull(gliding, "gliding cannot be null");
@@ -65,23 +65,30 @@ final class KineticScrollBehavior implements AutoCloseable {
     if (System.nanoTime() - lastPixelInputNanos < PIXEL_INPUT_IDLE_NANOS) {
       return;
     }
+
     if (momentumStartNanos == 0L) {
       double gestureSeconds = Math.max(
         NOMINAL_INPUT_FRAME_SECONDS,
         (lastPixelInputNanos - gestureStartNanos) / 1_000_000_000.0
       );
+
       momentumDurationSeconds = Math.min(
         MAX_GLIDE_SECONDS,
         MIN_GLIDE_SECONDS + gestureSeconds * GESTURE_TO_GLIDE_MULTIPLIER
       );
+
       releaseVelocity = clampMomentumVelocity(pixelVelocity * RELEASE_VELOCITY_MULTIPLIER);
+
       momentumStartNanos = now;
+
       previousMomentumFrameNanos = now;
+
       if (Math.abs(releaseVelocity) < STOP_VELOCITY_PIXELS_PER_SECOND) {
         stopMomentumAnimation();
       } else {
         gliding.set(true);
       }
+
       return;
     }
 
@@ -90,9 +97,13 @@ final class KineticScrollBehavior implements AutoCloseable {
       stopMomentumAnimation();
       return;
     }
+
     double elapsedSeconds = Math.min((now - previousMomentumFrameNanos) / 1_000_000_000.0, MAX_FRAME_SECONDS);
+
     previousMomentumFrameNanos = now;
+
     double remainingFraction = 1.0 - momentumSeconds / momentumDurationSeconds;
+
     double movedPixels = scrollTarget.scrollBy(releaseVelocity * remainingFraction * elapsedSeconds);
 
     if (movedPixels == 0.0) {
@@ -112,14 +123,23 @@ final class KineticScrollBehavior implements AutoCloseable {
     }
 
     long now = System.nanoTime();
+
     gliding.set(false);
+
     updatePixelVelocity(requestedPixels, now);
+
     previousPixelInputNanos = now;
+
     lastPixelInputNanos = now;
+
     momentumStartNanos = 0L;
+
     previousMomentumFrameNanos = 0L;
+
     scrollTarget.scrollBy(requestedPixels);
+
     startMomentumAnimation();
+
     event.consume();
   }
 
@@ -141,6 +161,7 @@ final class KineticScrollBehavior implements AutoCloseable {
     } else {
       pixelVelocity += (sampledVelocity - pixelVelocity) * VELOCITY_SAMPLE_WEIGHT;
     }
+
     pixelVelocity = clampMomentumVelocity(pixelVelocity);
   }
 

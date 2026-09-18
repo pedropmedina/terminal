@@ -1,5 +1,7 @@
-package com.acteque.terminal.ui;
+package com.acteque.terminal;
 
+import com.acteque.terminal.reload.ReloadHooks;
+import com.acteque.terminal.reload.ReloadTarget;
 import java.util.Objects;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
@@ -9,7 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 
 /** Owns the scene-level stylesheet and applies one semantic theme to the root node. */
-public final class ThemeManager implements RefreshableView {
+public final class AppThemeManager implements ReloadTarget {
 
   private static final String[] STYLESHEETS = {
     stylesheet("/com/acteque/terminal/theme.css"),
@@ -21,7 +23,7 @@ public final class ThemeManager implements RefreshableView {
   private final Scene scene;
   private final ObjectProperty<AppTheme> theme = new SimpleObjectProperty<>(this, "theme");
 
-  public ThemeManager(Scene scene, AppTheme initialTheme) {
+  public AppThemeManager(Scene scene, AppTheme initialTheme) {
     this.scene = Objects.requireNonNull(scene, "scene cannot be null");
     for (String stylesheet : STYLESHEETS) {
       if (!scene.getStylesheets().contains(stylesheet)) {
@@ -33,7 +35,7 @@ public final class ThemeManager implements RefreshableView {
     scene.rootProperty().addListener((ignored, previous, current) -> configureRoot(current, getTheme()));
     configureRoot(scene.getRoot(), null);
     setTheme(initialTheme);
-    ChartReloadHooks.register(this);
+    ReloadHooks.register(this);
   }
 
   public ReadOnlyObjectProperty<AppTheme> themeProperty() {
@@ -66,7 +68,7 @@ public final class ThemeManager implements RefreshableView {
 
   private static String stylesheet(String path) {
     return Objects.requireNonNull(
-      ThemeManager.class.getResource(path),
+      AppThemeManager.class.getResource(path),
       path + " stylesheet resource was not found"
     ).toExternalForm();
   }

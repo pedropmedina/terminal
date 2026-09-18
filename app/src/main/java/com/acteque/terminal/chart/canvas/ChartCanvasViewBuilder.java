@@ -2,8 +2,8 @@ package com.acteque.terminal.chart.canvas;
 
 import com.acteque.terminal.chart.canvas.CanvasRenderer.ChartBounds;
 import com.acteque.terminal.chart.canvas.ChartCanvasModel.DragMode;
-import com.acteque.terminal.ui.ChartReloadHooks;
-import com.acteque.terminal.ui.RefreshableView;
+import com.acteque.terminal.reload.ReloadHooks;
+import com.acteque.terminal.reload.ReloadTarget;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -20,7 +20,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.util.Builder;
 
-final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, RefreshableView {
+final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, ReloadTarget {
 
   private static final StyleablePropertyFactory<ChartCanvasViewBuilder> STYLEABLES = new StyleablePropertyFactory<>(
     Canvas.getClassCssMetaData()
@@ -148,7 +148,7 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
 
     getStyleClass().add("chart-canvas");
 
-    ChartReloadHooks.register(this); // Development runs refresh this view after class redefinition.
+    ReloadHooks.register(this); // Development runs refresh this view after class redefinition.
     widthProperty().addListener((ignored, oldWidth, newWidth) -> drawChart());
     heightProperty().addListener((ignored, oldHeight, newHeight) -> drawChart());
     model.revisionProperty().addListener(ignored -> drawChart());

@@ -1,8 +1,8 @@
 package com.acteque.terminal.chart.menu;
 
 import com.acteque.terminal.chart.menu.ChartMenuModel.Item;
-import com.acteque.terminal.ui.ChartReloadHooks;
-import com.acteque.terminal.ui.RefreshableView;
+import com.acteque.terminal.reload.ReloadHooks;
+import com.acteque.terminal.reload.ReloadTarget;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.Button.Size;
 import com.acteque.terminal.ui.Button.Variant;
@@ -18,7 +18,7 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Builder;
 
 /** Builds the reactive JavaFX view for the chart menu. */
-final class ChartMenuViewBuilder implements Builder<Region>, RefreshableView {
+final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
 
   private static final double TOP_MARGIN = 12.0;
 
@@ -40,7 +40,7 @@ final class ChartMenuViewBuilder implements Builder<Region>, RefreshableView {
 
     model.itemsProperty().addListener((ListChangeListener<Item>) ignored -> rebuildItems());
     refreshView();
-    ChartReloadHooks.register(this);
+    ReloadHooks.register(this);
   }
 
   @Override

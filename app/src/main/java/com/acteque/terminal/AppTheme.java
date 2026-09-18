@@ -1,4 +1,4 @@
-package com.acteque.terminal.ui;
+package com.acteque.terminal;
 
 /** Visual themes supported by the application design system. */
 public enum AppTheme {

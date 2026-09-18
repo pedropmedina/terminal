@@ -2,8 +2,8 @@ package com.acteque.terminal.chart.statusline;
 
 import com.acteque.terminal.chart.ChartIntervalText;
 import com.acteque.terminal.chart.PricePoint;
-import com.acteque.terminal.ui.ChartReloadHooks;
-import com.acteque.terminal.ui.RefreshableView;
+import com.acteque.terminal.reload.ReloadHooks;
+import com.acteque.terminal.reload.ReloadTarget;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.Button.Size;
 import com.acteque.terminal.ui.Button.Variant;
@@ -26,7 +26,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Builder;
 
 /** Builds the reactive JavaFX view for the chart status line. */
-final class ChartStatusLineViewBuilder implements Builder<Region>, RefreshableView {
+final class ChartStatusLineViewBuilder implements Builder<Region>, ReloadTarget {
 
   private static final double LEFT_MARGIN = 12.0;
   private static final double BOTTOM_MARGIN = 38.0;
@@ -85,7 +85,7 @@ final class ChartStatusLineViewBuilder implements Builder<Region>, RefreshableVi
     });
 
     refreshView();
-    ChartReloadHooks.register(this);
+    ReloadHooks.register(this);
   }
 
   @Override

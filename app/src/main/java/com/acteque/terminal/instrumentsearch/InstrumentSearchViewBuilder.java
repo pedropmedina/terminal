@@ -1,10 +1,10 @@
 package com.acteque.terminal.instrumentsearch;
 
 import com.acteque.terminal.marketdata.Instrument;
-import com.acteque.terminal.ui.ChartReloadHooks;
-import com.acteque.terminal.ui.KineticListView;
-import com.acteque.terminal.ui.RefreshableView;
+import com.acteque.terminal.reload.ReloadHooks;
 import com.acteque.terminal.ui.Input;
+import com.acteque.terminal.ui.ListView;
+import com.acteque.terminal.reload.ReloadTarget;
 import com.acteque.terminal.ui.dialog.Dialog;
 import com.acteque.terminal.ui.dialog.DialogContent;
 import com.acteque.terminal.ui.dialog.DialogTitle;
@@ -21,7 +21,7 @@ import javafx.scene.layout.Priority;
 import javafx.util.Builder;
 
 /** Builds the reactive JavaFX view for instrument search. */
-final class InstrumentSearchViewBuilder implements Builder<Dialog>, RefreshableView {
+final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget {
 
   private static final double MAX_VIEWPORT_WIDTH_RATIO = 0.70;
   private static final double MAX_VIEWPORT_HEIGHT_RATIO = 0.70;
@@ -31,7 +31,7 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, RefreshableV
   private final Consumer<Instrument> instrumentSelectedHandler;
   private final Dialog root = new Dialog();
   private final Input symbolField = new Input();
-  private final KineticListView<Instrument> instruments = new KineticListView<>();
+  private final ListView<Instrument> instruments = new ListView<>();
 
   InstrumentSearchViewBuilder(
     InstrumentSearchModel model,
@@ -88,7 +88,7 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, RefreshableV
 
     refreshView();
     updatePlaceholder();
-    ChartReloadHooks.register(this);
+    ReloadHooks.register(this);
   }
 
   @Override

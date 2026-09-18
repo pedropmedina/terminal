@@ -4,8 +4,6 @@ import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import com.acteque.terminal.marketlogos.LogoSession;
-import com.acteque.terminal.ui.AppTheme;
-import com.acteque.terminal.ui.ThemeManager;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.util.List;
 import javafx.application.Application;
@@ -83,7 +81,7 @@ public class App extends Application {
     Scene scene = new Scene(chartView.getView(), MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT);
 
     // This is find for now, but we might want defined up top if we need to access the theme manager later
-    new ThemeManager(scene, AppTheme.LIGHT);
+    new AppThemeManager(scene, AppTheme.LIGHT);
 
     stage.setTitle("Terminal");
     stage.setMinWidth(MIN_CANVAS_WIDTH);

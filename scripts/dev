@@ -20,14 +20,14 @@ trap 'exit 143' TERM
 trap 'exit 129' HUP
 
 # Populate the hot-reload directories before either long-running process starts.
-./gradlew hotClasses
+./gradlew :hot-reload:hotClasses
 
 # Gradle only enters continuous mode after a build finishes, so the watcher and
 # application must use separate invocations. Plain console output avoids two
 # rich consoles overwriting one another in the same terminal.
-./gradlew hotClasses --continuous --console=plain &
+./gradlew :hot-reload:hotClasses --continuous --console=plain &
 watcher_pid=$!
 
 # The initial build above already ran this dependency. Excluding it here also
 # prevents the two Gradle invocations from compiling into the same directories.
-./gradlew hotRun -x hotClasses --console=plain
+./gradlew :hot-reload:hotRun -x :hot-reload:hotClasses --console=plain

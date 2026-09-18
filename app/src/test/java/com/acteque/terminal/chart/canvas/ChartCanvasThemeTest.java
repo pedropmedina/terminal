@@ -2,11 +2,11 @@ package com.acteque.terminal.chart.canvas;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.acteque.terminal.AppTheme;
+import com.acteque.terminal.AppThemeManager;
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.test.FxTestSupport;
-import com.acteque.terminal.ui.AppTheme;
-import com.acteque.terminal.ui.ThemeManager;
 import java.time.LocalDate;
 import java.util.List;
 import javafx.scene.Scene;
@@ -29,7 +29,7 @@ class ChartCanvasThemeTest {
       javafx.scene.canvas.Canvas canvas = builder.build();
       StackPane root = new StackPane(canvas);
       Scene scene = new Scene(root, 800, 500);
-      ThemeManager themes = new ThemeManager(scene, AppTheme.LIGHT);
+      AppThemeManager themes = new AppThemeManager(scene, AppTheme.LIGHT);
       root.applyCss();
 
       assertEquals(Color.web("#ffffff"), builder.renderStyle().background());

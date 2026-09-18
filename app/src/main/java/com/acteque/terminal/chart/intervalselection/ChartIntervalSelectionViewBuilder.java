@@ -2,8 +2,8 @@ package com.acteque.terminal.chart.intervalselection;
 
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartIntervalText;
-import com.acteque.terminal.ui.ChartReloadHooks;
-import com.acteque.terminal.ui.RefreshableView;
+import com.acteque.terminal.reload.ReloadHooks;
+import com.acteque.terminal.reload.ReloadTarget;
 import com.acteque.terminal.ui.Toggle;
 import com.acteque.terminal.ui.dialog.Dialog;
 import com.acteque.terminal.ui.dialog.DialogContent;
@@ -30,7 +30,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Builder;
 
 /** Builds the reactive JavaFX view for chart interval selection. */
-final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, RefreshableView {
+final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, ReloadTarget {
 
   private static final int COLUMN_COUNT = 6;
 
@@ -105,7 +105,7 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Refres
     root.setOpen(open.get());
 
     refreshView();
-    ChartReloadHooks.register(this);
+    ReloadHooks.register(this);
   }
 
   @Override

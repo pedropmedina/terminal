@@ -6,21 +6,21 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.acteque.terminal.AppTheme;
+import com.acteque.terminal.AppThemeManager;
 import com.acteque.terminal.chart.intervalselection.ChartIntervalSelection;
 import com.acteque.terminal.test.FxTestSupport;
-import com.acteque.terminal.ui.AppTheme;
-import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.Input;
 import com.acteque.terminal.ui.Select;
 import com.acteque.terminal.ui.Toggle;
 import com.acteque.terminal.ui.dialog.Dialog;
+import com.acteque.terminal.ui.icons.LucideIcon;
+import com.acteque.terminal.ui.icons.LucideIcons;
 import com.acteque.terminal.ui.inputgroup.InputGroup;
 import com.acteque.terminal.ui.inputgroup.InputGroupAddon;
 import com.acteque.terminal.ui.inputgroup.InputGroupAlignment;
 import com.acteque.terminal.ui.togglegroup.ToggleGroup;
 import com.acteque.terminal.ui.togglegroup.ToggleGroupItem;
-import com.acteque.terminal.ui.icons.LucideIcon;
-import com.acteque.terminal.ui.icons.LucideIcons;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -337,7 +337,7 @@ class ChartIntervalSelectionDialogTest {
     );
     Dialog dialog = selection.getView();
     StackPane root = new StackPane(dialog);
-    new ThemeManager(new Scene(root, 800.0, 600.0), AppTheme.LIGHT);
+    new AppThemeManager(new Scene(root, 800.0, 600.0), AppTheme.LIGHT);
     root.applyCss();
     return new IntervalSelectionFeature(selection, dialog);
   }

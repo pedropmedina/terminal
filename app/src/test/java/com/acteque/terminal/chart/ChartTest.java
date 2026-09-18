@@ -3,10 +3,10 @@ package com.acteque.terminal.chart;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.acteque.terminal.AppTheme;
+import com.acteque.terminal.AppThemeManager;
 import com.acteque.terminal.StubInstrumentCatalog;
 import com.acteque.terminal.test.FxTestSupport;
-import com.acteque.terminal.ui.AppTheme;
-import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.dialog.Dialog;
 import com.acteque.terminal.ui.tooltip.Tooltip;
@@ -108,7 +108,7 @@ class ChartTest {
       stage.setX(200.0);
       stage.setY(200.0);
       stage.setScene(new Scene(chart, 800.0, 500.0));
-      new ThemeManager(stage.getScene(), AppTheme.LIGHT);
+      new AppThemeManager(stage.getScene(), AppTheme.LIGHT);
       Platform.setImplicitExit(false);
       stage.show();
       chart.applyCss();
