@@ -3,6 +3,29 @@ package com.acteque.terminal.ui.icons;
 
 /** Lucide icon geometry included in the icons library. */
 public enum LucideIcons implements LucideGlyph {
+  CHART_AREA(
+    "chart-area",
+    24,
+    24,
+    "M0 0M3 3v16a2 2 0 0 0 2 2h16 M0 0M7 11.207a.5.5 0 0 1 .146-.353l2-2a.5.5 0 0 1 .708 0l3.292 3.292a.5.5 0 0 0 .708 0l4.292-4.292a.5.5 0 0 1 .854.353V16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1z"
+  ),
+
+  CHART_CANDLESTICK(
+    "chart-candlestick",
+    24,
+    24,
+    "M0 0M9 5v4 M8 9H10A1 1 0 0 1 11 10V14A1 1 0 0 1 10 15H8A1 1 0 0 1 7 14V10A1 1 0 0 1 8 9Z M0 0M9 15v2 M0 0M17 3v2 M16 5H18A1 1 0 0 1 19 6V12A1 1 0 0 1 18 13H16A1 1 0 0 1 15 12V6A1 1 0 0 1 16 5Z M0 0M17 13v3 M0 0M3 3v16a2 2 0 0 0 2 2h16"
+  ),
+
+  CHART_LINE("chart-line", 24, 24, "M0 0M3 3v16a2 2 0 0 0 2 2h16 M0 0m19 9-5 5-4-4-3 3"),
+
+  CHART_NETWORK(
+    "chart-network",
+    24,
+    24,
+    "M0 0m13.11 7.664 1.78 2.672 M0 0m14.162 12.788-3.324 1.424 M0 0m20 4-6.06 1.515 M0 0M3 3v16a2 2 0 0 0 2 2h16 M10 6A2 2 0 1 0 14 6A2 2 0 1 0 10 6 M14 12A2 2 0 1 0 18 12A2 2 0 1 0 14 12 M7 15A2 2 0 1 0 11 15A2 2 0 1 0 7 15"
+  ),
+
   CHECK("check", 24, 24, "M0 0M20 6 9 17l-5-5"),
 
   CHEVRON_DOWN("chevron-down", 24, 24, "M0 0m6 9 6 6 6-6"),

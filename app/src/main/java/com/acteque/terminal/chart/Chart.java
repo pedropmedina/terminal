@@ -30,6 +30,7 @@ public final class Chart implements AutoCloseable {
   private final ChartInteractor interactor;
   private final InstrumentSearch instrumentSearch;
   private final ChartCanvas canvas;
+  private final ChartMenu menu;
   private final ChartStatusLine statusLine;
   private final ChartViewBuilder viewBuilder;
   private final String initialSymbol;
@@ -159,7 +160,7 @@ public final class Chart implements AutoCloseable {
     );
     intervalSelection.onIntervalSelected(interactor::selectInterval);
 
-    ChartMenu menu = new ChartMenu();
+    menu = new ChartMenu(symbol, interval);
     menu.onInstrumentSelectionRequested(interactor::openInstrumentSearch);
     menu.onIntervalSelectionRequested(interactor::openIntervalSelection);
 
@@ -212,6 +213,7 @@ public final class Chart implements AutoCloseable {
     statusLine.setInstrument(displayName, logo);
     instrumentSearch.setCurrentSymbol(symbol);
     canvas.setInstrumentPricePoints(toPricePoints(bars));
+    menu.setInstrumentSymbol(symbol);
   }
 
   public void setPricePoints(List<PricePoint> pricePoints) {
@@ -224,6 +226,7 @@ public final class Chart implements AutoCloseable {
 
   public void setChartType(ChartType chartType) {
     canvas.setChartType(chartType);
+    menu.setChartType(chartType);
   }
 
   public void drawChart() {
@@ -248,6 +251,7 @@ public final class Chart implements AutoCloseable {
     intervalSelection.setCurrentInterval(interval);
     statusLine.setInterval(interval);
     canvas.setInterval(interval);
+    menu.setInterval(interval);
     intervalSelectedHandler.accept(interval);
   }
 

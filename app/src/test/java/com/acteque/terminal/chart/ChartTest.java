@@ -1,6 +1,9 @@
 package com.acteque.terminal.chart;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.AppTheme;
@@ -9,8 +12,12 @@ import com.acteque.terminal.StubInstrumentCatalog;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.dialog.Dialog;
+import com.acteque.terminal.ui.icons.LucideIcon;
+import com.acteque.terminal.ui.icons.LucideIcons;
+import com.acteque.terminal.ui.togglegroup.ToggleGroupItem;
 import com.acteque.terminal.ui.tooltip.Tooltip;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
@@ -25,6 +32,59 @@ import javafx.stage.Stage;
 import org.junit.jupiter.api.Test;
 
 class ChartTest {
+
+  @Test
+  void menuShowsTheCurrentSymbolAndIntervalNotation() {
+    FxTestSupport.runAndWait(() -> {
+      try (
+        Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of))
+      ) {
+        StackPane chart = chartController.getView();
+        HBox menu = assertInstanceOf(HBox.class, chart.getChildren().get(1));
+        Button symbolButton = assertInstanceOf(Button.class, menu.getChildren().get(0));
+        Button intervalButton = assertInstanceOf(Button.class, menu.getChildren().get(1));
+
+        assertEquals("ACME", symbolButton.getText());
+        assertEquals("1D", intervalButton.getText());
+
+        chartController.setInstrument("BTC-USD", "Bitcoin", List.of(), Optional.empty());
+        assertEquals("BTC-USD", symbolButton.getText());
+
+        intervalButton.fire();
+        Dialog dialog = assertInstanceOf(Dialog.class, chart.lookup(".chart-interval-selection-dialog"));
+        ToggleGroupItem fourHours = dialog
+          .lookupAll(".chart-interval-button")
+          .stream()
+          .map(ToggleGroupItem.class::cast)
+          .filter(item -> "4H".equals(item.getText()))
+          .findFirst()
+          .orElseThrow();
+        fourHours.fire();
+
+        assertEquals("4H", intervalButton.getText());
+        assertEquals("Select interval, currently 4 hours", intervalButton.getAccessibleText());
+      }
+    });
+  }
+
+  @Test
+  void chartTypeChangesUpdateTheMenuIcon() {
+    FxTestSupport.runAndWait(() -> {
+      try (
+        Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of))
+      ) {
+        StackPane chart = chartController.getView();
+        HBox menu = assertInstanceOf(HBox.class, chart.getChildren().get(1));
+        Button button = assertInstanceOf(Button.class, menu.getChildren().get(2));
+
+        chartController.setChartType(ChartType.LINE_WITH_MARKERS);
+        assertSame(LucideIcons.CHART_NETWORK, assertInstanceOf(LucideIcon.class, button.getGraphic()).getGlyph());
+
+        chartController.setChartType(ChartType.CANDLESTICK);
+        assertSame(LucideIcons.CHART_CANDLESTICK, assertInstanceOf(LucideIcon.class, button.getGraphic()).getGlyph());
+      }
+    });
+  }
 
   @Test
   void mapsPlatformShortcutsToTheChartDialogs() {

@@ -4,7 +4,7 @@
 
 .chart-menu {
   -fx-alignment: center;
-  -fx-spacing: 2px;
+  -fx-spacing: 8px;
   -fx-padding: 4px;
   -fx-background-color: -app-card;
   -fx-background-radius: 8px;
