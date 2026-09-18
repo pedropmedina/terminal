@@ -93,8 +93,14 @@ class ChartCanvasInteractorTest {
     interactor.setChartType(ChartType.CANDLESTICK);
     assertEquals(previousRevision + 1, model.revisionProperty().get());
 
+    interactor.setChartType(ChartType.STEP_LINE);
+    assertEquals(ChartType.STEP_LINE, model.chartType);
+    assertEquals(8, model.visiblePricePointCount);
+    assertEquals(2, model.visiblePricePointOffset);
+    assertEquals(new PriceRange(90.0, 110.0), model.lockedPriceRange);
+
     interactor.setInstrumentPricePoints(points(10));
-    assertEquals(ChartType.CANDLESTICK, model.chartType);
+    assertEquals(ChartType.STEP_LINE, model.chartType);
     interactor.setChartType(ChartType.LINE);
     assertEquals(ChartType.LINE, model.chartType);
   }
@@ -112,6 +118,9 @@ class ChartCanvasInteractorTest {
     assertEquals(100.0, (lineRange.min() + lineRange.max()) / 2.0);
 
     interactor.setChartType(ChartType.AREA);
+    assertEquals(lineRange, interactor.displayedPriceRange(400.0));
+
+    interactor.setChartType(ChartType.STEP_LINE);
     assertEquals(lineRange, interactor.displayedPriceRange(400.0));
 
     interactor.setChartType(ChartType.CANDLESTICK);

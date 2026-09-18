@@ -281,6 +281,7 @@ final class CanvasRenderer {
     switch (model.chartType) {
       case CANDLESTICK -> drawCandlesticks(graphics, bounds, priceRange, visiblePoints, style);
       case LINE -> drawPriceLine(graphics, bounds, priceRange, visiblePoints, style);
+      case STEP_LINE -> drawStepLine(graphics, bounds, priceRange, visiblePoints, style);
       case AREA -> {
         drawPriceArea(graphics, bounds, priceRange, visiblePoints, style);
         drawPriceLine(graphics, bounds, priceRange, visiblePoints, style);
@@ -327,14 +328,7 @@ final class CanvasRenderer {
     graphics.setStroke(style.line());
     graphics.setLineWidth(style.lineWidth());
     if (visiblePoints.size() == 1) {
-      double size = style.lineWidth() * 2.0;
-      graphics.setFill(style.line());
-      graphics.fillOval(
-        xForSlot(0, model.visiblePricePointCount, bounds) - size / 2.0,
-        yForPrice(visiblePoints.getFirst().close(), bounds, priceRange) - size / 2.0,
-        size,
-        size
-      );
+      drawSinglePoint(graphics, bounds, priceRange, visiblePoints.getFirst(), style);
       return;
     }
     for (int index = 1; index < visiblePoints.size(); index++) {
@@ -347,6 +341,46 @@ final class CanvasRenderer {
         yForPrice(current.price(), bounds, priceRange)
       );
     }
+  }
+
+  private void drawStepLine(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    List<PricePoint> visiblePoints,
+    RenderStyle style
+  ) {
+    graphics.setStroke(style.line());
+    graphics.setLineWidth(style.lineWidth());
+    if (visiblePoints.size() == 1) {
+      drawSinglePoint(graphics, bounds, priceRange, visiblePoints.getFirst(), style);
+      return;
+    }
+    for (int index = 1; index < visiblePoints.size(); index++) {
+      double previousX = xForSlot(index - 1, model.visiblePricePointCount, bounds);
+      double currentX = xForSlot(index, model.visiblePricePointCount, bounds);
+      double previousY = yForPrice(visiblePoints.get(index - 1).close(), bounds, priceRange);
+      double currentY = yForPrice(visiblePoints.get(index).close(), bounds, priceRange);
+      graphics.strokeLine(previousX, previousY, currentX, previousY);
+      graphics.strokeLine(currentX, previousY, currentX, currentY);
+    }
+  }
+
+  private void drawSinglePoint(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    PricePoint point,
+    RenderStyle style
+  ) {
+    double size = style.lineWidth() * 2.0;
+    graphics.setFill(style.line());
+    graphics.fillOval(
+      xForSlot(0, model.visiblePricePointCount, bounds) - size / 2.0,
+      yForPrice(point.close(), bounds, priceRange) - size / 2.0,
+      size,
+      size
+    );
   }
 
   private void drawCandlesticks(

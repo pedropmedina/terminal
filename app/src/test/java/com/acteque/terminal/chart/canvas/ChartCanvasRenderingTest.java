@@ -71,6 +71,48 @@ class ChartCanvasRenderingTest {
       builder.drawChart();
       PixelReader line = canvas.snapshot(null, null).getPixelReader();
       assertEquals(builder.renderStyle().line(), line.getColor(368, 234));
+
+      interactor.setChartType(ChartType.STEP_LINE);
+      builder.drawChart();
+      PixelReader step = canvas.snapshot(null, null).getPixelReader();
+      assertEquals(line.getColor(368, 234), step.getColor(368, 234));
+      assertEquals(line.getColor(368, 300), step.getColor(368, 300));
+    });
+  }
+
+  @Test
+  void stepLineHoldsEachCloseUntilTheNextPointThenChangesVertically() {
+    FxTestSupport.runAndWait(() -> {
+      ChartCanvasModel model = new ChartCanvasModel();
+      ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
+      interactor.initialize(
+        List.of(
+          point(1, 100, 120, 80, 100),
+          point(2, 100, 120, 80, 110),
+          point(3, 110, 120, 80, 100),
+          point(4, 100, 120, 80, 100)
+        ),
+        ChartInterval.DAILY
+      );
+      ChartCanvasViewBuilder builder = new ChartCanvasViewBuilder(model, interactor);
+      Canvas canvas = builder.build();
+      canvas.setWidth(800);
+      canvas.setHeight(500);
+
+      interactor.setChartType(ChartType.LINE);
+      builder.drawChart();
+      PixelReader line = canvas.snapshot(null, null).getPixelReader();
+
+      interactor.setChartType(ChartType.STEP_LINE);
+      builder.drawChart();
+      PixelReader step = canvas.snapshot(null, null).getPixelReader();
+      Color seriesColor = (Color) builder.renderStyle().line();
+      assertCloserToSeriesColor(step, line, seriesColor, 122, 436);
+      assertCloserToSeriesColor(step, line, seriesColor, 245, 234);
+      assertCloserToSeriesColor(step, line, seriesColor, 368, 32);
+      assertCloserToSeriesColor(step, line, seriesColor, 491, 234);
+      assertCloserToSeriesColor(line, step, seriesColor, 122, 234);
+      assertCloserToSeriesColor(line, step, seriesColor, 368, 234);
     });
   }
 
@@ -134,6 +176,27 @@ class ChartCanvasRenderingTest {
     assertEquals(expected.getRed(), actual.getRed(), 0.01);
     assertEquals(expected.getGreen(), actual.getGreen(), 0.01);
     assertEquals(expected.getBlue(), actual.getBlue(), 0.01);
+  }
+
+  private static void assertCloserToSeriesColor(
+    PixelReader expected,
+    PixelReader other,
+    Color seriesColor,
+    int x,
+    int y
+  ) {
+    assertTrue(
+      colorDistance(expected.getColor(x, y), seriesColor) < colorDistance(other.getColor(x, y), seriesColor),
+      "Expected the series color at (" + x + ", " + y + ")"
+    );
+  }
+
+  private static double colorDistance(Color first, Color second) {
+    return (
+      Math.abs(first.getRed() - second.getRed()) +
+      Math.abs(first.getGreen() - second.getGreen()) +
+      Math.abs(first.getBlue() - second.getBlue())
+    );
   }
 
   private static PricePoint point(int day, double open, double high, double low, double close) {
