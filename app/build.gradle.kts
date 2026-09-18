@@ -30,6 +30,12 @@ tasks.named<JavaExec>("run") {
     jvmArgs("--enable-native-access=javafx.graphics")
 }
 
+tasks.withType<Test>().configureEach {
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    // JavaFX focus tests share the desktop and need separate test processes in sequence.
+    mustRunAfter(":ui:core:test", ":ui:icons:test")
+}
+
 javafx {
     version = "25.0.1"
     modules = listOf("javafx.controls")

@@ -1,18 +1,15 @@
-package com.acteque.terminal.ui;
+package com.acteque.terminal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.acteque.terminal.AppTheme;
-import com.acteque.terminal.AppTheme;
-import com.acteque.terminal.AppThemeManager;
 import com.acteque.terminal.test.FxTestSupport;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import org.junit.jupiter.api.Test;
 
-class ThemeManagerTest {
+class AppThemeManagerTest {
 
   @Test
   void switchesTheRootThemeWithoutDuplicatingTheStylesheet() {

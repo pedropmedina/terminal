@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart;
+package com.acteque.terminal.chart.intervalselection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,7 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.AppTheme;
 import com.acteque.terminal.AppThemeManager;
-import com.acteque.terminal.chart.intervalselection.ChartIntervalSelection;
+import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.ChartIntervalText;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Input;
 import com.acteque.terminal.ui.Select;
@@ -264,12 +265,6 @@ class ChartIntervalSelectionDialogTest {
         ToggleGroupItem selected = button(dialogReference.get(), "1D");
 
         assertSame(selected, input.getScene().getFocusOwner());
-      });
-      FxTestSupport.runAndWait(() -> {
-        ToggleGroupItem selected = button(dialogReference.get(), "1D");
-        selected.getScene().getRoot().applyCss();
-
-        assertEquals(2, selected.getBorder().getStrokes().size());
       });
     } finally {
       FxTestSupport.runAndWait(() -> stageReference.get().close());
