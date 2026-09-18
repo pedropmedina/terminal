@@ -78,7 +78,10 @@
   -chart-axis: -app-foreground;
   -chart-grid: -app-border;
   -chart-muted-foreground: -app-muted-foreground;
-  -chart-series: -app-chart-1;
+  -chart-line: -app-chart-line;
+  -chart-candle-up: -app-chart-up;
+  -chart-candle-down: -app-chart-down;
+  -chart-candle-border: -app-chart-border;
   -chart-crosshair: -app-ring;
   -chart-badge-background: -app-secondary;
   -chart-badge-foreground: -app-secondary-foreground;
@@ -88,7 +91,9 @@
   -chart-badge-font: 12px "System";
   -chart-axis-line-width: 1.4px;
   -chart-grid-line-width: 1px;
-  -chart-series-line-width: 2.2px;
+  -chart-line-width: 2.2px;
+  -chart-candle-body-max-width: 12px;
+  -chart-candle-stroke-width: 1px;
   -chart-badge-height: 24px;
   -chart-control-radius: 4px;
   -chart-axis-label-spacing: 56px;

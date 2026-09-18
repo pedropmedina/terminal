@@ -1,6 +1,7 @@
 package com.acteque.terminal.chart.canvas;
 
 import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.chart.canvas.ChartCanvasModel.DragMode;
 import com.acteque.terminal.chart.canvas.ChartCanvasModel.PriceRange;
@@ -72,6 +73,15 @@ final class ChartCanvasInteractor {
       return;
     }
     model.interval = replacement;
+    model.publish(model.displayedPricePointProperty().get());
+  }
+
+  void setChartType(ChartType chartType) {
+    ChartType replacement = Objects.requireNonNull(chartType, "chartType cannot be null");
+    if (replacement == model.chartType) {
+      return;
+    }
+    model.chartType = replacement;
     model.publish(model.displayedPricePointProperty().get());
   }
 
@@ -253,8 +263,8 @@ final class ChartCanvasInteractor {
     double min = Double.MAX_VALUE;
     double max = -Double.MAX_VALUE;
     for (PricePoint point : points) {
-      min = Math.min(min, point.price());
-      max = Math.max(max, point.price());
+      min = Math.min(min, model.chartType == ChartType.CANDLESTICK ? point.low() : point.close());
+      max = Math.max(max, model.chartType == ChartType.CANDLESTICK ? point.high() : point.close());
     }
     double range = max - min;
     double padding = range == 0 ? Math.max(1.0, max * 0.05) : range * 0.08;

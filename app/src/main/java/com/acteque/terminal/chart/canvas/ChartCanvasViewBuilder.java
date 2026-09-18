@@ -54,11 +54,29 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     Color.rgb(74, 82, 94),
     canvas -> canvas.chartMutedForeground
   );
-  private final StyleableProperty<Paint> chartSeries = paintProperty(
-    "chartSeries",
-    "-chart-series",
-    Color.rgb(26, 115, 232),
-    canvas -> canvas.chartSeries
+  private final StyleableProperty<Paint> chartLine = paintProperty(
+    "chartLine",
+    "-chart-line",
+    Color.BLACK,
+    canvas -> canvas.chartLine
+  );
+  private final StyleableProperty<Paint> chartCandleUp = paintProperty(
+    "chartCandleUp",
+    "-chart-candle-up",
+    Color.BLACK,
+    canvas -> canvas.chartCandleUp
+  );
+  private final StyleableProperty<Paint> chartCandleDown = paintProperty(
+    "chartCandleDown",
+    "-chart-candle-down",
+    Color.WHITE,
+    canvas -> canvas.chartCandleDown
+  );
+  private final StyleableProperty<Paint> chartCandleBorder = paintProperty(
+    "chartCandleBorder",
+    "-chart-candle-border",
+    Color.BLACK,
+    canvas -> canvas.chartCandleBorder
   );
   private final StyleableProperty<Paint> chartCrosshair = paintProperty(
     "chartCrosshair",
@@ -114,11 +132,23 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     1.0,
     canvas -> canvas.chartGridLineWidth
   );
-  private final StyleableProperty<Number> chartSeriesLineWidth = numberProperty(
-    "chartSeriesLineWidth",
-    "-chart-series-line-width",
+  private final StyleableProperty<Number> chartLineWidth = numberProperty(
+    "chartLineWidth",
+    "-chart-line-width",
     2.2,
-    canvas -> canvas.chartSeriesLineWidth
+    canvas -> canvas.chartLineWidth
+  );
+  private final StyleableProperty<Number> chartCandleBodyMaxWidth = numberProperty(
+    "chartCandleBodyMaxWidth",
+    "-chart-candle-body-max-width",
+    12.0,
+    canvas -> canvas.chartCandleBodyMaxWidth
+  );
+  private final StyleableProperty<Number> chartCandleStrokeWidth = numberProperty(
+    "chartCandleStrokeWidth",
+    "-chart-candle-stroke-width",
+    1.0,
+    canvas -> canvas.chartCandleStrokeWidth
   );
   private final StyleableProperty<Number> chartBadgeHeight = numberProperty(
     "chartBadgeHeight",
@@ -184,7 +214,10 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
       chartAxis.getValue(),
       chartGrid.getValue(),
       chartMutedForeground.getValue(),
-      chartSeries.getValue(),
+      chartLine.getValue(),
+      chartCandleUp.getValue(),
+      chartCandleDown.getValue(),
+      chartCandleBorder.getValue(),
       chartCrosshair.getValue(),
       chartBadgeBackground.getValue(),
       chartBadgeForeground.getValue(),
@@ -194,7 +227,9 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
       chartBadgeFont.getValue(),
       chartAxisLineWidth.getValue().doubleValue(),
       chartGridLineWidth.getValue().doubleValue(),
-      chartSeriesLineWidth.getValue().doubleValue(),
+      chartLineWidth.getValue().doubleValue(),
+      chartCandleBodyMaxWidth.getValue().doubleValue(),
+      chartCandleStrokeWidth.getValue().doubleValue(),
       chartBadgeHeight.getValue().doubleValue(),
       chartControlRadius.getValue().doubleValue(),
       chartAxisLabelSpacing.getValue().doubleValue()

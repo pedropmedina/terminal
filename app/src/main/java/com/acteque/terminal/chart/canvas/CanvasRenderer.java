@@ -1,5 +1,6 @@
 package com.acteque.terminal.chart.canvas;
 
+import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.chart.canvas.ChartCanvasModel.PriceRange;
 import com.acteque.terminal.chart.canvas.ChartCanvasModel.VisibleWindow;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import javafx.geometry.VPos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.TextAlignment;
 
 /** Renders chart-canvas state and provides its drawing-coordinate geometry. */
@@ -63,7 +65,7 @@ final class CanvasRenderer {
     drawAxes(graphics, bounds, style);
     drawYAxisTicks(graphics, bounds, priceRange, yAxisTicks, style);
     drawXAxisTicks(graphics, bounds, xAxisTicks, style);
-    drawPriceLine(graphics, bounds, priceRange, visibleWindow.points(), style);
+    drawSeries(graphics, bounds, priceRange, visibleWindow.points(), style);
     drawCurrentPriceBadge(graphics, bounds, priceRange, visibleWindow.points(), style);
     drawCrosshair(graphics, bounds, priceRange, visibleWindow, style);
     drawAutoscaleButton(graphics, bounds, style);
@@ -266,6 +268,25 @@ final class CanvasRenderer {
     );
   }
 
+  private void drawSeries(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    List<PricePoint> visiblePoints,
+    RenderStyle style
+  ) {
+    graphics.save();
+    graphics.beginPath();
+    graphics.rect(bounds.left(), bounds.top(), bounds.width(), bounds.height());
+    graphics.clip();
+    if (model.chartType == ChartType.CANDLESTICK) {
+      drawCandlesticks(graphics, bounds, priceRange, visiblePoints, style);
+    } else {
+      drawPriceLine(graphics, bounds, priceRange, visiblePoints, style);
+    }
+    graphics.restore();
+  }
+
   private void drawPriceLine(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -273,12 +294,19 @@ final class CanvasRenderer {
     List<PricePoint> visiblePoints,
     RenderStyle style
   ) {
-    graphics.setStroke(style.series());
-    graphics.setLineWidth(style.seriesLineWidth());
-    graphics.save();
-    graphics.beginPath();
-    graphics.rect(bounds.left(), bounds.top(), bounds.width(), bounds.height());
-    graphics.clip();
+    graphics.setStroke(style.line());
+    graphics.setLineWidth(style.lineWidth());
+    if (visiblePoints.size() == 1) {
+      double size = style.lineWidth() * 2.0;
+      graphics.setFill(style.line());
+      graphics.fillOval(
+        xForSlot(0, model.visiblePricePointCount, bounds) - size / 2.0,
+        yForPrice(visiblePoints.getFirst().close(), bounds, priceRange) - size / 2.0,
+        size,
+        size
+      );
+      return;
+    }
     for (int index = 1; index < visiblePoints.size(); index++) {
       PricePoint previous = visiblePoints.get(index - 1);
       PricePoint current = visiblePoints.get(index);
@@ -289,7 +317,37 @@ final class CanvasRenderer {
         yForPrice(current.price(), bounds, priceRange)
       );
     }
-    graphics.restore();
+  }
+
+  private void drawCandlesticks(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    List<PricePoint> visiblePoints,
+    RenderStyle style
+  ) {
+    double slotWidth = bounds.width() / Math.max(1, model.visiblePricePointCount - 1);
+    double bodyWidth = Math.max(1.0, Math.min(style.candleBodyMaxWidth(), slotWidth * 0.7));
+    graphics.setLineWidth(style.candleStrokeWidth());
+    for (int index = 0; index < visiblePoints.size(); index++) {
+      PricePoint point = visiblePoints.get(index);
+      double x = xForSlot(index, model.visiblePricePointCount, bounds);
+      double openY = yForPrice(point.open(), bounds, priceRange);
+      double closeY = yForPrice(point.close(), bounds, priceRange);
+      double bodyHeight = Math.max(1.0, Math.abs(openY - closeY));
+      double bodyTop = (openY + closeY - bodyHeight) / 2.0;
+      Paint candlePaint = point.close() >= point.open() ? style.candleUp() : style.candleDown();
+      graphics.setStroke(style.candleBorder());
+      graphics.setFill(candlePaint);
+      graphics.strokeLine(
+        x,
+        yForPrice(point.high(), bounds, priceRange),
+        x,
+        yForPrice(point.low(), bounds, priceRange)
+      );
+      graphics.fillRect(x - bodyWidth / 2.0, bodyTop, bodyWidth, bodyHeight);
+      graphics.strokeRect(x - bodyWidth / 2.0, bodyTop, bodyWidth, bodyHeight);
+    }
   }
 
   private double xForSlot(int index, int pointCount, ChartBounds bounds) {

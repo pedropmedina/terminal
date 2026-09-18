@@ -33,14 +33,20 @@ class ChartCanvasThemeTest {
       root.applyCss();
 
       assertEquals(Color.web("#ffffff"), builder.renderStyle().background());
-      assertEquals(Color.web("#e76e00"), builder.renderStyle().series());
+      assertEquals(Color.web("#0a0a0a"), builder.renderStyle().line());
+      assertEquals(Color.web("#0a0a0a"), builder.renderStyle().candleUp());
+      assertEquals(Color.web("#ffffff"), builder.renderStyle().candleDown());
+      assertEquals(Color.web("#0a0a0a"), builder.renderStyle().candleBorder());
       assertEquals(24.0, builder.renderStyle().badgeHeight());
 
       themes.setTheme(AppTheme.DARK);
       root.applyCss();
 
       assertEquals(Color.web("#0a0a0a"), builder.renderStyle().background());
-      assertEquals(Color.web("#7c3aed"), builder.renderStyle().series());
+      assertEquals(Color.web("#fafafa"), builder.renderStyle().line());
+      assertEquals(Color.web("#fafafa"), builder.renderStyle().candleUp());
+      assertEquals(Color.web("#0a0a0a"), builder.renderStyle().candleDown());
+      assertEquals(Color.web("#fafafa"), builder.renderStyle().candleBorder());
     });
   }
 }

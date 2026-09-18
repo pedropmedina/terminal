@@ -2,6 +2,7 @@ package com.acteque.terminal;
 
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import com.acteque.terminal.marketlogos.LogoSession;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -22,6 +23,7 @@ public class App extends Application {
 
   private static final String SYMBOL = "IBM";
   private static final ChartInterval INTERVAL = ChartInterval.DAILY;
+  private static final ChartType CHART_TYPE = ChartType.CANDLESTICK;
   private static final double MIN_CANVAS_WIDTH = 1060.0;
   private static final double MIN_CANVAS_HEIGHT = 760.0;
 
@@ -64,6 +66,7 @@ public class App extends Application {
 
     try {
       chartView = new Chart(List.of(), SYMBOL, INTERVAL, services.catalog(), marketData, logos, Platform::runLater);
+      chartView.setChartType(CHART_TYPE);
     } catch (RuntimeException | Error failure) {
       try {
         logos.close();

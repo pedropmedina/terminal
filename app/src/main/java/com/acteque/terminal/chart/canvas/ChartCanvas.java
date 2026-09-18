@@ -1,6 +1,7 @@
 package com.acteque.terminal.chart.canvas;
 
 import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.chart.statusline.ChartStatusLine;
 import java.util.List;
@@ -50,6 +51,10 @@ public final class ChartCanvas {
 
   public void setInterval(ChartInterval interval) {
     interactor.setInterval(interval);
+  }
+
+  public void setChartType(ChartType chartType) {
+    interactor.setChartType(chartType);
   }
 
   public void drawChart() {

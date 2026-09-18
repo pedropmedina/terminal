@@ -4,6 +4,7 @@ import com.acteque.terminal.chart.canvas.ChartCanvas;
 import com.acteque.terminal.chart.intervalselection.ChartIntervalSelection;
 import com.acteque.terminal.chart.menu.ChartMenu;
 import com.acteque.terminal.chart.statusline.ChartStatusLine;
+import com.acteque.terminal.instrumentsearch.InstrumentSearch;
 import com.acteque.terminal.marketdata.CalendarData;
 import com.acteque.terminal.marketdata.InstrumentCatalog;
 import com.acteque.terminal.marketdata.InstrumentLoadResult;
@@ -12,7 +13,6 @@ import com.acteque.terminal.marketlogos.InstrumentLogo;
 import com.acteque.terminal.marketlogos.LogoException;
 import com.acteque.terminal.marketlogos.LogoRequest;
 import com.acteque.terminal.marketlogos.LogoSession;
-import com.acteque.terminal.instrumentsearch.InstrumentSearch;
 import com.acteque.terminal.ui.dialog.Dialog;
 import java.util.List;
 import java.util.Objects;
@@ -220,6 +220,10 @@ public final class Chart implements AutoCloseable {
 
   public void setBars(List<CalendarData> bars) {
     canvas.setPricePoints(toPricePoints(bars));
+  }
+
+  public void setChartType(ChartType chartType) {
+    canvas.setChartType(chartType);
   }
 
   public void drawChart() {

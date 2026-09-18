@@ -1,6 +1,7 @@
 package com.acteque.terminal.chart.canvas;
 
 import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.chart.PricePoint;
 import java.util.List;
 import javafx.beans.property.ReadOnlyLongProperty;
@@ -37,6 +38,7 @@ final class ChartCanvasModel {
   record VisibleWindow(List<PricePoint> points, int firstDataIndex) {}
 
   ChartInterval interval;
+  ChartType chartType = ChartType.LINE;
   List<PricePoint> pricePoints = List.of();
   int visiblePricePointCount;
   int visiblePricePointOffset;

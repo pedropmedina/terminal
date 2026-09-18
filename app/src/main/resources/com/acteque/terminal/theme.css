@@ -47,11 +47,6 @@
   -app-dialog-ring: rgba(10, 10, 10, 0.1);
   -app-dialog-footer-background: rgba(245, 245, 245, 0.5);
   -app-overlay: rgba(10, 10, 10, 0.28);
-  -app-chart-1: #e76e00;
-  -app-chart-2: #009689;
-  -app-chart-3: #104e64;
-  -app-chart-4: #f5a524;
-  -app-chart-5: #f59e0b;
 }
 
 :root.theme-dark {
@@ -102,14 +97,13 @@
   -app-dialog-ring: rgba(250, 250, 250, 0.1);
   -app-dialog-footer-background: rgba(38, 38, 38, 0.5);
   -app-overlay: rgba(0, 0, 0, 0.56);
-  -app-chart-1: #7c3aed;
-  -app-chart-2: #10b981;
-  -app-chart-3: #f59e0b;
-  -app-chart-4: #a855f7;
-  -app-chart-5: #f43f5e;
 }
 
 :root {
+  -app-chart-up: -app-foreground;
+  -app-chart-down: -app-background;
+  -app-chart-border: -app-foreground;
+  -app-chart-line: -app-foreground;
   -fx-background-color: -app-background;
   -fx-font-family: "System";
   -fx-font-size: 13px;
