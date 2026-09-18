@@ -100,7 +100,7 @@ class ChartCanvasInteractorTest {
   }
 
   @Test
-  void autoscaleUsesClosesForLineAndFullHighLowRangeForCandlesticks() {
+  void autoscaleUsesClosesForLineAndAreaAndFullHighLowRangeForCandlesticks() {
     ChartCanvasModel model = new ChartCanvasModel();
     ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
     interactor.initialize(
@@ -110,6 +110,9 @@ class ChartCanvasInteractorTest {
 
     PriceRange lineRange = interactor.displayedPriceRange(400.0);
     assertEquals(100.0, (lineRange.min() + lineRange.max()) / 2.0);
+
+    interactor.setChartType(ChartType.AREA);
+    assertEquals(lineRange, interactor.displayedPriceRange(400.0));
 
     interactor.setChartType(ChartType.CANDLESTICK);
     PriceRange candleRange = interactor.displayedPriceRange(400.0);

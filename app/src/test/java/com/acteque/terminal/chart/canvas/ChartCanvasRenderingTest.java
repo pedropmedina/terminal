@@ -2,6 +2,7 @@ package com.acteque.terminal.chart.canvas;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartType;
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 import java.util.List;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.PixelReader;
+import javafx.scene.paint.Color;
 import org.junit.jupiter.api.Test;
 
 class ChartCanvasRenderingTest {
@@ -70,6 +72,68 @@ class ChartCanvasRenderingTest {
       PixelReader line = canvas.snapshot(null, null).getPixelReader();
       assertEquals(builder.renderStyle().line(), line.getColor(368, 234));
     });
+  }
+
+  @Test
+  void areaFillsBelowTheCloseLineAndSwitchingBackClearsTheFill() {
+    FxTestSupport.runAndWait(() -> {
+      ChartCanvasModel model = new ChartCanvasModel();
+      ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
+      interactor.initialize(List.of(point(1, 100, 120, 80, 100), point(2, 110, 130, 90, 110)), ChartInterval.DAILY);
+      ChartCanvasViewBuilder builder = new ChartCanvasViewBuilder(model, interactor);
+      Canvas canvas = builder.build();
+      canvas.setWidth(800);
+      canvas.setHeight(500);
+
+      interactor.setChartType(ChartType.LINE);
+      builder.drawChart();
+      PixelReader line = canvas.snapshot(null, null).getPixelReader();
+      Color backgroundBelowLine = line.getColor(350, 330);
+      Color backgroundAboveLine = line.getColor(350, 100);
+      Color outsidePlot = line.getColor(750, 330);
+
+      interactor.setChartType(ChartType.AREA);
+      builder.drawChart();
+      PixelReader area = canvas.snapshot(null, null).getPixelReader();
+      Color expectedFill = backgroundBelowLine.interpolate((Color) builder.renderStyle().line(), 0.2);
+      assertColorNear(expectedFill, area.getColor(350, 330));
+      assertEquals(backgroundAboveLine, area.getColor(350, 100));
+      assertEquals(outsidePlot, area.getColor(750, 330));
+      assertTrue(area.getColor(368, 234).getRed() < 0.1);
+
+      interactor.setChartType(ChartType.LINE);
+      builder.drawChart();
+      assertEquals(backgroundBelowLine, canvas.snapshot(null, null).getPixelReader().getColor(350, 330));
+    });
+  }
+
+  @Test
+  void singlePointAreaKeepsOnlyTheLineDot() {
+    FxTestSupport.runAndWait(() -> {
+      ChartCanvasModel model = new ChartCanvasModel();
+      ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
+      interactor.initialize(List.of(point(1, 100, 110, 90, 100)), ChartInterval.DAILY);
+      ChartCanvasViewBuilder builder = new ChartCanvasViewBuilder(model, interactor);
+      Canvas canvas = builder.build();
+      canvas.setWidth(800);
+      canvas.setHeight(500);
+
+      interactor.setChartType(ChartType.LINE);
+      builder.drawChart();
+      Color belowDot = canvas.snapshot(null, null).getPixelReader().getColor(368, 300);
+
+      interactor.setChartType(ChartType.AREA);
+      builder.drawChart();
+      PixelReader area = canvas.snapshot(null, null).getPixelReader();
+      assertEquals(builder.renderStyle().line(), area.getColor(368, 234));
+      assertEquals(belowDot, area.getColor(368, 300));
+    });
+  }
+
+  private static void assertColorNear(Color expected, Color actual) {
+    assertEquals(expected.getRed(), actual.getRed(), 0.01);
+    assertEquals(expected.getGreen(), actual.getGreen(), 0.01);
+    assertEquals(expected.getBlue(), actual.getBlue(), 0.01);
   }
 
   private static PricePoint point(int day, double open, double high, double low, double close) {

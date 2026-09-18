@@ -23,6 +23,7 @@ record RenderStyle(
   double axisLineWidth,
   double gridLineWidth,
   double lineWidth,
+  double areaOpacity,
   double candleBodyMaxWidth,
   double candleStrokeWidth,
   double badgeHeight,

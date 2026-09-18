@@ -1,6 +1,5 @@
 package com.acteque.terminal.chart.canvas;
 
-import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.chart.canvas.ChartCanvasModel.PriceRange;
 import com.acteque.terminal.chart.canvas.ChartCanvasModel.VisibleWindow;
@@ -279,11 +278,42 @@ final class CanvasRenderer {
     graphics.beginPath();
     graphics.rect(bounds.left(), bounds.top(), bounds.width(), bounds.height());
     graphics.clip();
-    if (model.chartType == ChartType.CANDLESTICK) {
-      drawCandlesticks(graphics, bounds, priceRange, visiblePoints, style);
-    } else {
-      drawPriceLine(graphics, bounds, priceRange, visiblePoints, style);
+    switch (model.chartType) {
+      case CANDLESTICK -> drawCandlesticks(graphics, bounds, priceRange, visiblePoints, style);
+      case LINE -> drawPriceLine(graphics, bounds, priceRange, visiblePoints, style);
+      case AREA -> {
+        drawPriceArea(graphics, bounds, priceRange, visiblePoints, style);
+        drawPriceLine(graphics, bounds, priceRange, visiblePoints, style);
+      }
     }
+    graphics.restore();
+  }
+
+  private void drawPriceArea(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    List<PricePoint> visiblePoints,
+    RenderStyle style
+  ) {
+    if (visiblePoints.size() < 2) {
+      return;
+    }
+
+    graphics.save();
+    graphics.setGlobalAlpha(style.areaOpacity());
+    graphics.setFill(style.line());
+    graphics.beginPath();
+    graphics.moveTo(xForSlot(0, model.visiblePricePointCount, bounds), bounds.bottom());
+    for (int index = 0; index < visiblePoints.size(); index++) {
+      graphics.lineTo(
+        xForSlot(index, model.visiblePricePointCount, bounds),
+        yForPrice(visiblePoints.get(index).price(), bounds, priceRange)
+      );
+    }
+    graphics.lineTo(xForSlot(visiblePoints.size() - 1, model.visiblePricePointCount, bounds), bounds.bottom());
+    graphics.closePath();
+    graphics.fill();
     graphics.restore();
   }
 
