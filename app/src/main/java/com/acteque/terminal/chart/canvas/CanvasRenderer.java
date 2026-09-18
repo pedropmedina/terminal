@@ -281,6 +281,10 @@ final class CanvasRenderer {
     switch (model.chartType) {
       case CANDLESTICK -> drawCandlesticks(graphics, bounds, priceRange, visiblePoints, style);
       case LINE -> drawPriceLine(graphics, bounds, priceRange, visiblePoints, style);
+      case LINE_WITH_MARKERS -> {
+        drawPriceLine(graphics, bounds, priceRange, visiblePoints, style);
+        drawPriceMarkers(graphics, bounds, priceRange, visiblePoints, style);
+      }
       case STEP_LINE -> drawStepLine(graphics, bounds, priceRange, visiblePoints, style);
       case AREA -> {
         drawPriceArea(graphics, bounds, priceRange, visiblePoints, style);
@@ -340,6 +344,22 @@ final class CanvasRenderer {
         xForSlot(index, model.visiblePricePointCount, bounds),
         yForPrice(current.price(), bounds, priceRange)
       );
+    }
+  }
+
+  private void drawPriceMarkers(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    List<PricePoint> visiblePoints,
+    RenderStyle style
+  ) {
+    double diameter = style.markerDiameter();
+    graphics.setFill(style.line());
+    for (int index = 0; index < visiblePoints.size(); index++) {
+      double x = xForSlot(index, model.visiblePricePointCount, bounds);
+      double y = yForPrice(visiblePoints.get(index).price(), bounds, priceRange);
+      graphics.fillOval(x - diameter / 2.0, y - diameter / 2.0, diameter, diameter);
     }
   }
 

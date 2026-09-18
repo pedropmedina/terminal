@@ -99,8 +99,14 @@ class ChartCanvasInteractorTest {
     assertEquals(2, model.visiblePricePointOffset);
     assertEquals(new PriceRange(90.0, 110.0), model.lockedPriceRange);
 
+    interactor.setChartType(ChartType.LINE_WITH_MARKERS);
+    assertEquals(ChartType.LINE_WITH_MARKERS, model.chartType);
+    assertEquals(8, model.visiblePricePointCount);
+    assertEquals(2, model.visiblePricePointOffset);
+    assertEquals(new PriceRange(90.0, 110.0), model.lockedPriceRange);
+
     interactor.setInstrumentPricePoints(points(10));
-    assertEquals(ChartType.STEP_LINE, model.chartType);
+    assertEquals(ChartType.LINE_WITH_MARKERS, model.chartType);
     interactor.setChartType(ChartType.LINE);
     assertEquals(ChartType.LINE, model.chartType);
   }
@@ -116,6 +122,9 @@ class ChartCanvasInteractorTest {
 
     PriceRange lineRange = interactor.displayedPriceRange(400.0);
     assertEquals(100.0, (lineRange.min() + lineRange.max()) / 2.0);
+
+    interactor.setChartType(ChartType.LINE_WITH_MARKERS);
+    assertEquals(lineRange, interactor.displayedPriceRange(400.0));
 
     interactor.setChartType(ChartType.AREA);
     assertEquals(lineRange, interactor.displayedPriceRange(400.0));

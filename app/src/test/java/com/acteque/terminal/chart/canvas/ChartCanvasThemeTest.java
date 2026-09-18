@@ -40,6 +40,7 @@ class ChartCanvasThemeTest {
 
       assertEquals(Color.web("#ffffff"), builder.renderStyle().background());
       assertEquals(Color.web("#0a0a0a"), builder.renderStyle().line());
+      assertEquals(6.0, builder.renderStyle().markerDiameter());
       assertEquals(0.2, builder.renderStyle().areaOpacity());
       assertEquals(Color.web("#0a0a0a"), builder.renderStyle().candleUp());
       assertEquals(Color.web("#ffffff"), builder.renderStyle().candleDown());

@@ -18,6 +18,59 @@ import org.junit.jupiter.api.Test;
 class ChartCanvasRenderingTest {
 
   @Test
+  void lineWithMarkersDrawsDotsAtPricePointsAndKeepsTheLineSegments() {
+    FxTestSupport.runAndWait(() -> {
+      ChartCanvasModel model = new ChartCanvasModel();
+      ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
+      interactor.initialize(
+        List.of(point(1, 100, 120, 80, 100), point(2, 110, 120, 80, 110), point(3, 100, 120, 80, 100)),
+        ChartInterval.DAILY
+      );
+      ChartCanvasViewBuilder builder = new ChartCanvasViewBuilder(model, interactor);
+      Canvas canvas = builder.build();
+      canvas.setWidth(800);
+      canvas.setHeight(500);
+
+      builder.drawChart();
+      PixelReader line = canvas.snapshot(null, null).getPixelReader();
+
+      interactor.setChartType(ChartType.LINE_WITH_MARKERS);
+      builder.drawChart();
+      PixelReader marked = canvas.snapshot(null, null).getPixelReader();
+      Color seriesColor = (Color) builder.renderStyle().line();
+      assertCloserToSeriesColor(marked, line, seriesColor, 368, 29);
+      assertEquals(line.getColor(184, 234), marked.getColor(184, 234));
+
+      interactor.setChartType(ChartType.LINE);
+      builder.drawChart();
+      assertEquals(line.getColor(368, 29), canvas.snapshot(null, null).getPixelReader().getColor(368, 29));
+    });
+  }
+
+  @Test
+  void lineWithMarkersDrawsOneDotForASinglePoint() {
+    FxTestSupport.runAndWait(() -> {
+      ChartCanvasModel model = new ChartCanvasModel();
+      ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
+      interactor.initialize(List.of(point(1, 100, 110, 90, 100)), ChartInterval.DAILY);
+      ChartCanvasViewBuilder builder = new ChartCanvasViewBuilder(model, interactor);
+      Canvas canvas = builder.build();
+      canvas.setWidth(800);
+      canvas.setHeight(500);
+
+      builder.drawChart();
+      PixelReader line = canvas.snapshot(null, null).getPixelReader();
+
+      interactor.setChartType(ChartType.LINE_WITH_MARKERS);
+      builder.drawChart();
+      PixelReader marked = canvas.snapshot(null, null).getPixelReader();
+      assertEquals(builder.renderStyle().line(), marked.getColor(368, 234));
+      assertCloserToSeriesColor(marked, line, (Color) builder.renderStyle().line(), 368, 231);
+      assertEquals(line.getColor(368, 240), marked.getColor(368, 240));
+    });
+  }
+
+  @Test
   void rendersRisingAndFallingBodiesAndSwitchesBackToTheCloseLine() {
     FxTestSupport.runAndWait(() -> {
       ChartCanvasModel model = new ChartCanvasModel();

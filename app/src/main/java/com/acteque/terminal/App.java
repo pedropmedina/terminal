@@ -23,7 +23,7 @@ public class App extends Application {
 
   private static final String SYMBOL = "IBM";
   private static final ChartInterval INTERVAL = ChartInterval.DAILY;
-  private static final ChartType CHART_TYPE = ChartType.STEP_LINE;
+  private static final ChartType CHART_TYPE = ChartType.LINE_WITH_MARKERS;
   private static final double MIN_CANVAS_WIDTH = 1060.0;
   private static final double MIN_CANVAS_HEIGHT = 760.0;
 

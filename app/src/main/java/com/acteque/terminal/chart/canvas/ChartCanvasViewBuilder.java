@@ -138,6 +138,12 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     2.2,
     canvas -> canvas.chartLineWidth
   );
+  private final StyleableProperty<Number> chartMarkerDiameter = numberProperty(
+    "chartMarkerDiameter",
+    "-chart-marker-diameter",
+    6.0,
+    canvas -> canvas.chartMarkerDiameter
+  );
   private final StyleableProperty<Number> chartAreaOpacity = numberProperty(
     "chartAreaOpacity",
     "-chart-area-opacity",
@@ -234,6 +240,7 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
       chartAxisLineWidth.getValue().doubleValue(),
       chartGridLineWidth.getValue().doubleValue(),
       chartLineWidth.getValue().doubleValue(),
+      chartMarkerDiameter.getValue().doubleValue(),
       chartAreaOpacity.getValue().doubleValue(),
       chartCandleBodyMaxWidth.getValue().doubleValue(),
       chartCandleStrokeWidth.getValue().doubleValue(),
