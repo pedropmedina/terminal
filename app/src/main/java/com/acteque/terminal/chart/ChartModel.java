@@ -16,6 +16,8 @@ final class ChartModel {
     "intervalSelectionOpen"
   );
   private final ReadOnlyObjectWrapper<ChartInterval> interval = new ReadOnlyObjectWrapper<>(this, "interval");
+  private final ReadOnlyObjectWrapper<ChartType> chartType = new ReadOnlyObjectWrapper<>(this, "chartType");
+  private final ReadOnlyObjectWrapper<String> symbol = new ReadOnlyObjectWrapper<>(this, "symbol");
   private final BooleanBinding modalOpen = instrumentSearchOpen.or(intervalSelectionOpen);
 
   boolean isInstrumentSearchOpen() {
@@ -60,5 +62,21 @@ final class ChartModel {
 
   void setInterval(ChartInterval value) {
     interval.set(value);
+  }
+
+  ChartType getChartType() {
+    return chartType.get();
+  }
+
+  void setChartType(ChartType value) {
+    chartType.set(value);
+  }
+
+  String getSymbol() {
+    return symbol.get();
+  }
+
+  void setSymbol(String value) {
+    symbol.set(value);
   }
 }

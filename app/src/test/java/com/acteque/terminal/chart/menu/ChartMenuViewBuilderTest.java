@@ -30,20 +30,21 @@ class ChartMenuViewBuilderTest {
       ChartMenuModel model = new ChartMenuModel();
       ChartMenuInteractor interactor = new ChartMenuInteractor(model);
       interactor.initialize("ACME", ChartInterval.DAILY);
-      Region menu = new ChartMenuViewBuilder(model, interactor::request).build();
+      Region menu = new ChartMenuViewBuilder(model, interactor::request, ignored -> {}).build();
       List<String> descriptions = List.of(
         "Select symbol or instrument, currently ACME",
         "Select interval, currently Daily",
-        "Chart type: Line"
+        "Chart type: Line",
+        "Split chart"
       );
-      List<String> labels = List.of("ACME", "1D", "");
+      List<String> labels = List.of("ACME", "1D", "", "");
       ChartMenuItems items = assertInstanceOf(ChartMenuItems.class, menu);
 
-      assertEquals(3, items.getChildren().size());
+      assertEquals(4, items.getChildren().size());
       for (int index = 0; index < items.getChildren().size(); index++) {
         Button button = assertInstanceOf(Button.class, items.getChildren().get(index));
         assertEquals(Variant.GHOST, button.getVariant());
-        assertEquals(index == 2 ? Size.ICON : Size.DEFAULT, button.getSize());
+        assertEquals(index >= 2 ? Size.ICON : Size.DEFAULT, button.getSize());
         assertEquals(labels.get(index), button.getText());
         assertEquals(descriptions.get(index), button.getAccessibleText());
       }
@@ -59,7 +60,7 @@ class ChartMenuViewBuilderTest {
       ChartMenuModel model = new ChartMenuModel();
       ChartMenuInteractor interactor = new ChartMenuInteractor(model);
       interactor.initialize("ACME", ChartInterval.DAILY);
-      Region menu = new ChartMenuViewBuilder(model, interactor::request).build();
+      Region menu = new ChartMenuViewBuilder(model, interactor::request, ignored -> {}).build();
       ChartMenuItems items = assertInstanceOf(ChartMenuItems.class, menu);
       Button button = assertInstanceOf(Button.class, items.getChildren().get(2));
       Map<ChartType, LucideIcons> icons = Map.of(
@@ -108,7 +109,7 @@ class ChartMenuViewBuilderTest {
       interactor.initialize("ACME", ChartInterval.DAILY);
       ChartMenuItems items = assertInstanceOf(
         ChartMenuItems.class,
-        new ChartMenuViewBuilder(model, interactor::request).build()
+        new ChartMenuViewBuilder(model, interactor::request, ignored -> {}).build()
       );
       Button symbolButton = assertInstanceOf(Button.class, items.getChildren().get(0));
       Button intervalButton = assertInstanceOf(Button.class, items.getChildren().get(1));
@@ -136,7 +137,7 @@ class ChartMenuViewBuilderTest {
       interactor.initialize("BTC-USD", ChartInterval.DAILY);
       ChartMenuItems items = assertInstanceOf(
         ChartMenuItems.class,
-        new ChartMenuViewBuilder(model, interactor::request).build()
+        new ChartMenuViewBuilder(model, interactor::request, ignored -> {}).build()
       );
       StackPane root = new StackPane(items);
       Scene scene = new Scene(root, 200.0, 100.0);
@@ -151,6 +152,7 @@ class ChartMenuViewBuilderTest {
       }
       assertTrue(items.getChildren().get(0).prefWidth(-1) > 32.0);
       assertEquals(32.0, items.getChildren().get(2).prefWidth(-1));
+      assertEquals(32.0, items.getChildren().get(3).prefWidth(-1));
     });
   }
 }

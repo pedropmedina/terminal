@@ -21,7 +21,7 @@ class ChartMenuInteractorTest {
     interactor.initialize("ACME", ChartInterval.DAILY);
     interactor.request(Item.INTERVAL);
 
-    assertEquals(List.of(Item.INSTRUMENT, Item.INTERVAL, Item.CHART_TYPE), model.getItems());
+    assertEquals(List.of(Item.INSTRUMENT, Item.INTERVAL, Item.CHART_TYPE, Item.SPLIT), model.getItems());
     assertEquals("ACME", model.getInstrumentSymbol());
     assertEquals(ChartInterval.DAILY, model.getInterval());
     assertSame(Item.INTERVAL, request.get());

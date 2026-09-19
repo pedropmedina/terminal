@@ -17,7 +17,9 @@ final class ChartMenuModel {
   enum Item {
     INSTRUMENT("Symbol or instrument"),
     INTERVAL("Interval"),
-    CHART_TYPE("Chart type");
+    CHART_TYPE("Chart type"),
+    SPLIT("Split chart"),
+    CLOSE("Close chart");
 
     private final String description;
 

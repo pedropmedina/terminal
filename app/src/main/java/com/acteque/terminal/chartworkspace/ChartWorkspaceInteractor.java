@@ -1,0 +1,225 @@
+package com.acteque.terminal.chartworkspace;
+
+import com.acteque.terminal.chart.Chart;
+import com.acteque.terminal.chart.ChartSplitDirection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import javafx.geometry.Orientation;
+
+final class ChartWorkspaceInteractor implements AutoCloseable {
+
+  private static final System.Logger LOGGER = System.getLogger(ChartWorkspaceInteractor.class.getName());
+
+  private final ChartWorkspaceModel model;
+  private final ChartWorkspaceChartFactory chartFactory;
+  private boolean started;
+  private boolean closed;
+
+  ChartWorkspaceInteractor(ChartWorkspaceModel model, ChartWorkspaceChartFactory chartFactory) {
+    this.model = Objects.requireNonNull(model, "model cannot be null");
+    this.chartFactory = Objects.requireNonNull(chartFactory, "chartFactory cannot be null");
+  }
+
+  void initialize(ChartWorkspaceSettings settings) {
+    if (model.getRoot() != null) {
+      throw new IllegalStateException("Workspace is already initialized");
+    }
+    Chart chart = chartFactory.create(Objects.requireNonNull(settings, "settings cannot be null"));
+    configure(chart);
+    model.setRoot(new ChartWorkspaceLeaf(chart));
+    updateCloseAvailability();
+  }
+
+  void start() {
+    requireOpen();
+    if (started) {
+      return;
+    }
+    started = true;
+    charts(model.getRoot()).forEach(this::startChart);
+  }
+
+  void split(Chart source, ChartSplitDirection direction) {
+    requireOpen();
+    Objects.requireNonNull(source, "source cannot be null");
+    Objects.requireNonNull(direction, "direction cannot be null");
+    if (!contains(model.getRoot(), source)) {
+      return;
+    }
+
+    ChartWorkspaceSettings settings = new ChartWorkspaceSettings(
+      source.getSymbol(),
+      source.getInterval(),
+      source.getChartType()
+    );
+    Chart created;
+    try {
+      created = chartFactory.create(settings);
+    } catch (RuntimeException failure) {
+      LOGGER.log(System.Logger.Level.ERROR, "Could not create a split chart", failure);
+      return;
+    }
+    configure(created);
+
+    ChartWorkspaceLeaf sourceLeaf = new ChartWorkspaceLeaf(source);
+    ChartWorkspaceLeaf createdLeaf = new ChartWorkspaceLeaf(created);
+    Orientation orientation = switch (direction) {
+      case LEFT, RIGHT -> Orientation.HORIZONTAL;
+      case TOP, BOTTOM -> Orientation.VERTICAL;
+    };
+    ChartWorkspaceItem first =
+      direction == ChartSplitDirection.LEFT || direction == ChartSplitDirection.TOP ? createdLeaf : sourceLeaf;
+    ChartWorkspaceItem second = first == createdLeaf ? sourceLeaf : createdLeaf;
+    ChartWorkspaceSplit replacement = new ChartWorkspaceSplit(orientation, first, second);
+
+    model.setRoot(replace(model.getRoot(), source, replacement));
+    updateCloseAvailability();
+    if (started) {
+      startChart(created);
+    }
+  }
+
+  void remove(Chart chart) {
+    requireOpen();
+    Objects.requireNonNull(chart, "chart cannot be null");
+    if (count(model.getRoot()) <= 1) {
+      return;
+    }
+
+    Removal removal = remove(model.getRoot(), chart);
+    if (!removal.removed()) {
+      return;
+    }
+    model.setRoot(removal.item());
+    updateCloseAvailability();
+    try {
+      chart.close();
+    } catch (RuntimeException failure) {
+      LOGGER.log(System.Logger.Level.WARNING, "Could not completely close a removed chart", failure);
+    }
+  }
+
+  @Override
+  public void close() {
+    if (closed) {
+      return;
+    }
+    closed = true;
+    RuntimeException failure = null;
+    for (Chart chart : charts(model.getRoot())) {
+      try {
+        chart.close();
+      } catch (RuntimeException exception) {
+        if (failure == null) {
+          failure = exception;
+        } else {
+          failure.addSuppressed(exception);
+        }
+      }
+    }
+    if (failure != null) {
+      throw failure;
+    }
+  }
+
+  private void configure(Chart chart) {
+    chart.onSplitRequested(direction -> split(chart, direction));
+    chart.onCloseRequested(() -> remove(chart));
+  }
+
+  private void updateCloseAvailability() {
+    boolean available = count(model.getRoot()) > 1;
+    charts(model.getRoot()).forEach(chart -> chart.setCloseAvailable(available));
+  }
+
+  private void startChart(Chart chart) {
+    chart.drawChart();
+    chart.loadInitialInstrument();
+  }
+
+  private void requireOpen() {
+    if (closed) {
+      throw new IllegalStateException("Workspace is closed");
+    }
+  }
+
+  private static ChartWorkspaceItem replace(ChartWorkspaceItem item, Chart source, ChartWorkspaceItem replacement) {
+    if (item instanceof ChartWorkspaceLeaf leaf) {
+      return leaf.chart() == source ? replacement : leaf;
+    }
+    ChartWorkspaceSplit split = (ChartWorkspaceSplit) item;
+    ChartWorkspaceItem first = replace(split.first(), source, replacement);
+    ChartWorkspaceItem second = replace(split.second(), source, replacement);
+    return first == split.first() && second == split.second()
+      ? split
+      : new ChartWorkspaceSplit(split.orientation(), first, second, split.dividerPosition());
+  }
+
+  private static Removal remove(ChartWorkspaceItem item, Chart target) {
+    if (item instanceof ChartWorkspaceLeaf leaf) {
+      return leaf.chart() == target ? new Removal(null, true) : new Removal(leaf, false);
+    }
+
+    ChartWorkspaceSplit split = (ChartWorkspaceSplit) item;
+    Removal first = remove(split.first(), target);
+    if (first.removed()) {
+      return new Removal(
+        first.item() == null
+          ? split.second()
+          : new ChartWorkspaceSplit(split.orientation(), first.item(), split.second(), split.dividerPosition()),
+        true
+      );
+    }
+    Removal second = remove(split.second(), target);
+    if (second.removed()) {
+      return new Removal(
+        second.item() == null
+          ? split.first()
+          : new ChartWorkspaceSplit(split.orientation(), split.first(), second.item(), split.dividerPosition()),
+        true
+      );
+    }
+    return new Removal(split, false);
+  }
+
+  private static boolean contains(ChartWorkspaceItem item, Chart target) {
+    if (item instanceof ChartWorkspaceLeaf leaf) {
+      return leaf.chart() == target;
+    }
+    ChartWorkspaceSplit split = (ChartWorkspaceSplit) item;
+    return contains(split.first(), target) || contains(split.second(), target);
+  }
+
+  private static int count(ChartWorkspaceItem item) {
+    if (item == null) {
+      return 0;
+    }
+    if (item instanceof ChartWorkspaceLeaf) {
+      return 1;
+    }
+    ChartWorkspaceSplit split = (ChartWorkspaceSplit) item;
+    return count(split.first()) + count(split.second());
+  }
+
+  private static List<Chart> charts(ChartWorkspaceItem item) {
+    List<Chart> charts = new ArrayList<>();
+    collectCharts(item, charts);
+    return charts;
+  }
+
+  private static void collectCharts(ChartWorkspaceItem item, List<Chart> charts) {
+    if (item == null) {
+      return;
+    }
+    if (item instanceof ChartWorkspaceLeaf leaf) {
+      charts.add(leaf.chart());
+      return;
+    }
+    ChartWorkspaceSplit split = (ChartWorkspaceSplit) item;
+    collectCharts(split.first(), charts);
+    collectCharts(split.second(), charts);
+  }
+
+  private record Removal(ChartWorkspaceItem item, boolean removed) {}
+}

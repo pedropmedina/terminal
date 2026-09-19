@@ -1,12 +1,9 @@
 package com.acteque.terminal;
 
-import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartType;
-import com.acteque.terminal.marketdata.MarketDataSession;
-import com.acteque.terminal.marketlogos.LogoSession;
+import com.acteque.terminal.chartworkspace.ChartWorkspace;
 import io.github.cdimascio.dotenv.Dotenv;
-import java.util.List;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -27,7 +24,7 @@ public class App extends Application {
   private static final double MIN_CANVAS_WIDTH = 1060.0;
   private static final double MIN_CANVAS_HEIGHT = 760.0;
 
-  private Chart chartView;
+  private ChartWorkspace chartWorkspace;
   private AppService services;
 
   public static void main(String[] args) {
@@ -51,37 +48,8 @@ public class App extends Application {
   }
 
   private void startChart(Stage stage) {
-    MarketDataSession marketData = services.createMarketDataSession(SYMBOL);
-    LogoSession logos;
-    try {
-      logos = services.createLogoSession();
-    } catch (RuntimeException | Error failure) {
-      try {
-        marketData.close();
-      } catch (RuntimeException closeFailure) {
-        failure.addSuppressed(closeFailure);
-      }
-      throw failure;
-    }
-
-    try {
-      chartView = new Chart(List.of(), SYMBOL, INTERVAL, services.catalog(), marketData, logos, Platform::runLater);
-      chartView.setChartType(CHART_TYPE);
-    } catch (RuntimeException | Error failure) {
-      try {
-        logos.close();
-      } catch (RuntimeException closeFailure) {
-        failure.addSuppressed(closeFailure);
-      }
-      try {
-        marketData.close();
-      } catch (RuntimeException closeFailure) {
-        failure.addSuppressed(closeFailure);
-      }
-      throw failure;
-    }
-
-    Scene scene = new Scene(chartView.getView(), MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT);
+    chartWorkspace = new ChartWorkspace(services, SYMBOL, INTERVAL, CHART_TYPE, Platform::runLater);
+    Scene scene = new Scene(chartWorkspace.getView(), MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT);
 
     // This is find for now, but we might want defined up top if we need to access the theme manager later
     new AppThemeManager(scene, AppTheme.LIGHT);
@@ -92,15 +60,14 @@ public class App extends Application {
     stage.setScene(scene);
     stage.show();
 
-    chartView.drawChart();
-    chartView.loadInitialInstrument();
+    chartWorkspace.start();
   }
 
   @Override
   public void stop() {
     try {
-      if (chartView != null) {
-        chartView.close();
+      if (chartWorkspace != null) {
+        chartWorkspace.close();
       }
     } finally {
       if (services != null) {

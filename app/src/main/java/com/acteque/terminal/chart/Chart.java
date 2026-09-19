@@ -36,9 +36,12 @@ public final class Chart implements AutoCloseable {
   private final ChartInspector inspector;
   private final ChartStatusLine statusLine;
   private final ChartViewBuilder viewBuilder;
+  private final ChartModel model;
   private final String initialSymbol;
   private final boolean ownsMarketData;
   private Consumer<ChartInterval> intervalSelectedHandler = ignored -> {};
+  private Consumer<ChartSplitDirection> splitRequestedHandler = ignored -> {};
+  private Runnable closeRequestedHandler = () -> {};
 
   public Chart(
     List<PricePoint> pricePoints,
@@ -130,7 +133,9 @@ public final class Chart implements AutoCloseable {
     this.logoSource = Objects.requireNonNull(logoSource, "logoSource cannot be null");
     initialSymbol = symbol;
     ownsMarketData = marketData != null;
-    ChartModel model = new ChartModel();
+    model = new ChartModel();
+    model.setSymbol(symbol);
+    model.setChartType(ChartType.LINE);
     interactor = ownsMarketData
       ? new ChartInteractor(model, marketData, Objects.requireNonNull(uiExecutor, "uiExecutor cannot be null"))
       : new ChartInteractor(model);
@@ -169,6 +174,8 @@ public final class Chart implements AutoCloseable {
     inspector = new ChartInspector();
     inspector.onChartTypeSelected(this::setChartType);
     menu.onChartTypeSelectionRequested(inspector::showChartTypes);
+    menu.onSplitRequested(this::requestSplit);
+    menu.onCloseRequested(this::requestClose);
     Drawer inspectorDrawer = inspector.getView();
     inspector.openProperty().addListener((ignored, wasOpen, isOpen) -> menu.setChartTypeSelectionOpen(isOpen));
     model.modalOpenProperty().addListener((ignored, wasOpen, isOpen) -> {
@@ -218,12 +225,37 @@ public final class Chart implements AutoCloseable {
     intervalSelectedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
+  public String getSymbol() {
+    return model.getSymbol();
+  }
+
+  public ChartInterval getInterval() {
+    return model.getInterval();
+  }
+
+  public ChartType getChartType() {
+    return model.getChartType();
+  }
+
+  public void onSplitRequested(Consumer<ChartSplitDirection> callback) {
+    splitRequestedHandler = Objects.requireNonNull(callback, "callback cannot be null");
+  }
+
+  public void onCloseRequested(Runnable callback) {
+    closeRequestedHandler = Objects.requireNonNull(callback, "callback cannot be null");
+  }
+
+  public void setCloseAvailable(boolean value) {
+    menu.setCloseAvailable(value);
+  }
+
   public void beginInstrumentLoad() {
     statusLine.cancelLogoLoad();
   }
 
   public void setInstrument(String symbol, String displayName, List<CalendarData> bars, Optional<InstrumentLogo> logo) {
     Objects.requireNonNull(symbol, "symbol cannot be null");
+    model.setSymbol(symbol);
     statusLine.setInstrument(displayName, logo);
     instrumentSearch.setCurrentSymbol(symbol);
     canvas.setInstrumentPricePoints(toPricePoints(bars));
@@ -239,6 +271,7 @@ public final class Chart implements AutoCloseable {
   }
 
   public void setChartType(ChartType chartType) {
+    model.setChartType(Objects.requireNonNull(chartType, "chartType cannot be null"));
     canvas.setChartType(chartType);
     menu.setChartType(chartType);
     inspector.setChartType(chartType);
@@ -254,6 +287,7 @@ public final class Chart implements AutoCloseable {
 
   @Override
   public void close() {
+    menu.close();
     statusLine.cancelLogoLoad();
     try {
       logoSource.close();
@@ -268,6 +302,14 @@ public final class Chart implements AutoCloseable {
     canvas.setInterval(interval);
     menu.setInterval(interval);
     intervalSelectedHandler.accept(interval);
+  }
+
+  private void requestSplit(ChartSplitDirection direction) {
+    splitRequestedHandler.accept(direction);
+  }
+
+  private void requestClose() {
+    closeRequestedHandler.run();
   }
 
   private void applyLoadedInstrument(InstrumentLoadResult instrument) {

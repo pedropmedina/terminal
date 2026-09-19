@@ -1,6 +1,7 @@
 package com.acteque.terminal.chart.menu;
 
 import com.acteque.terminal.chart.ChartIntervalText;
+import com.acteque.terminal.chart.ChartSplitDirection;
 import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.chart.ChartTypePresentation;
 import com.acteque.terminal.chart.menu.ChartMenuModel.Item;
@@ -10,6 +11,10 @@ import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.Button.Size;
 import com.acteque.terminal.ui.Button.Variant;
 import com.acteque.terminal.ui.icons.LucideIcon;
+import com.acteque.terminal.ui.icons.LucideIcons;
+import com.acteque.terminal.ui.popover.Popover;
+import com.acteque.terminal.ui.popover.PopoverContent;
+import com.acteque.terminal.ui.popover.PopoverTrigger;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.beans.binding.Bindings;
@@ -17,6 +22,7 @@ import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.util.Builder;
@@ -29,16 +35,24 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
 
   private final ChartMenuModel model;
   private final Consumer<Item> actionRequestedHandler;
+  private final Consumer<ChartSplitDirection> splitRequestedHandler;
   private final ChartMenuItems root = new ChartMenuItems();
+  private final Popover splitPopover;
   private Button chartTypeButton;
   private boolean chartTypeSelectionOpen;
 
-  ChartMenuViewBuilder(ChartMenuModel model, Consumer<Item> actionRequestedHandler) {
+  ChartMenuViewBuilder(
+    ChartMenuModel model,
+    Consumer<Item> actionRequestedHandler,
+    Consumer<ChartSplitDirection> splitRequestedHandler
+  ) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
     this.actionRequestedHandler = Objects.requireNonNull(
       actionRequestedHandler,
       "actionRequestedHandler cannot be null"
     );
+    this.splitRequestedHandler = Objects.requireNonNull(splitRequestedHandler, "splitRequestedHandler cannot be null");
+    splitPopover = createSplitPopover();
 
     root.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
     StackPane.setAlignment(root, Pos.TOP_CENTER);
@@ -67,7 +81,12 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
     }
   }
 
+  void close() {
+    splitPopover.setOpen(false);
+  }
+
   private void rebuildItems() {
+    splitPopover.setOpen(false);
     Button[] buttons = model
       .getItems()
       .stream()
@@ -77,7 +96,25 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
   }
 
   private Button createItem(Item item) {
-    Button button = new Button("", Variant.GHOST, item == Item.CHART_TYPE ? Size.ICON : Size.DEFAULT);
+    if (item == Item.SPLIT) {
+      PopoverTrigger trigger = new PopoverTrigger(
+        "",
+        new LucideIcon(LucideIcons.PLUS),
+        Variant.GHOST,
+        Size.ICON,
+        splitPopover
+      );
+      trigger.getStyleClass().add("chart-menu-split");
+      trigger.setAccessibleText(item.description());
+      trigger.setFocusTraversable(true);
+      return trigger;
+    }
+
+    Button button = new Button(
+      "",
+      Variant.GHOST,
+      item == Item.CHART_TYPE || item == Item.CLOSE ? Size.ICON : Size.DEFAULT
+    );
     button.setAccessibleText(item.description());
     button.setFocusTraversable(true);
     button.setOnAction(ignored -> actionRequestedHandler.accept(item));
@@ -112,8 +149,39 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
         button.pseudoClassStateChanged(DRAWER_OPEN, chartTypeSelectionOpen);
         updateChartTypeButton();
       }
+      case CLOSE -> {
+        button.getStyleClass().add("chart-menu-close");
+        button.setGraphic(new LucideIcon(LucideIcons.X));
+      }
+      case SPLIT -> throw new IllegalStateException("Split item must use its popover trigger");
     }
     return button;
+  }
+
+  private Popover createSplitPopover() {
+    GridPane actions = new GridPane();
+    actions.getStyleClass().add("chart-split-actions");
+    addSplitAction(actions, "Top", ChartSplitDirection.TOP, 1, 0);
+    addSplitAction(actions, "Left", ChartSplitDirection.LEFT, 0, 1);
+    addSplitAction(actions, "Right", ChartSplitDirection.RIGHT, 2, 1);
+    addSplitAction(actions, "Bottom", ChartSplitDirection.BOTTOM, 1, 2);
+
+    PopoverContent content = new PopoverContent(actions);
+    content.getStyleClass().add("chart-split-popover");
+    return new Popover(content);
+  }
+
+  private void addSplitAction(GridPane actions, String label, ChartSplitDirection direction, int column, int row) {
+    Button button = new Button(label, Variant.GHOST, Size.DEFAULT);
+    button.getStyleClass().add("chart-split-action");
+    button.setAccessibleText("Create chart to the " + label.toLowerCase());
+    button.setFocusTraversable(true);
+    button.setMaxWidth(Double.MAX_VALUE);
+    button.setOnAction(ignored -> {
+      splitPopover.setOpen(false);
+      splitRequestedHandler.accept(direction);
+    });
+    actions.add(button, column, row);
   }
 
   private void updateChartTypeButton() {

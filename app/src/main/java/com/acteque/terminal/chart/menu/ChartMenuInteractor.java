@@ -20,7 +20,15 @@ final class ChartMenuInteractor {
   void initialize(String instrumentSymbol, ChartInterval interval) {
     setInstrumentSymbol(instrumentSymbol);
     setInterval(interval);
-    model.setItems(List.of(Item.INSTRUMENT, Item.INTERVAL, Item.CHART_TYPE));
+    model.setItems(List.of(Item.INSTRUMENT, Item.INTERVAL, Item.CHART_TYPE, Item.SPLIT));
+  }
+
+  void setCloseAvailable(boolean value) {
+    model.setItems(
+      value
+        ? List.of(Item.INSTRUMENT, Item.INTERVAL, Item.CHART_TYPE, Item.SPLIT, Item.CLOSE)
+        : List.of(Item.INSTRUMENT, Item.INTERVAL, Item.CHART_TYPE, Item.SPLIT)
+    );
   }
 
   void onActionRequested(Consumer<Item> callback) {
