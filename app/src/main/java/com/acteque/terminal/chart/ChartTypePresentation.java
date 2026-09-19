@@ -13,6 +13,7 @@ public final class ChartTypePresentation {
       case LINE_WITH_MARKERS -> "Line with markers";
       case STEP_LINE -> "Step line";
       case AREA -> "Area";
+      case BAR -> "Bar";
       case CANDLESTICK -> "Candlestick";
     };
   }
@@ -23,6 +24,7 @@ public final class ChartTypePresentation {
       case LINE_WITH_MARKERS -> "Marks each closing price and connects the points.";
       case STEP_LINE -> "Holds each closing price until the next interval.";
       case AREA -> "Fills the space beneath the closing-price line.";
+      case BAR -> "Shows each interval's open, high, low, and close as an OHLC bar.";
       case CANDLESTICK -> "Shows each interval's open, high, low, and close.";
     };
   }
@@ -32,6 +34,7 @@ public final class ChartTypePresentation {
       case LINE, STEP_LINE -> LucideIcons.CHART_LINE;
       case LINE_WITH_MARKERS -> LucideIcons.CHART_NETWORK;
       case AREA -> LucideIcons.CHART_AREA;
+      case BAR -> LucideIcons.CHART_BAR;
       case CANDLESTICK -> LucideIcons.CHART_CANDLESTICK;
     };
   }

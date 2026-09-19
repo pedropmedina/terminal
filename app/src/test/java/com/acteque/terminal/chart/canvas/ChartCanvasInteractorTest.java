@@ -82,16 +82,18 @@ class ChartCanvasInteractorTest {
     long previousRevision = model.revisionProperty().get();
 
     assertEquals(ChartType.LINE, model.chartType);
-    interactor.setChartType(ChartType.CANDLESTICK);
+    interactor.setChartType(ChartType.BAR);
 
-    assertEquals(ChartType.CANDLESTICK, model.chartType);
+    assertEquals(ChartType.BAR, model.chartType);
     assertEquals(previousRevision + 1, model.revisionProperty().get());
     assertEquals(8, model.visiblePricePointCount);
     assertEquals(2, model.visiblePricePointOffset);
     assertEquals(new PriceRange(90.0, 110.0), model.lockedPriceRange);
 
     interactor.setChartType(ChartType.CANDLESTICK);
-    assertEquals(previousRevision + 1, model.revisionProperty().get());
+    assertEquals(previousRevision + 2, model.revisionProperty().get());
+    interactor.setChartType(ChartType.CANDLESTICK);
+    assertEquals(previousRevision + 2, model.revisionProperty().get());
 
     interactor.setChartType(ChartType.STEP_LINE);
     assertEquals(ChartType.STEP_LINE, model.chartType);
@@ -112,7 +114,7 @@ class ChartCanvasInteractorTest {
   }
 
   @Test
-  void autoscaleUsesClosesForLineAndAreaAndFullHighLowRangeForCandlesticks() {
+  void autoscaleUsesClosesForLineTypesAndFullHighLowRangeForOhlcTypes() {
     ChartCanvasModel model = new ChartCanvasModel();
     ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
     interactor.initialize(
@@ -132,20 +134,23 @@ class ChartCanvasInteractorTest {
     interactor.setChartType(ChartType.STEP_LINE);
     assertEquals(lineRange, interactor.displayedPriceRange(400.0));
 
+    interactor.setChartType(ChartType.BAR);
+    PriceRange barRange = interactor.displayedPriceRange(400.0);
+    assertEquals(70.0 - 60.0 * 0.08, barRange.min(), 0.000_001);
+    assertEquals(130.0 + 60.0 * 0.08, barRange.max(), 0.000_001);
+
     interactor.setChartType(ChartType.CANDLESTICK);
-    PriceRange candleRange = interactor.displayedPriceRange(400.0);
-    assertEquals(70.0 - 60.0 * 0.08, candleRange.min(), 0.000_001);
-    assertEquals(130.0 + 60.0 * 0.08, candleRange.max(), 0.000_001);
+    assertEquals(barRange, interactor.displayedPriceRange(400.0));
   }
 
   @Test
-  void candlestickAutoscaleUsesOnlyTheVisibleWindowAfterZoomAndPan() {
+  void ohlcAutoscaleUsesOnlyTheVisibleWindowAfterZoomAndPan() {
     ChartCanvasModel model = new ChartCanvasModel();
     ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
     List<PricePoint> points = new ArrayList<>(points(12));
     points.set(0, new PricePoint(LocalDate.of(2026, 1, 1), 100, 1_000, 1, 100, 1_000));
     interactor.initialize(points, ChartInterval.DAILY);
-    interactor.setChartType(ChartType.CANDLESTICK);
+    interactor.setChartType(ChartType.BAR);
     model.visiblePricePointCount = 8;
 
     PriceRange latestRange = interactor.displayedPriceRange(400.0);
@@ -156,6 +161,9 @@ class ChartCanvasInteractorTest {
     PriceRange pannedRange = interactor.displayedPriceRange(400.0);
     assertEquals(1.0 - 999.0 * 0.08, pannedRange.min(), 0.000_001);
     assertEquals(1_000.0 + 999.0 * 0.08, pannedRange.max(), 0.000_001);
+
+    interactor.setChartType(ChartType.CANDLESTICK);
+    assertEquals(pannedRange, interactor.displayedPriceRange(400.0));
   }
 
   @Test

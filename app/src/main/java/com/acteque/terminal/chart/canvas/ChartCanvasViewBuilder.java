@@ -60,6 +60,12 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     Color.BLACK,
     canvas -> canvas.chartLine
   );
+  private final StyleableProperty<Paint> chartBar = paintProperty(
+    "chartBar",
+    "-chart-bar",
+    Color.BLACK,
+    canvas -> canvas.chartBar
+  );
   private final StyleableProperty<Paint> chartCandleUp = paintProperty(
     "chartCandleUp",
     "-chart-candle-up",
@@ -137,6 +143,18 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     "-chart-line-width",
     2.2,
     canvas -> canvas.chartLineWidth
+  );
+  private final StyleableProperty<Number> chartBarStrokeWidth = numberProperty(
+    "chartBarStrokeWidth",
+    "-chart-bar-stroke-width",
+    1.0,
+    canvas -> canvas.chartBarStrokeWidth
+  );
+  private final StyleableProperty<Number> chartBarTickMaxWidth = numberProperty(
+    "chartBarTickMaxWidth",
+    "-chart-bar-tick-max-width",
+    6.0,
+    canvas -> canvas.chartBarTickMaxWidth
   );
   private final StyleableProperty<Number> chartMarkerDiameter = numberProperty(
     "chartMarkerDiameter",
@@ -227,6 +245,7 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
       chartGrid.getValue(),
       chartMutedForeground.getValue(),
       chartLine.getValue(),
+      chartBar.getValue(),
       chartCandleUp.getValue(),
       chartCandleDown.getValue(),
       chartCandleBorder.getValue(),
@@ -240,6 +259,8 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
       chartAxisLineWidth.getValue().doubleValue(),
       chartGridLineWidth.getValue().doubleValue(),
       chartLineWidth.getValue().doubleValue(),
+      chartBarStrokeWidth.getValue().doubleValue(),
+      chartBarTickMaxWidth.getValue().doubleValue(),
       chartMarkerDiameter.getValue().doubleValue(),
       chartAreaOpacity.getValue().doubleValue(),
       chartCandleBodyMaxWidth.getValue().doubleValue(),

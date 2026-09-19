@@ -40,6 +40,9 @@ class ChartCanvasThemeTest {
 
       assertEquals(Color.web("#ffffff"), builder.renderStyle().background());
       assertEquals(Color.web("#0a0a0a"), builder.renderStyle().line());
+      assertEquals(Color.web("#0a0a0a"), builder.renderStyle().bar());
+      assertEquals(1.0, builder.renderStyle().barStrokeWidth());
+      assertEquals(6.0, builder.renderStyle().barTickMaxWidth());
       assertEquals(6.0, builder.renderStyle().markerDiameter());
       assertEquals(0.2, builder.renderStyle().areaOpacity());
       assertEquals(Color.web("#0a0a0a"), builder.renderStyle().candleUp());
@@ -55,6 +58,7 @@ class ChartCanvasThemeTest {
 
       assertEquals(Color.web("#0a0a0a"), builder.renderStyle().background());
       assertEquals(Color.web("#fafafa"), builder.renderStyle().line());
+      assertEquals(Color.web("#fafafa"), builder.renderStyle().bar());
       assertEquals(0.2, builder.renderStyle().areaOpacity());
       assertEquals(Color.web("#fafafa"), builder.renderStyle().candleUp());
       assertEquals(Color.web("#0a0a0a"), builder.renderStyle().candleDown());

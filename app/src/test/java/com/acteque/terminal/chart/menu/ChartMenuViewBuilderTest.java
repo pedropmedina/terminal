@@ -71,6 +71,8 @@ class ChartMenuViewBuilderTest {
         LucideIcons.CHART_LINE,
         ChartType.AREA,
         LucideIcons.CHART_AREA,
+        ChartType.BAR,
+        LucideIcons.CHART_BAR,
         ChartType.CANDLESTICK,
         LucideIcons.CHART_CANDLESTICK
       );
@@ -83,6 +85,8 @@ class ChartMenuViewBuilderTest {
         "Step line",
         ChartType.AREA,
         "Area",
+        ChartType.BAR,
+        "Bar",
         ChartType.CANDLESTICK,
         "Candlestick"
       );

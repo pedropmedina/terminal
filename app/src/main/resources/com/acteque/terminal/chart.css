@@ -129,6 +129,7 @@
   -chart-grid: -app-border;
   -chart-muted-foreground: -app-muted-foreground;
   -chart-line: -app-chart-line;
+  -chart-bar: -app-chart-line;
   -chart-candle-up: -app-chart-up;
   -chart-candle-down: -app-chart-down;
   -chart-candle-border: -app-chart-border;
@@ -142,6 +143,8 @@
   -chart-axis-line-width: 1.4px;
   -chart-grid-line-width: 1px;
   -chart-line-width: 2.2px;
+  -chart-bar-stroke-width: 1px;
+  -chart-bar-tick-max-width: 6px;
   -chart-marker-diameter: 6px;
   -chart-area-opacity: 0.2;
   -chart-candle-body-max-width: 12px;

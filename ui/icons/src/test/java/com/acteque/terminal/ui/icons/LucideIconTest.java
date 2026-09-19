@@ -87,6 +87,7 @@ class LucideIconTest {
   @Test
   void generatedCatalogContainsValidGeometry() {
     assertEquals("chart-area", LucideIcons.CHART_AREA.sourceName());
+    assertEquals("chart-bar", LucideIcons.CHART_BAR.sourceName());
     assertEquals("chart-candlestick", LucideIcons.CHART_CANDLESTICK.sourceName());
     assertEquals("chart-line", LucideIcons.CHART_LINE.sourceName());
     assertEquals("chart-network", LucideIcons.CHART_NETWORK.sourceName());

@@ -260,11 +260,12 @@ final class ChartCanvasInteractor {
   }
 
   PriceRange calculateDefaultPriceRange(List<PricePoint> points) {
+    boolean usesHighLowRange = model.chartType == ChartType.BAR || model.chartType == ChartType.CANDLESTICK;
     double min = Double.MAX_VALUE;
     double max = -Double.MAX_VALUE;
     for (PricePoint point : points) {
-      min = Math.min(min, model.chartType == ChartType.CANDLESTICK ? point.low() : point.close());
-      max = Math.max(max, model.chartType == ChartType.CANDLESTICK ? point.high() : point.close());
+      min = Math.min(min, usesHighLowRange ? point.low() : point.close());
+      max = Math.max(max, usesHighLowRange ? point.high() : point.close());
     }
     double range = max - min;
     double padding = range == 0 ? Math.max(1.0, max * 0.05) : range * 0.08;

@@ -83,6 +83,9 @@ class ChartTest {
         chartController.setChartType(ChartType.LINE_WITH_MARKERS);
         assertSame(LucideIcons.CHART_NETWORK, assertInstanceOf(LucideIcon.class, button.getGraphic()).getGlyph());
 
+        chartController.setChartType(ChartType.BAR);
+        assertSame(LucideIcons.CHART_BAR, assertInstanceOf(LucideIcon.class, button.getGraphic()).getGlyph());
+
         chartController.setChartType(ChartType.CANDLESTICK);
         assertSame(LucideIcons.CHART_CANDLESTICK, assertInstanceOf(LucideIcon.class, button.getGraphic()).getGlyph());
       }

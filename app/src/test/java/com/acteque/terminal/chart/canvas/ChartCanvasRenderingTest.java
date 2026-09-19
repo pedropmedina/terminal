@@ -105,6 +105,65 @@ class ChartCanvasRenderingTest {
   }
 
   @Test
+  void rendersBarRangesWithOpenTicksOnTheLeftAndCloseTicksOnTheRight() {
+    FxTestSupport.runAndWait(() -> {
+      ChartCanvasModel model = new ChartCanvasModel();
+      ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
+      interactor.initialize(
+        List.of(
+          point(1, 100, 110, 90, 100),
+          point(2, 100, 120, 90, 110),
+          point(3, 110, 120, 90, 100),
+          point(4, 100, 110, 90, 100)
+        ),
+        ChartInterval.DAILY
+      );
+      ChartCanvasViewBuilder builder = new ChartCanvasViewBuilder(model, interactor);
+      Canvas canvas = builder.build();
+      canvas.setWidth(800);
+      canvas.setHeight(500);
+
+      interactor.setChartType(ChartType.LINE);
+      builder.drawChart();
+      PixelReader line = canvas.snapshot(null, null).getPixelReader();
+
+      interactor.setChartType(ChartType.BAR);
+      builder.drawChart();
+      PixelReader bars = canvas.snapshot(null, null).getPixelReader();
+      Color barColor = (Color) builder.renderStyle().bar();
+      assertCloserToSeriesColor(bars, line, barColor, 245, 100);
+      assertCloserToSeriesColor(bars, line, barColor, 240, 301);
+      assertCloserToSeriesColor(bars, line, barColor, 250, 167);
+      assertEquals(line.getColor(250, 301), bars.getColor(250, 301));
+      assertEquals(line.getColor(240, 167), bars.getColor(240, 167));
+
+      interactor.setChartType(ChartType.LINE);
+      builder.drawChart();
+      assertEquals(line.getColor(240, 301), canvas.snapshot(null, null).getPixelReader().getColor(240, 301));
+    });
+  }
+
+  @Test
+  void rendersAFlatSinglePointBar() {
+    FxTestSupport.runAndWait(() -> {
+      ChartCanvasModel model = new ChartCanvasModel();
+      ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
+      interactor.initialize(List.of(point(1, 100, 110, 90, 100)), ChartInterval.DAILY);
+      ChartCanvasViewBuilder builder = new ChartCanvasViewBuilder(model, interactor);
+      Canvas canvas = builder.build();
+      canvas.setWidth(800);
+      canvas.setHeight(500);
+
+      interactor.setChartType(ChartType.BAR);
+      builder.drawChart();
+      PixelReader bar = canvas.snapshot(null, null).getPixelReader();
+      assertNotEquals(builder.renderStyle().background(), bar.getColor(368, 100));
+      assertNotEquals(builder.renderStyle().background(), bar.getColor(363, 234));
+      assertNotEquals(builder.renderStyle().background(), bar.getColor(373, 234));
+    });
+  }
+
+  @Test
   void drawsAFlatCandleAndASinglePointLine() {
     FxTestSupport.runAndWait(() -> {
       ChartCanvasModel model = new ChartCanvasModel();

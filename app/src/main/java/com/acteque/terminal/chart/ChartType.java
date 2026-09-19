@@ -6,5 +6,6 @@ public enum ChartType {
   LINE_WITH_MARKERS,
   STEP_LINE,
   AREA,
+  BAR,
   CANDLESTICK,
 }

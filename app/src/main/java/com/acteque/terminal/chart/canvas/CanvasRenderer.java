@@ -279,6 +279,7 @@ final class CanvasRenderer {
     graphics.rect(bounds.left(), bounds.top(), bounds.width(), bounds.height());
     graphics.clip();
     switch (model.chartType) {
+      case BAR -> drawBars(graphics, bounds, priceRange, visiblePoints, style);
       case CANDLESTICK -> drawCandlesticks(graphics, bounds, priceRange, visiblePoints, style);
       case LINE -> drawPriceLine(graphics, bounds, priceRange, visiblePoints, style);
       case LINE_WITH_MARKERS -> {
@@ -292,6 +293,33 @@ final class CanvasRenderer {
       }
     }
     graphics.restore();
+  }
+
+  private void drawBars(
+    GraphicsContext graphics,
+    ChartBounds bounds,
+    PriceRange priceRange,
+    List<PricePoint> visiblePoints,
+    RenderStyle style
+  ) {
+    double slotWidth = bounds.width() / Math.max(1, model.visiblePricePointCount - 1);
+    double tickWidth = Math.max(1.0, Math.min(style.barTickMaxWidth(), slotWidth * 0.35));
+    graphics.setStroke(style.bar());
+    graphics.setLineWidth(style.barStrokeWidth());
+    for (int index = 0; index < visiblePoints.size(); index++) {
+      PricePoint point = visiblePoints.get(index);
+      double x = xForSlot(index, model.visiblePricePointCount, bounds);
+      double openY = yForPrice(point.open(), bounds, priceRange);
+      double closeY = yForPrice(point.close(), bounds, priceRange);
+      graphics.strokeLine(
+        x,
+        yForPrice(point.high(), bounds, priceRange),
+        x,
+        yForPrice(point.low(), bounds, priceRange)
+      );
+      graphics.strokeLine(x - tickWidth, openY, x, openY);
+      graphics.strokeLine(x, closeY, x + tickWidth, closeY);
+    }
   }
 
   private void drawPriceArea(
