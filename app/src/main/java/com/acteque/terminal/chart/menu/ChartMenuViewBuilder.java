@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.layout.Region;
@@ -24,11 +25,13 @@ import javafx.util.Builder;
 final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
 
   private static final double TOP_MARGIN = 12.0;
+  private static final PseudoClass DRAWER_OPEN = PseudoClass.getPseudoClass("drawer-open");
 
   private final ChartMenuModel model;
   private final Consumer<Item> actionRequestedHandler;
   private final ChartMenuItems root = new ChartMenuItems();
   private Button chartTypeButton;
+  private boolean chartTypeSelectionOpen;
 
   ChartMenuViewBuilder(ChartMenuModel model, Consumer<Item> actionRequestedHandler) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
@@ -55,6 +58,13 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
   @Override
   public void refreshView() {
     rebuildItems();
+  }
+
+  void setChartTypeSelectionOpen(boolean value) {
+    chartTypeSelectionOpen = value;
+    if (chartTypeButton != null) {
+      chartTypeButton.pseudoClassStateChanged(DRAWER_OPEN, value);
+    }
   }
 
   private void rebuildItems() {
@@ -98,6 +108,8 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
       }
       case CHART_TYPE -> {
         chartTypeButton = button;
+        button.getStyleClass().add("chart-menu-chart-type");
+        button.pseudoClassStateChanged(DRAWER_OPEN, chartTypeSelectionOpen);
         updateChartTypeButton();
       }
     }

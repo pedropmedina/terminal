@@ -2,9 +2,9 @@ package com.acteque.terminal.instrumentsearch;
 
 import com.acteque.terminal.marketdata.Instrument;
 import com.acteque.terminal.reload.ReloadHooks;
+import com.acteque.terminal.reload.ReloadTarget;
 import com.acteque.terminal.ui.Input;
 import com.acteque.terminal.ui.ListView;
-import com.acteque.terminal.reload.ReloadTarget;
 import com.acteque.terminal.ui.dialog.Dialog;
 import com.acteque.terminal.ui.dialog.DialogContent;
 import com.acteque.terminal.ui.dialog.DialogTitle;

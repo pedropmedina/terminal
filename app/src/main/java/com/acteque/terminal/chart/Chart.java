@@ -1,9 +1,9 @@
 package com.acteque.terminal.chart;
 
 import com.acteque.terminal.chart.canvas.ChartCanvas;
+import com.acteque.terminal.chart.inspector.ChartInspector;
 import com.acteque.terminal.chart.intervalselection.ChartIntervalSelection;
 import com.acteque.terminal.chart.menu.ChartMenu;
-import com.acteque.terminal.chart.settings.ChartSettings;
 import com.acteque.terminal.chart.statusline.ChartStatusLine;
 import com.acteque.terminal.instrumentsearch.InstrumentSearch;
 import com.acteque.terminal.marketdata.CalendarData;
@@ -15,6 +15,7 @@ import com.acteque.terminal.marketlogos.LogoException;
 import com.acteque.terminal.marketlogos.LogoRequest;
 import com.acteque.terminal.marketlogos.LogoSession;
 import com.acteque.terminal.ui.dialog.Dialog;
+import com.acteque.terminal.ui.drawer.Drawer;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,7 +33,7 @@ public final class Chart implements AutoCloseable {
   private final InstrumentSearch instrumentSearch;
   private final ChartCanvas canvas;
   private final ChartMenu menu;
-  private final ChartSettings settings;
+  private final ChartInspector inspector;
   private final ChartStatusLine statusLine;
   private final ChartViewBuilder viewBuilder;
   private final String initialSymbol;
@@ -165,12 +166,14 @@ public final class Chart implements AutoCloseable {
     menu = new ChartMenu(symbol, interval);
     menu.onInstrumentSelectionRequested(interactor::openInstrumentSearch);
     menu.onIntervalSelectionRequested(interactor::openIntervalSelection);
-    settings = new ChartSettings();
-    settings.onChartTypeSelected(this::setChartType);
-    menu.onChartTypeSelectionRequested(settings::showChartTypes);
+    inspector = new ChartInspector();
+    inspector.onChartTypeSelected(this::setChartType);
+    menu.onChartTypeSelectionRequested(inspector::showChartTypes);
+    Drawer inspectorDrawer = inspector.getView();
+    inspector.openProperty().addListener((ignored, wasOpen, isOpen) -> menu.setChartTypeSelectionOpen(isOpen));
     model.modalOpenProperty().addListener((ignored, wasOpen, isOpen) -> {
       if (isOpen) {
-        settings.close();
+        inspector.close();
       }
     });
 
@@ -180,7 +183,7 @@ public final class Chart implements AutoCloseable {
       model,
       canvasView,
       menu.getView(),
-      settings.getView(),
+      inspectorDrawer,
       statusLine.getView(),
       instrumentSearch.getView(),
       intervalSelectionDialog,
@@ -238,7 +241,7 @@ public final class Chart implements AutoCloseable {
   public void setChartType(ChartType chartType) {
     canvas.setChartType(chartType);
     menu.setChartType(chartType);
-    settings.setChartType(chartType);
+    inspector.setChartType(chartType);
   }
 
   public void drawChart() {

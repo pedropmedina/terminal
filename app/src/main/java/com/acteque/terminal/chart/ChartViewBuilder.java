@@ -30,7 +30,7 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
   private final ChartModel model;
   private final Canvas canvas;
   private final Region menu;
-  private final Drawer settingsDrawer;
+  private final Drawer inspectorDrawer;
   private final Region statusLine;
   private final Dialog instrumentSearchDialog;
   private final Dialog intervalSelectionDialog;
@@ -42,7 +42,7 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
     ChartModel model,
     Canvas canvas,
     Region menu,
-    Drawer settingsDrawer,
+    Drawer inspectorDrawer,
     Region statusLine,
     Dialog instrumentSearchDialog,
     Dialog intervalSelectionDialog,
@@ -52,7 +52,7 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
     this.model = Objects.requireNonNull(model, "model cannot be null");
     this.canvas = Objects.requireNonNull(canvas, "canvas cannot be null");
     this.menu = Objects.requireNonNull(menu, "menu cannot be null");
-    this.settingsDrawer = Objects.requireNonNull(settingsDrawer, "settingsDrawer cannot be null");
+    this.inspectorDrawer = Objects.requireNonNull(inspectorDrawer, "inspectorDrawer cannot be null");
     this.statusLine = Objects.requireNonNull(statusLine, "statusLine cannot be null");
     this.instrumentSearchDialog = Objects.requireNonNull(
       instrumentSearchDialog,
@@ -101,7 +101,7 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
 
     root
       .getChildren()
-      .setAll(canvas, menu, statusOverlay, settingsDrawer, instrumentSearchDialog, intervalSelectionDialog);
+      .setAll(canvas, menu, statusOverlay, inspectorDrawer, instrumentSearchDialog, intervalSelectionDialog);
   }
 
   private void handleShortcut(KeyEvent event) {
@@ -119,7 +119,7 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
 
   private void positionSettingsDrawerBelowMenu() {
     double menuBottom = Math.max(0.0, menu.getBoundsInParent().getMaxY());
-    StackPane.setMargin(settingsDrawer, new Insets(menuBottom, 0.0, 0.0, 0.0));
+    StackPane.setMargin(inspectorDrawer, new Insets(menuBottom, 0.0, 0.0, 0.0));
   }
 
   static boolean isInstrumentSearchShortcut(KeyEvent event) {

@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart.settings;
+package com.acteque.terminal.chart.inspector;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,17 +27,17 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.junit.jupiter.api.Test;
 
-class ChartSettingsTest {
+class ChartInspectorTest {
 
   @Test
   void presentsEveryChartTypeInTheLeftSettingsDrawer() {
     FxTestSupport.runAndWait(() -> {
-      ChartSettings settings = new ChartSettings();
-      Drawer drawer = settings.getView();
+      ChartInspector inspector = new ChartInspector();
+      Drawer drawer = inspector.getView();
       StackPane root = new StackPane(drawer);
       new AppThemeManager(new Scene(root, 800, 600), AppTheme.LIGHT);
 
-      settings.showChartTypes();
+      inspector.showChartTypes();
       root.applyCss();
       root.layout();
 
@@ -78,37 +78,50 @@ class ChartSettingsTest {
   @Test
   void selectingATypeClosesTheDrawerAndRetainsSelectionOnReopen() {
     FxTestSupport.runAndWait(() -> {
-      ChartSettings settings = new ChartSettings();
+      ChartInspector inspector = new ChartInspector();
       AtomicReference<ChartType> selected = new AtomicReference<>();
-      settings.onChartTypeSelected(selected::set);
-      settings.setChartType(ChartType.CANDLESTICK);
-      settings.showChartTypes();
-      ToggleGroup options = options(settings.getView());
+      inspector.onChartTypeSelected(selected::set);
+      inspector.setChartType(ChartType.CANDLESTICK);
+      inspector.showChartTypes();
+      ToggleGroup options = options(inspector.getView());
 
       assertTrue(item(options, ChartType.CANDLESTICK).isSelected());
       item(options, ChartType.STEP_LINE).fire();
 
       assertEquals(ChartType.STEP_LINE, selected.get());
-      assertFalse(settings.getView().isOpen());
-      settings.showChartTypes();
+      assertFalse(inspector.getView().isOpen());
+      inspector.showChartTypes();
       assertTrue(item(options, ChartType.STEP_LINE).isSelected());
       assertFalse(item(options, ChartType.CANDLESTICK).isSelected());
 
       item(options, ChartType.STEP_LINE).fire();
       assertTrue(item(options, ChartType.STEP_LINE).isSelected());
-      assertFalse(settings.getView().isOpen());
+      assertFalse(inspector.getView().isOpen());
+    });
+  }
+
+  @Test
+  void mirrorsDrawerDismissalsIntoTheFeatureState() {
+    FxTestSupport.runAndWait(() -> {
+      ChartInspector inspector = new ChartInspector();
+
+      inspector.showChartTypes();
+      assertTrue(inspector.openProperty().get());
+
+      inspector.getView().close();
+      assertFalse(inspector.openProperty().get());
     });
   }
 
   @Test
   void presentsChartTypesWithoutHeaderOrScrollContainer() {
     FxTestSupport.runAndWait(() -> {
-      ChartSettings settings = new ChartSettings();
-      Drawer drawer = settings.getView();
+      ChartInspector inspector = new ChartInspector();
+      Drawer drawer = inspector.getView();
       StackPane root = new StackPane(drawer);
       new AppThemeManager(new Scene(root, 800, 360), AppTheme.LIGHT);
 
-      settings.showChartTypes();
+      inspector.showChartTypes();
       root.applyCss();
       root.layout();
 
@@ -125,12 +138,12 @@ class ChartSettingsTest {
   @Test
   void fitsTheDrawerHeightToItsContent() {
     FxTestSupport.runAndWait(() -> {
-      ChartSettings settings = new ChartSettings();
-      Drawer drawer = settings.getView();
+      ChartInspector inspector = new ChartInspector();
+      Drawer drawer = inspector.getView();
       StackPane root = new StackPane(drawer);
       new AppThemeManager(new Scene(root, 800, 760), AppTheme.LIGHT);
 
-      settings.showChartTypes();
+      inspector.showChartTypes();
       root.applyCss();
       root.layout();
 

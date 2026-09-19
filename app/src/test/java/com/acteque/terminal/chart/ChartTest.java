@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
+import javafx.css.PseudoClass;
 import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
@@ -98,21 +99,22 @@ class ChartTest {
         new AppThemeManager(new Scene(chart, 1060, 760), AppTheme.LIGHT);
         HBox menu = assertInstanceOf(HBox.class, chart.getChildren().get(1));
         Button button = assertInstanceOf(Button.class, menu.getChildren().get(2));
-        Drawer drawer = assertInstanceOf(Drawer.class, chart.lookup(".chart-settings-drawer"));
+        Drawer drawer = assertInstanceOf(Drawer.class, chart.lookup(".chart-inspector-drawer"));
 
         chartController.setChartType(ChartType.CANDLESTICK);
         button.fire();
         chart.applyCss();
         chart.layout();
         assertTrue(drawer.isOpen());
+        assertTrue(button.getPseudoClassStates().contains(PseudoClass.getPseudoClass("drawer-open")));
         assertEquals(menu.getBoundsInParent().getMaxY(), StackPane.getMargin(drawer).getTop());
         Bounds menuBounds = menu.localToScene(menu.getBoundsInLocal());
         Bounds drawerBounds = drawer.getContent().localToScene(drawer.getContent().getLayoutBounds());
         assertTrue(drawerBounds.getMinY() >= menuBounds.getMaxY());
-        assertTrue(drawer.lookup(".chart-settings-option").isFocusTraversable());
+        assertTrue(drawer.lookup(".chart-inspector-option").isFocusTraversable());
 
         chart
-          .lookupAll(".chart-settings-option")
+          .lookupAll(".chart-inspector-option")
           .stream()
           .map(com.acteque.terminal.ui.togglegroup.ToggleGroupItem.class::cast)
           .filter(item -> item.getAccessibleText().startsWith("Area."))
@@ -121,6 +123,7 @@ class ChartTest {
           .fire();
 
         assertFalse(drawer.isOpen());
+        assertFalse(button.getPseudoClassStates().contains(PseudoClass.getPseudoClass("drawer-open")));
         assertSame(LucideIcons.CHART_AREA, assertInstanceOf(LucideIcon.class, button.getGraphic()).getGlyph());
         assertEquals("Chart type: Area", button.getAccessibleText());
       }
@@ -128,7 +131,7 @@ class ChartTest {
   }
 
   @Test
-  void settingsDrawerDismissesWithoutBlockingTheChartOrOtherDialogs() {
+  void inspectorDrawerDismissesWithoutBlockingTheChartOrOtherDialogs() {
     FxTestSupport.runAndWait(() -> {
       try (
         Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of))
@@ -138,7 +141,7 @@ class ChartTest {
         HBox menu = assertInstanceOf(HBox.class, chart.getChildren().get(1));
         Button chartTypeButton = assertInstanceOf(Button.class, menu.getChildren().get(2));
         Button intervalButton = assertInstanceOf(Button.class, menu.getChildren().get(1));
-        Drawer drawer = assertInstanceOf(Drawer.class, chart.lookup(".chart-settings-drawer"));
+        Drawer drawer = assertInstanceOf(Drawer.class, chart.lookup(".chart-inspector-drawer"));
 
         chartTypeButton.fire();
         chart.fireEvent(plainKeyEvent(KeyCode.ESCAPE));

@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
-import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.Button;
+import com.acteque.terminal.ui.ThemeManager;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.effect.ColorAdjust;

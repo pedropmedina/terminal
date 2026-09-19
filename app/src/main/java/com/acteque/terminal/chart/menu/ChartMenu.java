@@ -31,6 +31,10 @@ public final class ChartMenu {
     interactor.setChartType(chartType);
   }
 
+  public void setChartTypeSelectionOpen(boolean value) {
+    viewBuilder.setChartTypeSelectionOpen(value);
+  }
+
   public void setInstrumentSymbol(String symbol) {
     interactor.setInstrumentSymbol(symbol);
   }

@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
-import com.acteque.terminal.ui.ThemeManager;
 import com.acteque.terminal.ui.Button;
+import com.acteque.terminal.ui.ThemeManager;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
