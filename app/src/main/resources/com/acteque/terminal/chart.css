@@ -44,11 +44,6 @@
   -fx-padding: 0;
 }
 
-.chart-workspace-split > .split-pane-divider {
-  -fx-background-color: -app-border;
-  -fx-padding: 0 1px 0 1px;
-}
-
 .chart-inspector-drawer .core-drawer-content {
   -fx-background-radius: 12px;
   -fx-border-radius: 12px;

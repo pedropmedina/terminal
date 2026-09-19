@@ -17,12 +17,15 @@ import com.acteque.terminal.marketdata.MarketDataSession;
 import com.acteque.terminal.marketlogos.InstrumentLogo;
 import com.acteque.terminal.marketlogos.LogoSession;
 import com.acteque.terminal.test.FxTestSupport;
+import com.acteque.terminal.ui.resizable.ResizableHandle;
+import com.acteque.terminal.ui.resizable.ResizablePanel;
+import com.acteque.terminal.ui.resizable.ResizablePanelGroup;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javafx.geometry.Orientation;
-import javafx.scene.control.SplitPane;
+import javafx.scene.AccessibleAction;
 import javafx.scene.layout.StackPane;
 import org.junit.jupiter.api.Test;
 
@@ -91,9 +94,13 @@ class ChartWorkspaceTest {
       StackPane view = viewBuilder.build();
 
       fixture.interactor.split(source, ChartSplitDirection.RIGHT);
-      SplitPane firstView = assertInstanceOf(SplitPane.class, view.getChildren().getFirst());
-      firstView.setDividerPositions(0.7);
+      ResizablePanelGroup firstView = assertInstanceOf(ResizablePanelGroup.class, view.getChildren().getFirst());
+      layout(view);
+      ResizableHandle firstHandle = assertInstanceOf(ResizableHandle.class, firstView.getChildren().get(1));
+      firstHandle.executeAccessibleAction(AccessibleAction.SET_VALUE, 70.0);
+      layout(view);
       ChartWorkspaceSplit firstSplit = (ChartWorkspaceSplit) fixture.model.getRoot();
+      assertEquals(0.7, firstSplit.dividerPosition(), 0.01);
       Chart right = ((ChartWorkspaceLeaf) firstSplit.second()).chart();
 
       fixture.interactor.split(right, ChartSplitDirection.BOTTOM);
@@ -104,8 +111,12 @@ class ChartWorkspaceTest {
       ChartWorkspaceSplit nested = assertInstanceOf(ChartWorkspaceSplit.class, root.second());
       assertEquals(Orientation.VERTICAL, nested.orientation());
       assertEquals(3, fixture.charts.size());
-      SplitPane rebuilt = assertInstanceOf(SplitPane.class, view.getChildren().getFirst());
+      ResizablePanelGroup rebuilt = assertInstanceOf(ResizablePanelGroup.class, view.getChildren().getFirst());
+      assertEquals(Orientation.HORIZONTAL, rebuilt.getOrientation());
       assertEquals(0.7, rebuilt.getDividerPositions()[0]);
+      ResizablePanel second = assertInstanceOf(ResizablePanel.class, rebuilt.getChildren().get(2));
+      ResizablePanelGroup nestedView = assertInstanceOf(ResizablePanelGroup.class, second.getChildren().getFirst());
+      assertEquals(Orientation.VERTICAL, nestedView.getOrientation());
       fixture.interactor.close();
     });
   }
@@ -171,6 +182,12 @@ class ChartWorkspaceTest {
     );
     chart.setChartType(settings.chartType());
     return chart;
+  }
+
+  private static void layout(StackPane view) {
+    view.resize(1_000.0, 600.0);
+    view.applyCss();
+    view.layout();
   }
 
   private static final class Fixture {

@@ -1,9 +1,11 @@
 package com.acteque.terminal.chartworkspace;
 
+import com.acteque.terminal.ui.resizable.ResizableHandle;
+import com.acteque.terminal.ui.resizable.ResizablePanel;
+import com.acteque.terminal.ui.resizable.ResizablePanelGroup;
 import java.util.List;
 import java.util.Objects;
 import javafx.scene.Node;
-import javafx.scene.control.SplitPane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Builder;
 
@@ -41,25 +43,33 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
     }
 
     ChartWorkspaceSplit split = (ChartWorkspaceSplit) item;
-    SplitPane pane = new SplitPane(build(split.first()), build(split.second()));
-    pane.getStyleClass().add("chart-workspace-split");
-    pane.setOrientation(split.orientation());
-    pane.setMinSize(0.0, 0.0);
-    pane.setDividerPositions(split.dividerPosition());
-    pane
-      .getDividers()
-      .getFirst()
+    ResizableHandle handle = new ResizableHandle(true);
+    ResizablePanelGroup group = new ResizablePanelGroup(
+      split.orientation(),
+      new ResizablePanel(build(split.first())),
+      handle,
+      new ResizablePanel(build(split.second()))
+    );
+    group.getStyleClass().add("chart-workspace-split");
+    group.setMinSize(0.0, 0.0);
+    group.setDividerPositions(split.dividerPosition());
+    handle
       .positionProperty()
       .addListener((ignored, previous, current) -> split.setDividerPosition(current.doubleValue()));
-    return pane;
+    return group;
   }
 
   private static void detach(Node node) {
-    if (!(node instanceof SplitPane splitPane)) {
+    if (node instanceof ResizablePanelGroup group) {
+      List<Node> children = List.copyOf(group.getChildren());
+      group.getChildren().clear();
+      children.forEach(ChartWorkspaceViewBuilder::detach);
       return;
     }
-    List<Node> children = List.copyOf(splitPane.getItems());
-    splitPane.getItems().clear();
-    children.forEach(ChartWorkspaceViewBuilder::detach);
+    if (node instanceof ResizablePanel panel) {
+      List<Node> children = List.copyOf(panel.getChildren());
+      panel.getChildren().clear();
+      children.forEach(ChartWorkspaceViewBuilder::detach);
+    }
   }
 }
