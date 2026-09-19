@@ -2,6 +2,7 @@ package com.acteque.terminal.chart.menu;
 
 import com.acteque.terminal.chart.ChartIntervalText;
 import com.acteque.terminal.chart.ChartType;
+import com.acteque.terminal.chart.ChartTypePresentation;
 import com.acteque.terminal.chart.menu.ChartMenuModel.Item;
 import com.acteque.terminal.reload.ReloadHooks;
 import com.acteque.terminal.reload.ReloadTarget;
@@ -9,7 +10,6 @@ import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.Button.Size;
 import com.acteque.terminal.ui.Button.Variant;
 import com.acteque.terminal.ui.icons.LucideIcon;
-import com.acteque.terminal.ui.icons.LucideIcons;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.beans.binding.Bindings;
@@ -109,26 +109,7 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
       return;
     }
     ChartType chartType = model.getChartType();
-    chartTypeButton.setGraphic(new LucideIcon(iconFor(chartType)));
-    chartTypeButton.setAccessibleText("Chart type: " + displayName(chartType));
-  }
-
-  private static LucideIcons iconFor(ChartType chartType) {
-    return switch (chartType) {
-      case LINE, STEP_LINE -> LucideIcons.CHART_LINE;
-      case LINE_WITH_MARKERS -> LucideIcons.CHART_NETWORK;
-      case AREA -> LucideIcons.CHART_AREA;
-      case CANDLESTICK -> LucideIcons.CHART_CANDLESTICK;
-    };
-  }
-
-  private static String displayName(ChartType chartType) {
-    return switch (chartType) {
-      case LINE -> "Line";
-      case LINE_WITH_MARKERS -> "Line with markers";
-      case STEP_LINE -> "Step line";
-      case AREA -> "Area";
-      case CANDLESTICK -> "Candlestick";
-    };
+    chartTypeButton.setGraphic(new LucideIcon(ChartTypePresentation.icon(chartType)));
+    chartTypeButton.setAccessibleText("Chart type: " + ChartTypePresentation.displayName(chartType));
   }
 }

@@ -1,7 +1,13 @@
 package com.acteque.terminal.ui.drawer;
 
+import com.acteque.terminal.ui.behavior.KineticScroll;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.scene.AccessibleRole;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -11,7 +17,9 @@ public final class DrawerContent extends BorderPane {
 
   private final VBox body = new VBox();
   private final DrawerSwipeHandle swipeHandle = new DrawerSwipeHandle();
+  private final Map<ScrollPane, KineticScroll> kineticScrolls = new IdentityHashMap<>();
   private Node autoGrowNode;
+  private boolean kineticScrollingActive;
 
   public DrawerContent(Node... children) {
     getStyleClass().add("core-drawer-content");
@@ -19,7 +27,12 @@ public final class DrawerContent extends BorderPane {
     setFocusTraversable(true);
     body.getStyleClass().add("core-drawer-body");
     body.getChildren().addAll(children);
-    body.getChildren().addListener((javafx.collections.ListChangeListener<Node>) change -> updateFooterGrowth());
+    body.getChildren().addListener(
+      (javafx.collections.ListChangeListener<Node>) change -> {
+        updateFooterGrowth();
+        refreshKineticScrolling();
+      }
+    );
     updateFooterGrowth();
     setCenter(body);
   }
@@ -31,6 +44,17 @@ public final class DrawerContent extends BorderPane {
 
   public DrawerSwipeHandle getSwipeHandle() {
     return swipeHandle;
+  }
+
+  void activateKineticScrolling() {
+    kineticScrollingActive = true;
+    refreshKineticScrolling();
+  }
+
+  void deactivateKineticScrolling() {
+    kineticScrollingActive = false;
+    kineticScrolls.values().forEach(KineticScroll::close);
+    kineticScrolls.clear();
   }
 
   void configureHandle(DrawerDirection direction, boolean visible) {
@@ -66,5 +90,64 @@ public final class DrawerContent extends BorderPane {
         break;
       }
     }
+  }
+
+  private void refreshKineticScrolling() {
+    if (!kineticScrollingActive) {
+      return;
+    }
+    Map<ScrollPane, Boolean> current = new IdentityHashMap<>();
+    collectScrollPanes(body, current);
+    kineticScrolls.entrySet().removeIf(entry -> {
+      if (current.containsKey(entry.getKey())) {
+        return false;
+      }
+      entry.getValue().close();
+      return true;
+    });
+    current
+      .keySet()
+      .stream()
+      .filter(scrollPane -> !kineticScrolls.containsKey(scrollPane))
+      .forEach(scrollPane ->
+        kineticScrolls.put(
+          scrollPane,
+          new KineticScroll(
+            scrollPane,
+            requestedPixels -> scrollByPixels(scrollPane, requestedPixels),
+            new ReadOnlyBooleanWrapper(scrollPane, "gliding")
+          )
+        )
+      );
+  }
+
+  private static void collectScrollPanes(Node node, Map<ScrollPane, Boolean> target) {
+    if (node instanceof ScrollPane scrollPane) {
+      target.put(scrollPane, Boolean.TRUE);
+    }
+    if (node instanceof Parent parent) {
+      parent.getChildrenUnmodifiable().forEach(child -> collectScrollPanes(child, target));
+    }
+  }
+
+  private static double scrollByPixels(ScrollPane scrollPane, double requestedPixels) {
+    Node content = scrollPane.getContent();
+    if (content == null || requestedPixels == 0.0) {
+      return 0.0;
+    }
+
+    double scrollablePixels = Math.max(
+      0.0,
+      content.getBoundsInLocal().getHeight() - scrollPane.getViewportBounds().getHeight()
+    );
+    double valueRange = scrollPane.getVmax() - scrollPane.getVmin();
+    if (scrollablePixels == 0.0 || valueRange == 0.0) {
+      return 0.0;
+    }
+
+    double currentPixels = ((scrollPane.getVvalue() - scrollPane.getVmin()) / valueRange) * scrollablePixels;
+    double nextPixels = Math.max(0.0, Math.min(scrollablePixels, currentPixels + requestedPixels));
+    scrollPane.setVvalue(scrollPane.getVmin() + (nextPixels / scrollablePixels) * valueRange);
+    return nextPixels - currentPixels;
   }
 }

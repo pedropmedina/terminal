@@ -12,12 +12,14 @@ import com.acteque.terminal.StubInstrumentCatalog;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.dialog.Dialog;
+import com.acteque.terminal.ui.drawer.Drawer;
 import com.acteque.terminal.ui.icons.LucideIcon;
 import com.acteque.terminal.ui.icons.LucideIcons;
 import com.acteque.terminal.ui.togglegroup.ToggleGroupItem;
 import com.acteque.terminal.ui.tooltip.Tooltip;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
@@ -82,6 +84,77 @@ class ChartTest {
 
         chartController.setChartType(ChartType.CANDLESTICK);
         assertSame(LucideIcons.CHART_CANDLESTICK, assertInstanceOf(LucideIcon.class, button.getGraphic()).getGlyph());
+      }
+    });
+  }
+
+  @Test
+  void chartTypeMenuOpensDrawerAndAppliesTheSelectedType() {
+    FxTestSupport.runAndWait(() -> {
+      try (
+        Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of))
+      ) {
+        StackPane chart = chartController.getView();
+        new AppThemeManager(new Scene(chart, 1060, 760), AppTheme.LIGHT);
+        HBox menu = assertInstanceOf(HBox.class, chart.getChildren().get(1));
+        Button button = assertInstanceOf(Button.class, menu.getChildren().get(2));
+        Drawer drawer = assertInstanceOf(Drawer.class, chart.lookup(".chart-settings-drawer"));
+
+        chartController.setChartType(ChartType.CANDLESTICK);
+        button.fire();
+        chart.applyCss();
+        chart.layout();
+        assertTrue(drawer.isOpen());
+        assertEquals(menu.getBoundsInParent().getMaxY(), StackPane.getMargin(drawer).getTop());
+        Bounds menuBounds = menu.localToScene(menu.getBoundsInLocal());
+        Bounds drawerBounds = drawer.getContent().localToScene(drawer.getContent().getLayoutBounds());
+        assertTrue(drawerBounds.getMinY() >= menuBounds.getMaxY());
+        assertTrue(drawer.lookup(".chart-settings-option").isFocusTraversable());
+
+        chart
+          .lookupAll(".chart-settings-option")
+          .stream()
+          .map(com.acteque.terminal.ui.togglegroup.ToggleGroupItem.class::cast)
+          .filter(item -> item.getAccessibleText().startsWith("Area."))
+          .findFirst()
+          .orElseThrow()
+          .fire();
+
+        assertFalse(drawer.isOpen());
+        assertSame(LucideIcons.CHART_AREA, assertInstanceOf(LucideIcon.class, button.getGraphic()).getGlyph());
+        assertEquals("Chart type: Area", button.getAccessibleText());
+      }
+    });
+  }
+
+  @Test
+  void settingsDrawerDismissesWithoutBlockingTheChartOrOtherDialogs() {
+    FxTestSupport.runAndWait(() -> {
+      try (
+        Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of))
+      ) {
+        StackPane chart = chartController.getView();
+        new Scene(chart, 1060, 760);
+        HBox menu = assertInstanceOf(HBox.class, chart.getChildren().get(1));
+        Button chartTypeButton = assertInstanceOf(Button.class, menu.getChildren().get(2));
+        Button intervalButton = assertInstanceOf(Button.class, menu.getChildren().get(1));
+        Drawer drawer = assertInstanceOf(Drawer.class, chart.lookup(".chart-settings-drawer"));
+
+        chartTypeButton.fire();
+        chart.fireEvent(plainKeyEvent(KeyCode.ESCAPE));
+        assertFalse(drawer.isOpen());
+
+        chartTypeButton.fire();
+        AtomicInteger chartPresses = new AtomicInteger();
+        chart.addEventHandler(MouseEvent.MOUSE_PRESSED, ignored -> chartPresses.incrementAndGet());
+        chart.fireEvent(mouseEvent(MouseEvent.MOUSE_PRESSED, chart.getBoundsInLocal(), true));
+        assertFalse(drawer.isOpen());
+        assertEquals(1, chartPresses.get());
+
+        chartTypeButton.fire();
+        intervalButton.fire();
+        assertFalse(drawer.isOpen());
+        assertTrue(((Dialog) chart.lookup(".chart-interval-selection-dialog")).isOpen());
       }
     });
   }

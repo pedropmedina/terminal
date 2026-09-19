@@ -1,0 +1,62 @@
+.core-list-view > .virtual-flow > .scroll-bar:vertical,
+.core-drawer-content .scroll-pane > .scroll-bar:vertical {
+  -fx-pref-width: 10px;
+  -fx-min-width: 10px;
+  -fx-max-width: 10px;
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-padding: 0;
+}
+
+.core-list-view > .virtual-flow > .scroll-bar:vertical > .track,
+.core-list-view > .virtual-flow > .scroll-bar:vertical > .track-background,
+.core-drawer-content .scroll-pane > .scroll-bar:vertical > .track,
+.core-drawer-content .scroll-pane > .scroll-bar:vertical > .track-background {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+}
+
+.core-list-view > .virtual-flow > .scroll-bar:vertical > .thumb,
+.core-drawer-content .scroll-pane > .scroll-bar:vertical > .thumb {
+  -fx-background-color: -app-muted-foreground;
+  -fx-background-insets: 2px;
+  -fx-background-radius: 999px;
+}
+
+.core-list-view > .virtual-flow > .scroll-bar:vertical > .thumb:hover,
+.core-drawer-content .scroll-pane > .scroll-bar:vertical > .thumb:hover {
+  -fx-background-color: -app-foreground;
+}
+
+.core-list-view > .virtual-flow > .scroll-bar:vertical > .thumb:pressed,
+.core-drawer-content .scroll-pane > .scroll-bar:vertical > .thumb:pressed {
+  -fx-background-color: -app-primary;
+}
+
+.core-list-view > .virtual-flow > .scroll-bar:vertical > .increment-button,
+.core-list-view > .virtual-flow > .scroll-bar:vertical > .decrement-button,
+.core-drawer-content .scroll-pane > .scroll-bar:vertical > .increment-button,
+.core-drawer-content .scroll-pane > .scroll-bar:vertical > .decrement-button {
+  -fx-pref-width: 10px;
+  -fx-min-width: 10px;
+  -fx-max-width: 10px;
+  -fx-pref-height: 0;
+  -fx-min-height: 0;
+  -fx-max-height: 0;
+  -fx-padding: 0;
+  -fx-background-color: transparent;
+}
+
+.core-list-view > .virtual-flow > .scroll-bar:vertical > .increment-button > .increment-arrow,
+.core-list-view > .virtual-flow > .scroll-bar:vertical > .decrement-button > .decrement-arrow,
+.core-drawer-content .scroll-pane > .scroll-bar:vertical > .increment-button > .increment-arrow,
+.core-drawer-content .scroll-pane > .scroll-bar:vertical > .decrement-button > .decrement-arrow {
+  -fx-padding: 0;
+  -fx-background-color: transparent;
+  -fx-shape: null;
+}
+
+.core-list-view > .virtual-flow > .corner,
+.core-drawer-content .scroll-pane > .corner {
+  -fx-background-color: transparent;
+}

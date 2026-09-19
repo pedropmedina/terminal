@@ -11,6 +11,10 @@ public final class ListView<T> extends javafx.scene.control.ListView<T> {
 
   private final ReadOnlyBooleanWrapper gliding = new ReadOnlyBooleanWrapper(this, "gliding");
 
+  public ListView() {
+    getStyleClass().add("core-list-view");
+  }
+
   public ReadOnlyBooleanProperty glidingProperty() {
     return gliding.getReadOnlyProperty();
   }

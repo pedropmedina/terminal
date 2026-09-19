@@ -2,6 +2,7 @@ package com.acteque.terminal.ui.drawer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,19 +10,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.AppTheme;
 import com.acteque.terminal.ui.Button;
+import com.acteque.terminal.ui.ListView;
 import com.acteque.terminal.ui.ThemeManager;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.TouchEvent;
 import javafx.scene.input.TouchPoint;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -239,15 +247,33 @@ class DrawerTest {
   void touchSwipeDismissesAndScrollingKeepsItsGestureUntilTheBoundary() {
     FxTestSupport.runAndWait(() -> {
       AtomicLong time = new AtomicLong(1_000_000_000L);
-      ScrollPane scroll = new ScrollPane(new StackPane());
+      StackPane longContent = new StackPane();
+      longContent.setPrefHeight(1_200.0);
+      ScrollPane scroll = new ScrollPane(longContent);
+      ListView<String> list = new ListView<>();
+      for (int index = 0; index < 100; index++) {
+        list.getItems().add("Item " + index);
+      }
       DrawerContent content = new DrawerContent(scroll);
       Drawer drawer = new Drawer(content, time::get);
       drawer.setSnapPoints(List.of(DrawerSnapPoint.fraction(1.0)));
-      StackPane root = new StackPane(drawer);
-      new Scene(root, 800, 600);
+      StackPane root = new StackPane(list, drawer);
+      new ThemeManager(new Scene(root, 800, 600), AppTheme.LIGHT);
       drawer.show();
+      root.applyCss();
       root.resize(800, 600);
       root.layout();
+
+      ScrollBar listScrollBar = verticalScrollBar(list);
+      ScrollBar drawerScrollBar = verticalScrollBar(scroll);
+      Region listThumb = assertInstanceOf(Region.class, listScrollBar.lookup(".thumb"));
+      Region drawerThumb = assertInstanceOf(Region.class, drawerScrollBar.lookup(".thumb"));
+      assertEquals(listScrollBar.prefWidth(-1), drawerScrollBar.prefWidth(-1));
+      assertEquals(10.0, drawerScrollBar.prefWidth(-1));
+      assertEquals(listThumb.getBackground(), drawerThumb.getBackground());
+
+      scroll.fireEvent(scrollEvent(-120.0));
+      assertTrue(scroll.getVvalue() > scroll.getVmin());
 
       scroll.setVvalue(scroll.getVmax());
       scroll.fireEvent(mouseEvent(MouseEvent.MOUSE_PRESSED, 400, 200));
@@ -350,6 +376,38 @@ class DrawerTest {
     }
   }
 
+  @Test
+  void openingAnimationTracksPopupSizeChanges() throws InterruptedException {
+    AtomicReference<Stage> stageReference = new AtomicReference<>();
+    AtomicReference<Drawer> drawerReference = new AtomicReference<>();
+    try {
+      FxTestSupport.runAndWait(() -> {
+        Platform.setImplicitExit(false);
+        Drawer drawer = new Drawer(new DrawerContent(new DrawerTitle("Responsive")));
+        drawer.setDirection(DrawerDirection.LEFT);
+        Stage stage = new Stage();
+        stage.setScene(new Scene(new StackPane(drawer), 400, 600));
+        stage.show();
+        drawer.show();
+        stageReference.set(stage);
+        drawerReference.set(drawer);
+      });
+      Thread.sleep(100);
+      FxTestSupport.runAndWait(() -> stageReference.get().setWidth(800));
+      Thread.sleep(700);
+      FxTestSupport.runAndWait(() -> {
+        Drawer drawer = drawerReference.get();
+        assertEquals(drawer.getContent().getWidth(), drawer.visibleExtent(), 0.01);
+      });
+    } finally {
+      FxTestSupport.runAndWait(() -> {
+        if (stageReference.get() != null) {
+          stageReference.get().hide();
+        }
+      });
+    }
+  }
+
   private static MouseEvent mouseEvent(javafx.event.EventType<MouseEvent> type, double x, double y) {
     return new MouseEvent(
       type,
@@ -382,5 +440,41 @@ class DrawerTest {
   ) {
     TouchPoint point = new TouchPoint(1, state, x, y, x, y, target, null);
     return new TouchEvent(type, point, List.of(point), 1, false, false, false, false);
+  }
+
+  private static ScrollEvent scrollEvent(double deltaY) {
+    return new ScrollEvent(
+      ScrollEvent.SCROLL,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      0.0,
+      deltaY,
+      0.0,
+      deltaY,
+      ScrollEvent.HorizontalTextScrollUnits.NONE,
+      0.0,
+      ScrollEvent.VerticalTextScrollUnits.NONE,
+      0.0,
+      0,
+      null
+    );
+  }
+
+  private static ScrollBar verticalScrollBar(Node node) {
+    return node
+      .lookupAll(".scroll-bar")
+      .stream()
+      .map(ScrollBar.class::cast)
+      .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
+      .findFirst()
+      .orElseThrow();
   }
 }

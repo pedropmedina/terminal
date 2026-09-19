@@ -3,6 +3,7 @@ package com.acteque.terminal.chart;
 import com.acteque.terminal.chart.canvas.ChartCanvas;
 import com.acteque.terminal.chart.intervalselection.ChartIntervalSelection;
 import com.acteque.terminal.chart.menu.ChartMenu;
+import com.acteque.terminal.chart.settings.ChartSettings;
 import com.acteque.terminal.chart.statusline.ChartStatusLine;
 import com.acteque.terminal.instrumentsearch.InstrumentSearch;
 import com.acteque.terminal.marketdata.CalendarData;
@@ -31,6 +32,7 @@ public final class Chart implements AutoCloseable {
   private final InstrumentSearch instrumentSearch;
   private final ChartCanvas canvas;
   private final ChartMenu menu;
+  private final ChartSettings settings;
   private final ChartStatusLine statusLine;
   private final ChartViewBuilder viewBuilder;
   private final String initialSymbol;
@@ -163,6 +165,14 @@ public final class Chart implements AutoCloseable {
     menu = new ChartMenu(symbol, interval);
     menu.onInstrumentSelectionRequested(interactor::openInstrumentSearch);
     menu.onIntervalSelectionRequested(interactor::openIntervalSelection);
+    settings = new ChartSettings();
+    settings.onChartTypeSelected(this::setChartType);
+    menu.onChartTypeSelectionRequested(settings::showChartTypes);
+    model.modalOpenProperty().addListener((ignored, wasOpen, isOpen) -> {
+      if (isOpen) {
+        settings.close();
+      }
+    });
 
     canvas = new ChartCanvas(pricePoints, interval, statusLine);
     Canvas canvasView = canvas.getView();
@@ -170,6 +180,7 @@ public final class Chart implements AutoCloseable {
       model,
       canvasView,
       menu.getView(),
+      settings.getView(),
       statusLine.getView(),
       instrumentSearch.getView(),
       intervalSelectionDialog,
@@ -227,6 +238,7 @@ public final class Chart implements AutoCloseable {
   public void setChartType(ChartType chartType) {
     canvas.setChartType(chartType);
     menu.setChartType(chartType);
+    settings.setChartType(chartType);
   }
 
   public void drawChart() {

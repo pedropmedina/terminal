@@ -104,6 +104,7 @@ public final class Drawer extends StackPane {
   private Node focusBeforeOpen;
   private Effect previousBackdropEffect;
   private Timeline extentAnimation;
+  private double extentAnimationTarget = Double.NaN;
   private Timeline stackAnimation;
   private boolean pendingOpen;
   private boolean closing;
@@ -399,6 +400,7 @@ public final class Drawer extends StackPane {
 
   private void replaceContent(DrawerContent previous, DrawerContent next) {
     if (previous != null) {
+      previous.deactivateKineticScrolling();
       portal.getChildren().remove(previous);
       previous.widthProperty().removeListener(popupSizeListener);
       previous.heightProperty().removeListener(popupSizeListener);
@@ -410,6 +412,9 @@ public final class Drawer extends StackPane {
       previous.removeEventFilter(TouchEvent.TOUCH_RELEASED, popupTouchReleasedHandler);
     }
     if (next != null) {
+      if (isOpen()) {
+        next.activateKineticScrolling();
+      }
       portal.getChildren().add(1, next);
       next.addEventFilter(MouseEvent.MOUSE_PRESSED, popupMousePressedHandler);
       next.addEventFilter(MouseEvent.MOUSE_DRAGGED, popupMouseDraggedHandler);
@@ -433,8 +438,12 @@ public final class Drawer extends StackPane {
     if (pendingOpen) {
       pendingOpen = false;
       animateExtent(targetExtent(), false);
-    } else if (isOpen() && !dragging && extentAnimation == null) {
-      visibleExtent.set(targetExtent());
+    } else if (isOpen() && !dragging) {
+      if (extentAnimation == null) {
+        visibleExtent.set(targetExtent());
+      } else if (Math.abs(targetExtent() - extentAnimationTarget) > 0.01) {
+        animateExtent(targetExtent(), false);
+      }
     }
     updateTranslation();
     updatePseudoClasses();
@@ -471,6 +480,9 @@ public final class Drawer extends StackPane {
         open.set(false);
         throw new IllegalStateException("A parent drawer must be open before its nested drawer");
       }
+      if (getContent() != null) {
+        getContent().activateKineticScrolling();
+      }
       if (parentDrawer != null) {
         for (Drawer sibling : parentDrawer.nestedDrawers) {
           if (sibling != this && sibling.isOpen()) {
@@ -497,6 +509,9 @@ public final class Drawer extends StackPane {
         }
       });
     } else {
+      if (getContent() != null) {
+        getContent().deactivateKineticScrolling();
+      }
       dragging = false;
       touchActive = false;
       activeTouchId = -1;
@@ -558,6 +573,7 @@ public final class Drawer extends StackPane {
       extentAnimation = null;
     }
     if (getContent() == null || !isShowing()) {
+      extentAnimationTarget = Double.NaN;
       visibleExtent.set(target);
       if (hideAfter) {
         finishClosing();
@@ -566,9 +582,11 @@ public final class Drawer extends StackPane {
     }
     Timeline animation = new Timeline(new KeyFrame(MOTION_DURATION, new KeyValue(visibleExtent, target, MOTION)));
     extentAnimation = animation;
+    extentAnimationTarget = target;
     animation.setOnFinished(event -> {
       if (extentAnimation == animation) {
         extentAnimation = null;
+        extentAnimationTarget = Double.NaN;
       }
       if (hideAfter && !isOpen()) {
         finishClosing();
