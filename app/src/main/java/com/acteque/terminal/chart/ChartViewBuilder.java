@@ -2,7 +2,6 @@ package com.acteque.terminal.chart;
 
 import com.acteque.terminal.reload.ReloadHooks;
 import com.acteque.terminal.reload.ReloadTarget;
-import com.acteque.terminal.ui.dialog.Dialog;
 import java.util.List;
 import java.util.Objects;
 import javafx.beans.binding.Bindings;
@@ -34,27 +33,21 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
   private final ChartModel model;
   private final Canvas canvas;
   private final Region statusLine;
-  private final Dialog instrumentSearchDialog;
   private final Region identifier;
   private final Runnable instrumentSearchRequestedHandler;
   private final Runnable intervalSelectionRequestedHandler;
-  private final ChartPane root;
+  private final StackPane root = new StackPane();
 
   ChartViewBuilder(
     ChartModel model,
     Canvas canvas,
     Region statusLine,
-    Dialog instrumentSearchDialog,
     Runnable instrumentSearchRequestedHandler,
     Runnable intervalSelectionRequestedHandler
   ) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
     this.canvas = Objects.requireNonNull(canvas, "canvas cannot be null");
     this.statusLine = Objects.requireNonNull(statusLine, "statusLine cannot be null");
-    this.instrumentSearchDialog = Objects.requireNonNull(
-      instrumentSearchDialog,
-      "instrumentSearchDialog cannot be null"
-    );
     this.instrumentSearchRequestedHandler = Objects.requireNonNull(
       instrumentSearchRequestedHandler,
       "instrumentSearchRequestedHandler cannot be null"
@@ -78,8 +71,6 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
     identifier.visibleProperty().bind(model.identifierVisibleProperty());
     identifier.managedProperty().bind(model.identifierVisibleProperty());
     identifier.setMouseTransparent(true);
-
-    root = new ChartPane(instrumentSearchDialog);
 
     root.getStyleClass().add("chart");
     root.addEventFilter(KeyEvent.KEY_PRESSED, this::handleShortcut);
@@ -107,7 +98,7 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
     statusOverlay.getStyleClass().add("chart-status-overlay");
     statusOverlay.setPickOnBounds(false);
 
-    root.getChildren().setAll(canvas, statusOverlay, instrumentSearchDialog);
+    root.getChildren().setAll(canvas, statusOverlay);
   }
 
   private void handleShortcut(KeyEvent event) {
@@ -133,20 +124,5 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
 
   private static KeyCombination shortcut(KeyCode keyCode) {
     return new KeyCodeCombination(keyCode, KeyCombination.SHORTCUT_DOWN);
-  }
-
-  private static final class ChartPane extends StackPane {
-
-    private final Dialog instrumentSearchDialog;
-
-    private ChartPane(Dialog instrumentSearchDialog) {
-      this.instrumentSearchDialog = instrumentSearchDialog;
-    }
-
-    @Override
-    protected void layoutChildren() {
-      super.layoutChildren();
-      instrumentSearchDialog.resizeRelocate(0.0, 0.0, getWidth(), getHeight());
-    }
   }
 }

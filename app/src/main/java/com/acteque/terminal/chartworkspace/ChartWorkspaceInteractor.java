@@ -111,6 +111,10 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     requireActiveChart().showInstrumentSearch();
   }
 
+  void closeActiveInstrumentSearch() {
+    requireActiveChart().closeInstrumentSearch();
+  }
+
   void showActiveIntervalSelection() {
     requireActiveChart().showIntervalSelection();
   }
@@ -121,6 +125,10 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
 
   void setActiveChartInterval(ChartInterval interval) {
     requireActiveChart().setInterval(Objects.requireNonNull(interval, "interval cannot be null"));
+  }
+
+  void setActiveChartInstrument(String symbol) {
+    requireActiveChart().selectInstrument(Objects.requireNonNull(symbol, "symbol cannot be null"));
   }
 
   void setActiveChartType(ChartType chartType) {

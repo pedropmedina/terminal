@@ -5,13 +5,16 @@ import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.chartworkspace.inspector.ChartWorkspaceInspector;
+import com.acteque.terminal.chartworkspace.instrumentsearch.InstrumentSearch;
 import com.acteque.terminal.chartworkspace.intervalselection.ChartWorkspaceIntervalSelection;
 import com.acteque.terminal.chartworkspace.menu.ChartWorkspaceMenu;
+import com.acteque.terminal.marketdata.InstrumentCatalog;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import com.acteque.terminal.marketlogos.LogoSession;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.layout.StackPane;
@@ -24,9 +27,12 @@ public final class ChartWorkspace implements AutoCloseable {
   private final ChartWorkspaceModel model;
   private final ChartWorkspaceMenu menu;
   private final ChartWorkspaceInspector inspector;
+  private final InstrumentSearch instrumentSearch;
   private final ChartWorkspaceIntervalSelection intervalSelection;
   private final ChangeListener<Boolean> modalOpenListener;
+  private final ChangeListener<Boolean> instrumentSearchOpenListener;
   private final ChangeListener<Boolean> intervalSelectionOpenListener;
+  private final ChangeListener<String> symbolListener;
   private final ChangeListener<ChartInterval> intervalListener;
   private final ChangeListener<ChartType> chartTypeListener;
   private Chart observedChart;
@@ -38,21 +44,45 @@ public final class ChartWorkspace implements AutoCloseable {
     ChartType chartType,
     Executor uiExecutor
   ) {
-    this(new ChartWorkspaceSettings(symbol, interval, chartType), settings ->
-      createChart(services, settings, uiExecutor)
+    this(
+      new ChartWorkspaceSettings(symbol, interval, chartType),
+      settings -> createChart(services, settings, uiExecutor),
+      Objects.requireNonNull(services, "services cannot be null").catalog(),
+      ForkJoinPool.commonPool(),
+      uiExecutor
     );
   }
 
-  ChartWorkspace(ChartWorkspaceSettings settings, ChartWorkspaceChartFactory chartFactory) {
+  ChartWorkspace(
+    ChartWorkspaceSettings settings,
+    ChartWorkspaceChartFactory chartFactory,
+    InstrumentCatalog instrumentCatalog,
+    Executor backgroundExecutor,
+    Executor uiExecutor
+  ) {
     model = new ChartWorkspaceModel();
     interactor = new ChartWorkspaceInteractor(model, chartFactory);
     interactor.initialize(settings);
 
     inspector = new ChartWorkspaceInspector();
+    instrumentSearch = new InstrumentSearch(
+      model.getActiveChart().getSymbol(),
+      instrumentCatalog,
+      backgroundExecutor,
+      uiExecutor
+    );
     intervalSelection = new ChartWorkspaceIntervalSelection(model.getActiveChart().getInterval());
     modalOpenListener = (ignored, wasOpen, isOpen) -> {
       if (isOpen) {
         inspector.close();
+      }
+    };
+    instrumentSearchOpenListener = (ignored, wasOpen, isOpen) -> {
+      if (isOpen) {
+        inspector.close();
+        instrumentSearch.show();
+      } else {
+        instrumentSearch.close();
       }
     };
     intervalSelectionOpenListener = (ignored, wasOpen, isOpen) -> {
@@ -63,9 +93,12 @@ public final class ChartWorkspace implements AutoCloseable {
         intervalSelection.close();
       }
     };
+    symbolListener = (ignored, previous, current) -> instrumentSearch.setCurrentSymbol(current);
     intervalListener = (ignored, previous, current) -> intervalSelection.setCurrentInterval(current);
     chartTypeListener = (ignored, previous, current) -> inspector.setChartType(current);
     inspector.onChartTypeSelected(interactor::setActiveChartType);
+    instrumentSearch.onInstrumentSelected(interactor::setActiveChartInstrument);
+    instrumentSearch.onRequestClose(interactor::closeActiveInstrumentSearch);
     intervalSelection.onIntervalSelected(interactor::setActiveChartInterval);
     intervalSelection.onRequestClose(interactor::closeActiveIntervalSelection);
     menu = new ChartWorkspaceMenu(model.getActiveChart());
@@ -91,7 +124,8 @@ public final class ChartWorkspace implements AutoCloseable {
       interactor::activate,
       menu.getView(),
       inspector.getView(),
-      intervalSelection.getView()
+      intervalSelection.getView(),
+      instrumentSearch.getView()
     );
   }
 
@@ -106,6 +140,7 @@ public final class ChartWorkspace implements AutoCloseable {
   @Override
   public void close() {
     stopObservingActiveChart();
+    instrumentSearch.close();
     intervalSelection.close();
     inspector.close();
     menu.close();
@@ -118,14 +153,21 @@ public final class ChartWorkspace implements AutoCloseable {
     menu.setActiveChart(observedChart);
     inspector.close();
     inspector.setChartType(observedChart.getChartType());
+    instrumentSearch.close();
+    instrumentSearch.setCurrentSymbol(observedChart.getSymbol());
     intervalSelection.close();
     intervalSelection.setCurrentInterval(observedChart.getInterval());
     observedChart.modalOpenProperty().addListener(modalOpenListener);
+    observedChart.instrumentSearchOpenProperty().addListener(instrumentSearchOpenListener);
     observedChart.intervalSelectionOpenProperty().addListener(intervalSelectionOpenListener);
+    observedChart.symbolProperty().addListener(symbolListener);
     observedChart.intervalProperty().addListener(intervalListener);
     observedChart.chartTypeProperty().addListener(chartTypeListener);
     if (observedChart.intervalSelectionOpenProperty().get()) {
       intervalSelection.show();
+    }
+    if (observedChart.instrumentSearchOpenProperty().get()) {
+      instrumentSearch.show();
     }
   }
 
@@ -135,9 +177,12 @@ public final class ChartWorkspace implements AutoCloseable {
     }
     ObservableBooleanValue modalOpen = observedChart.modalOpenProperty();
     modalOpen.removeListener(modalOpenListener);
+    observedChart.instrumentSearchOpenProperty().removeListener(instrumentSearchOpenListener);
     observedChart.intervalSelectionOpenProperty().removeListener(intervalSelectionOpenListener);
+    observedChart.symbolProperty().removeListener(symbolListener);
     observedChart.intervalProperty().removeListener(intervalListener);
     observedChart.chartTypeProperty().removeListener(chartTypeListener);
+    observedChart.closeInstrumentSearch();
     observedChart.closeIntervalSelection();
     observedChart = null;
   }
@@ -149,15 +194,7 @@ public final class ChartWorkspace implements AutoCloseable {
     LogoSession logos = null;
     try {
       logos = services.createLogoSession();
-      Chart chart = new Chart(
-        List.of(),
-        settings.symbol(),
-        settings.interval(),
-        services.catalog(),
-        marketData,
-        logos,
-        uiExecutor
-      );
+      Chart chart = new Chart(List.of(), settings.symbol(), settings.interval(), marketData, logos, uiExecutor);
       chart.setChartType(settings.chartType());
       return chart;
     } catch (RuntimeException | Error failure) {

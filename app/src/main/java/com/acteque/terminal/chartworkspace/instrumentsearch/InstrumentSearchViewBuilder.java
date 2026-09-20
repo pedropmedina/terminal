@@ -1,4 +1,4 @@
-package com.acteque.terminal.instrumentsearch;
+package com.acteque.terminal.chartworkspace.instrumentsearch;
 
 import com.acteque.terminal.marketdata.Instrument;
 import com.acteque.terminal.reload.ReloadHooks;
@@ -82,9 +82,6 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
       }
     });
     root.setOpen(open.get());
-    if (open.get()) {
-      showSearch(catalogRequestedHandler);
-    }
 
     refreshView();
     updatePlaceholder();
@@ -110,10 +107,6 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
     card.maxHeightProperty().bind(root.heightProperty().multiply(MAX_VIEWPORT_HEIGHT_RATIO));
     DialogContent.setVgrow(instruments, Priority.ALWAYS);
     root.setContent(card);
-  }
-
-  void close() {
-    root.close();
   }
 
   private void showSearch(Runnable catalogRequestedHandler) {

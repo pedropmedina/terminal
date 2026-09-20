@@ -71,7 +71,10 @@ class ChartWorkspaceTest {
           charts.add(chart);
           resources.add(new Resources(marketData, logos));
           return chart;
-        }
+        },
+        new StubInstrumentCatalog(List::of),
+        Runnable::run,
+        Runnable::run
       );
 
       try {
@@ -164,14 +167,19 @@ class ChartWorkspaceTest {
         right.getView().getParent().fireEvent(primaryMousePress());
         assertTrue(isActive(right));
 
+        assertEquals(1, view.lookupAll(".instrument-search-dialog").size());
+        assertNull(left.getView().lookup(".instrument-search-dialog"));
+        assertNull(right.getView().lookup(".instrument-search-dialog"));
         assertInstanceOf(Button.class, menuItems.getChildren().getFirst()).fire();
-        Dialog rightInstrumentSearch = assertInstanceOf(
-          Dialog.class,
-          right.getView().lookup(".instrument-search-dialog")
-        );
-        assertTrue(rightInstrumentSearch.isOpen());
-        assertFalse(assertInstanceOf(Dialog.class, left.getView().lookup(".instrument-search-dialog")).isOpen());
-        rightInstrumentSearch.close();
+        layout(view);
+        Dialog instrumentSearch = assertInstanceOf(Dialog.class, view.lookup(".instrument-search-dialog"));
+        assertTrue(instrumentSearch.isOpen());
+        Region instrumentSearchCard = assertInstanceOf(Region.class, view.lookup(".instrument-search-card"));
+        Bounds workspaceBounds = view.localToScene(view.getBoundsInLocal());
+        Bounds cardBounds = instrumentSearchCard.localToScene(instrumentSearchCard.getBoundsInLocal());
+        assertEquals(workspaceBounds.getCenterX(), cardBounds.getCenterX(), 0.01);
+        assertEquals(workspaceBounds.getCenterY(), cardBounds.getCenterY(), 0.01);
+        instrumentSearch.close();
 
         assertInstanceOf(Button.class, menuItems.getChildren().getLast()).fire();
         assertEquals(1, resources.get(1).marketData.closes);
@@ -228,6 +236,7 @@ class ChartWorkspaceTest {
         fixture.interactor::activate,
         new Region(),
         new Drawer(),
+        new Dialog(),
         new Dialog()
       );
       StackPane view = viewBuilder.build();
@@ -252,6 +261,7 @@ class ChartWorkspaceTest {
         fixture.interactor::activate,
         new Region(),
         new Drawer(),
+        new Dialog(),
         new Dialog()
       );
       StackPane view = viewBuilder.build();
@@ -354,6 +364,7 @@ class ChartWorkspaceTest {
         fixture.interactor::activate,
         new Region(),
         new Drawer(),
+        new Dialog(),
         new Dialog()
       );
       StackPane view = viewBuilder.build();
@@ -510,15 +521,7 @@ class ChartWorkspaceTest {
   }
 
   private static Chart chart(ChartWorkspaceSettings settings, StubMarketData marketData, StubLogos logos) {
-    Chart chart = new Chart(
-      List.of(),
-      settings.symbol(),
-      settings.interval(),
-      new StubInstrumentCatalog(List::of),
-      marketData,
-      logos,
-      Runnable::run
-    );
+    Chart chart = new Chart(List.of(), settings.symbol(), settings.interval(), marketData, logos, Runnable::run);
     chart.setChartType(settings.chartType());
     return chart;
   }

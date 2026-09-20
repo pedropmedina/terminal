@@ -1,7 +1,9 @@
-package com.acteque.terminal.instrumentsearch;
+package com.acteque.terminal.chartworkspace.instrumentsearch;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.StubInstrumentCatalog;
 import com.acteque.terminal.marketdata.Instrument;
@@ -15,6 +17,21 @@ class InstrumentSearchInteractorTest {
 
   private static final Instrument APPLE = instrument("AAPL", "NASDAQ");
   private static final Instrument IBM = instrument("IBM", "NYSE");
+
+  @Test
+  void initializesClosedAndControlsWorkspaceVisibility() {
+    InstrumentSearchModel model = new InstrumentSearchModel();
+    InstrumentSearchInteractor interactor = interactor(model, List.of());
+
+    interactor.initialize("IBM");
+    assertFalse(model.openProperty().get());
+
+    interactor.show();
+    assertTrue(model.openProperty().get());
+
+    interactor.close();
+    assertFalse(model.openProperty().get());
+  }
 
   @Test
   void initializesAndFiltersNormalizedQueriesBySymbolOrExchange() {

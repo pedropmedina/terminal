@@ -2,7 +2,6 @@ package com.acteque.terminal.chart;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.acteque.terminal.StubInstrumentCatalog;
 import com.acteque.terminal.marketdata.CalendarData;
 import com.acteque.terminal.marketdata.Instrument;
 import com.acteque.terminal.marketdata.InstrumentLoadResult;
@@ -27,17 +26,7 @@ class ChartInstrumentLogosTest {
       for (String outcome : List.of("pending", "missing", "resolution-failed", "download-failed")) {
         StubMarketData marketData = new StubMarketData();
         StubLogos logos = new StubLogos(outcome);
-        try (
-          Chart chart = new Chart(
-            List.of(),
-            "IBM",
-            ChartInterval.DAILY,
-            new StubInstrumentCatalog(List::of),
-            marketData,
-            logos,
-            Runnable::run
-          )
-        ) {
+        try (Chart chart = new Chart(List.of(), "IBM", ChartInterval.DAILY, marketData, logos, Runnable::run)) {
           var view = chart.getView();
           chart.loadInitialInstrument();
           assertEquals("Provider Name", ((Button) view.lookup(".chart-symbol-button")).getText());

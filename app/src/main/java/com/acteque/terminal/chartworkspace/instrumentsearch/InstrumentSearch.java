@@ -1,4 +1,4 @@
-package com.acteque.terminal.instrumentsearch;
+package com.acteque.terminal.chartworkspace.instrumentsearch;
 
 import com.acteque.terminal.marketdata.Instrument;
 import com.acteque.terminal.marketdata.InstrumentCatalog;
@@ -18,7 +18,6 @@ public final class InstrumentSearch {
 
   public InstrumentSearch(
     String currentSymbol,
-    ObservableBooleanValue open,
     InstrumentCatalog catalog,
     Executor backgroundExecutor,
     Executor uiExecutor
@@ -28,7 +27,7 @@ public final class InstrumentSearch {
     interactor.initialize(currentSymbol);
     viewBuilder = new InstrumentSearchViewBuilder(
       model,
-      Objects.requireNonNull(open, "open cannot be null"),
+      interactor.openProperty(),
       interactor::setQuery,
       interactor::loadCatalog,
       this::select,
@@ -44,6 +43,18 @@ public final class InstrumentSearch {
     interactor.setCurrentSymbol(symbol);
   }
 
+  public ObservableBooleanValue openProperty() {
+    return interactor.openProperty();
+  }
+
+  public void show() {
+    interactor.show();
+  }
+
+  public void close() {
+    interactor.close();
+  }
+
   public void onInstrumentSelected(Consumer<String> callback) {
     instrumentSelectedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
@@ -54,7 +65,7 @@ public final class InstrumentSearch {
 
   private void select(Instrument instrument) {
     interactor.select(instrument);
-    viewBuilder.close();
+    close();
     instrumentSelectedHandler.accept(instrument.symbol());
   }
 

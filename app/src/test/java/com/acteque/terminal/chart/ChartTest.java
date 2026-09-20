@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.AppTheme;
 import com.acteque.terminal.AppThemeManager;
-import com.acteque.terminal.StubInstrumentCatalog;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.tooltip.Tooltip;
@@ -33,9 +32,7 @@ class ChartTest {
   @Test
   void identifierUsesTheConfiguredColorAsAPassiveStatusLineBorder() {
     FxTestSupport.runAndWait(() -> {
-      try (
-        Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of))
-      ) {
+      try (Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY)) {
         StackPane chart = chartController.getView();
         new AppThemeManager(new Scene(chart, 800.0, 500.0), AppTheme.LIGHT);
         Color color = Color.hsb(210.0, 0.72, 0.85);
@@ -85,9 +82,7 @@ class ChartTest {
   @Test
   void requestsWorkspaceIntervalSelectionFromItsPlatformShortcut() {
     FxTestSupport.runAndWait(() -> {
-      try (
-        Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of))
-      ) {
+      try (Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY)) {
         StackPane chart = chartController.getView();
         assertTrue(chart.lookupAll(".chart-workspace-interval-selection-dialog").isEmpty());
 
@@ -102,9 +97,7 @@ class ChartTest {
   @Test
   void dismissesTheStatusTooltipWhenAShortcutOpensAModal() {
     FxTestSupport.runAndWait(() -> {
-      try (
-        Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of))
-      ) {
+      try (Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY)) {
         StackPane chart = chartController.getView();
         Stage stage = new Stage();
         stage.setScene(new Scene(chart, 800.0, 500.0));
@@ -139,7 +132,7 @@ class ChartTest {
     AtomicReference<Chart> chartControllerReference = new AtomicReference<>();
 
     FxTestSupport.runAndWait(() -> {
-      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of));
+      Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY);
       StackPane chart = chartController.getView();
       Stage stage = new Stage();
       stage.setX(200.0);

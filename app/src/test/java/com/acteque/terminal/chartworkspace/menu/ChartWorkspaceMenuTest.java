@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.AppTheme;
 import com.acteque.terminal.AppThemeManager;
-import com.acteque.terminal.StubInstrumentCatalog;
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartSplitDirection;
@@ -119,6 +118,6 @@ class ChartWorkspaceMenuTest {
   }
 
   private static Chart chart(String symbol) {
-    return new Chart(List.of(), symbol, ChartInterval.DAILY, new StubInstrumentCatalog(List::of));
+    return new Chart(List.of(), symbol, ChartInterval.DAILY);
   }
 }

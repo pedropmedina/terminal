@@ -1,7 +1,9 @@
-package com.acteque.terminal.instrumentsearch;
+package com.acteque.terminal.chartworkspace.instrumentsearch;
 
 import com.acteque.terminal.marketdata.Instrument;
 import java.util.List;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyListProperty;
 import javafx.beans.property.ReadOnlyListWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -21,6 +23,7 @@ final class InstrumentSearchModel {
   }
 
   private final ReadOnlyStringWrapper currentSymbol = new ReadOnlyStringWrapper(this, "currentSymbol", "");
+  private final ReadOnlyBooleanWrapper open = new ReadOnlyBooleanWrapper(this, "open");
   private final ReadOnlyStringWrapper query = new ReadOnlyStringWrapper(this, "query", "");
   private final ReadOnlyListWrapper<Instrument> instruments = new ReadOnlyListWrapper<>(
     this,
@@ -48,6 +51,14 @@ final class InstrumentSearchModel {
 
   void setCurrentSymbol(String value) {
     currentSymbol.set(value);
+  }
+
+  ReadOnlyBooleanProperty openProperty() {
+    return open.getReadOnlyProperty();
+  }
+
+  void setOpen(boolean value) {
+    open.set(value);
   }
 
   String getQuery() {

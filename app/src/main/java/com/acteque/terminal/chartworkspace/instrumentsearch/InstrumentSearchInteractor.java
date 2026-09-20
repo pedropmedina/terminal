@@ -1,4 +1,4 @@
-package com.acteque.terminal.instrumentsearch;
+package com.acteque.terminal.chartworkspace.instrumentsearch;
 
 import com.acteque.terminal.marketdata.Instrument;
 import com.acteque.terminal.marketdata.InstrumentCatalog;
@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import javafx.beans.value.ObservableBooleanValue;
 
 /** Applies instrument-search state transitions without depending on its layout. */
 final class InstrumentSearchInteractor {
@@ -30,6 +31,19 @@ final class InstrumentSearchInteractor {
 
   void initialize(String currentSymbol) {
     setCurrentSymbol(currentSymbol);
+    model.setOpen(false);
+  }
+
+  ObservableBooleanValue openProperty() {
+    return model.openProperty();
+  }
+
+  void show() {
+    model.setOpen(true);
+  }
+
+  void close() {
+    model.setOpen(false);
   }
 
   void setCurrentSymbol(String symbol) {
