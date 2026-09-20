@@ -14,8 +14,6 @@ import java.util.Locale;
 import java.util.Objects;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
@@ -27,9 +25,6 @@ import javafx.util.Builder;
 
 /** Builds the reactive JavaFX view for the chart status line. */
 final class ChartStatusLineViewBuilder implements Builder<Region>, ReloadTarget {
-
-  private static final double LEFT_MARGIN = 12.0;
-  private static final double BOTTOM_MARGIN = 38.0;
 
   private final ChartStatusLineModel model;
   private final Runnable instrumentClickHandler;
@@ -56,8 +51,6 @@ final class ChartStatusLineViewBuilder implements Builder<Region>, ReloadTarget 
     root.getStyleClass().add("chart-status-line");
     root.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
     root.setPickOnBounds(false);
-    StackPane.setAlignment(root, Pos.BOTTOM_LEFT);
-    StackPane.setMargin(root, new Insets(0.0, 0.0, BOTTOM_MARGIN, LEFT_MARGIN));
 
     logoAttribution.getStyleClass().add("chart-symbol-tooltip-attribution");
     logoAttribution

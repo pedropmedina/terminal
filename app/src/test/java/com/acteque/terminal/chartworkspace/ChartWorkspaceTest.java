@@ -3,6 +3,7 @@ package com.acteque.terminal.chartworkspace;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -23,10 +24,13 @@ import com.acteque.terminal.ui.resizable.ResizablePanelGroup;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import javafx.geometry.Orientation;
 import javafx.scene.AccessibleAction;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import org.junit.jupiter.api.Test;
 
 class ChartWorkspaceTest {
@@ -150,6 +154,40 @@ class ChartWorkspaceTest {
   }
 
   @Test
+  void showsStableDistinctIdentifiersOnlyWhileTheWorkspaceHasMultipleCharts() {
+    FxTestSupport.runAndWait(() -> {
+      Fixture fixture = new Fixture();
+      Chart source = fixture.initialize();
+      Region sourceIdentifier = identifier(source);
+      Color sourceColor = identifierColor(sourceIdentifier);
+
+      assertFalse(sourceIdentifier.isVisible());
+      assertFalse(sourceIdentifier.isManaged());
+      assertEquals(0.72, sourceColor.getSaturation(), 0.001);
+      assertEquals(0.85, sourceColor.getBrightness(), 0.001);
+
+      fixture.interactor.split(source, ChartSplitDirection.RIGHT);
+      ChartWorkspaceSplit split = (ChartWorkspaceSplit) fixture.model.getRoot();
+      Chart created = ((ChartWorkspaceLeaf) split.second()).chart();
+      Region createdIdentifier = identifier(created);
+
+      assertTrue(sourceIdentifier.isVisible());
+      assertTrue(sourceIdentifier.isManaged());
+      assertTrue(createdIdentifier.isVisible());
+      assertTrue(createdIdentifier.isManaged());
+      assertEquals(sourceColor, identifierColor(sourceIdentifier));
+      assertNotEquals(identifierColor(sourceIdentifier), identifierColor(createdIdentifier));
+
+      fixture.interactor.remove(created);
+
+      assertFalse(sourceIdentifier.isVisible());
+      assertFalse(sourceIdentifier.isManaged());
+      assertEquals(sourceColor, identifierColor(sourceIdentifier));
+      fixture.interactor.close();
+    });
+  }
+
+  @Test
   void leavesTheTreeUnchangedWhenChartCreationFails() {
     FxTestSupport.runAndWait(() -> {
       ChartWorkspaceModel model = new ChartWorkspaceModel();
@@ -190,21 +228,33 @@ class ChartWorkspaceTest {
     view.layout();
   }
 
+  private static Region identifier(Chart chart) {
+    return assertInstanceOf(Region.class, chart.getView().lookup(".chart-identifier"));
+  }
+
+  private static Color identifierColor(Region identifier) {
+    return assertInstanceOf(Color.class, identifier.getBackground().getFills().getFirst().getFill());
+  }
+
   private static final class Fixture {
 
     private final ChartWorkspaceModel model = new ChartWorkspaceModel();
     private final List<ChartWorkspaceSettings> settings = new ArrayList<>();
     private final List<Resources> resources = new ArrayList<>();
     private final List<Chart> charts = new ArrayList<>();
-    private final ChartWorkspaceInteractor interactor = new ChartWorkspaceInteractor(model, value -> {
-      StubMarketData marketData = new StubMarketData();
-      StubLogos logos = new StubLogos();
-      Chart chart = chart(value, marketData, logos);
-      settings.add(value);
-      resources.add(new Resources(marketData, logos));
-      charts.add(chart);
-      return chart;
-    });
+    private final ChartWorkspaceInteractor interactor = new ChartWorkspaceInteractor(
+      model,
+      value -> {
+        StubMarketData marketData = new StubMarketData();
+        StubLogos logos = new StubLogos();
+        Chart chart = chart(value, marketData, logos);
+        settings.add(value);
+        resources.add(new Resources(marketData, logos));
+        charts.add(chart);
+        return chart;
+      },
+      new Random(1_234L)
+    );
 
     private Chart initialize() {
       interactor.initialize(new ChartWorkspaceSettings("IBM", ChartInterval.DAILY, ChartType.LINE));

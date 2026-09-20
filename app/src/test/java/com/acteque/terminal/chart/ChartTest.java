@@ -24,13 +24,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 import javafx.css.PseudoClass;
 import javafx.geometry.Bounds;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.Test;
 
@@ -88,6 +91,41 @@ class ChartTest {
 
         chartController.setChartType(ChartType.CANDLESTICK);
         assertSame(LucideIcons.CHART_CANDLESTICK, assertInstanceOf(LucideIcon.class, button.getGraphic()).getGlyph());
+      }
+    });
+  }
+
+  @Test
+  void identifierUsesTheConfiguredColorAsAPassiveStatusLineBorder() {
+    FxTestSupport.runAndWait(() -> {
+      try (
+        Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of))
+      ) {
+        StackPane chart = chartController.getView();
+        new AppThemeManager(new Scene(chart, 800.0, 500.0), AppTheme.LIGHT);
+        Color color = Color.hsb(210.0, 0.72, 0.85);
+
+        chartController.setIdentifierColor(color);
+        chartController.setIdentifierVisible(true);
+        chart.applyCss();
+        chart.layout();
+
+        Region identifier = assertInstanceOf(Region.class, chart.lookup(".chart-identifier"));
+        HBox statusContent = assertInstanceOf(HBox.class, chart.lookup(".chart-status-content"));
+        Region statusLine = assertInstanceOf(Region.class, chart.lookup(".chart-status-line"));
+        var identifierFill = identifier.getBackground().getFills().getFirst();
+        assertEquals(color, identifierFill.getFill());
+        assertTrue(identifierFill.getRadii().isUniform());
+        assertEquals(3.0, identifierFill.getRadii().getTopLeftHorizontalRadius());
+        assertEquals(6.0, identifier.getWidth());
+        assertEquals(statusLine.getHeight() * 0.8, identifier.getBoundsInParent().getHeight(), 0.01);
+        assertEquals(Pos.CENTER_LEFT, statusContent.getAlignment());
+        assertEquals(6.0, statusContent.getSpacing());
+        assertTrue(identifier.getBoundsInParent().getMaxX() <= statusLine.getBoundsInParent().getMinX());
+        assertEquals(statusLine.getBoundsInParent().getCenterY(), identifier.getBoundsInParent().getCenterY(), 0.01);
+        Bounds identifierBounds = chart.sceneToLocal(identifier.localToScene(identifier.getBoundsInLocal()));
+        assertEquals(12.0, identifierBounds.getMinX(), 0.01);
+        assertTrue(identifier.isMouseTransparent());
       }
     });
   }

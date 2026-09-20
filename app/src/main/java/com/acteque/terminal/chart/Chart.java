@@ -24,6 +24,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 
 /** Composes and exposes the chart's MVCI feature. */
 public final class Chart implements AutoCloseable {
@@ -247,6 +248,14 @@ public final class Chart implements AutoCloseable {
 
   public void setCloseAvailable(boolean value) {
     menu.setCloseAvailable(value);
+  }
+
+  public void setIdentifierColor(Color color) {
+    model.setIdentifierColor(Objects.requireNonNull(color, "color cannot be null"));
+  }
+
+  public void setIdentifierVisible(boolean value) {
+    model.setIdentifierVisible(value);
   }
 
   public void beginInstrumentLoad() {

@@ -6,6 +6,7 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ObservableBooleanValue;
+import javafx.scene.paint.Color;
 
 /** Observable state shared by the chart's MVCI components. */
 final class ChartModel {
@@ -14,6 +15,12 @@ final class ChartModel {
   private final ReadOnlyBooleanWrapper intervalSelectionOpen = new ReadOnlyBooleanWrapper(
     this,
     "intervalSelectionOpen"
+  );
+  private final ReadOnlyBooleanWrapper identifierVisible = new ReadOnlyBooleanWrapper(this, "identifierVisible");
+  private final ReadOnlyObjectWrapper<Color> identifierColor = new ReadOnlyObjectWrapper<>(
+    this,
+    "identifierColor",
+    Color.TRANSPARENT
   );
   private final ReadOnlyObjectWrapper<ChartInterval> interval = new ReadOnlyObjectWrapper<>(this, "interval");
   private final ReadOnlyObjectWrapper<ChartType> chartType = new ReadOnlyObjectWrapper<>(this, "chartType");
@@ -42,6 +49,22 @@ final class ChartModel {
 
   void setIntervalSelectionOpen(boolean value) {
     intervalSelectionOpen.set(value);
+  }
+
+  ReadOnlyBooleanProperty identifierVisibleProperty() {
+    return identifierVisible.getReadOnlyProperty();
+  }
+
+  void setIdentifierVisible(boolean value) {
+    identifierVisible.set(value);
+  }
+
+  ReadOnlyObjectProperty<Color> identifierColorProperty() {
+    return identifierColor.getReadOnlyProperty();
+  }
+
+  void setIdentifierColor(Color value) {
+    identifierColor.set(value);
   }
 
   boolean isModalOpen() {

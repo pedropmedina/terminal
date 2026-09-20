@@ -3,9 +3,13 @@ package com.acteque.terminal.chartworkspace;
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartSplitDirection;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.random.RandomGenerator;
 import javafx.geometry.Orientation;
+import javafx.scene.paint.Color;
 
 final class ChartWorkspaceInteractor implements AutoCloseable {
 
@@ -13,12 +17,23 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
 
   private final ChartWorkspaceModel model;
   private final ChartWorkspaceChartFactory chartFactory;
+  private final ChartIdentifierColorGenerator identifierColorGenerator;
+  private final Map<Chart, Color> identifierColors = new IdentityHashMap<>();
   private boolean started;
   private boolean closed;
 
   ChartWorkspaceInteractor(ChartWorkspaceModel model, ChartWorkspaceChartFactory chartFactory) {
+    this(model, chartFactory, RandomGenerator.getDefault());
+  }
+
+  ChartWorkspaceInteractor(
+    ChartWorkspaceModel model,
+    ChartWorkspaceChartFactory chartFactory,
+    RandomGenerator randomGenerator
+  ) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
     this.chartFactory = Objects.requireNonNull(chartFactory, "chartFactory cannot be null");
+    identifierColorGenerator = new ChartIdentifierColorGenerator(randomGenerator);
   }
 
   void initialize(ChartWorkspaceSettings settings) {
@@ -28,7 +43,7 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     Chart chart = chartFactory.create(Objects.requireNonNull(settings, "settings cannot be null"));
     configure(chart);
     model.setRoot(new ChartWorkspaceLeaf(chart));
-    updateCloseAvailability();
+    updateMultiChartAvailability();
   }
 
   void start() {
@@ -74,7 +89,7 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     ChartWorkspaceSplit replacement = new ChartWorkspaceSplit(orientation, first, second);
 
     model.setRoot(replace(model.getRoot(), source, replacement));
-    updateCloseAvailability();
+    updateMultiChartAvailability();
     if (started) {
       startChart(created);
     }
@@ -92,7 +107,8 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
       return;
     }
     model.setRoot(removal.item());
-    updateCloseAvailability();
+    identifierColors.remove(chart);
+    updateMultiChartAvailability();
     try {
       chart.close();
     } catch (RuntimeException failure) {
@@ -118,19 +134,26 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
         }
       }
     }
+    identifierColors.clear();
     if (failure != null) {
       throw failure;
     }
   }
 
   private void configure(Chart chart) {
+    Color identifierColor = identifierColorGenerator.next(identifierColors.values());
+    identifierColors.put(chart, identifierColor);
+    chart.setIdentifierColor(identifierColor);
     chart.onSplitRequested(direction -> split(chart, direction));
     chart.onCloseRequested(() -> remove(chart));
   }
 
-  private void updateCloseAvailability() {
+  private void updateMultiChartAvailability() {
     boolean available = count(model.getRoot()) > 1;
-    charts(model.getRoot()).forEach(chart -> chart.setCloseAvailable(available));
+    charts(model.getRoot()).forEach(chart -> {
+      chart.setCloseAvailable(available);
+      chart.setIdentifierVisible(available);
+    });
   }
 
   private void startChart(Chart chart) {
