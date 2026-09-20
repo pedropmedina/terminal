@@ -1,54 +1,46 @@
-package com.acteque.terminal.chart.menu;
+package com.acteque.terminal.chartworkspace.menu;
 
-import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartSplitDirection;
-import com.acteque.terminal.chart.ChartType;
-import com.acteque.terminal.chart.menu.ChartMenuModel.Item;
+import com.acteque.terminal.chartworkspace.menu.ChartWorkspaceMenuModel.Item;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.scene.layout.Region;
 
-/** Composes and exposes the chart menu's MVCI feature. */
-public final class ChartMenu {
+/** Composes and exposes the workspace menu's MVCI feature. */
+public final class ChartWorkspaceMenu implements AutoCloseable {
 
-  private final ChartMenuInteractor interactor;
-  private final ChartMenuViewBuilder viewBuilder;
+  private final ChartWorkspaceMenuInteractor interactor;
+  private final ChartWorkspaceMenuViewBuilder viewBuilder;
   private Runnable instrumentSelectionAction = () -> {};
   private Runnable intervalSelectionAction = () -> {};
   private Runnable chartTypeSelectionAction = () -> {};
   private Consumer<ChartSplitDirection> splitAction = ignored -> {};
   private Runnable closeAction = () -> {};
 
-  public ChartMenu(String symbol, ChartInterval interval) {
-    ChartMenuModel model = new ChartMenuModel();
-    interactor = new ChartMenuInteractor(model);
+  public ChartWorkspaceMenu(Chart activeChart) {
+    ChartWorkspaceMenuModel model = new ChartWorkspaceMenuModel();
+    interactor = new ChartWorkspaceMenuInteractor(model);
     interactor.onActionRequested(this::requestAction);
-    interactor.initialize(symbol, interval);
-    viewBuilder = new ChartMenuViewBuilder(model, interactor::request, this::requestSplit);
+    interactor.initialize(activeChart);
+    viewBuilder = new ChartWorkspaceMenuViewBuilder(model, interactor::request, this::requestSplit);
   }
 
   public Region getView() {
     return viewBuilder.build();
   }
 
-  public void setChartType(ChartType chartType) {
-    interactor.setChartType(chartType);
+  public void setActiveChart(Chart chart) {
+    viewBuilder.closeTransientUi();
+    interactor.setActiveChart(chart);
+  }
+
+  public void setMultipleCharts(boolean value) {
+    interactor.setMultipleCharts(value);
   }
 
   public void setChartTypeSelectionOpen(boolean value) {
     viewBuilder.setChartTypeSelectionOpen(value);
-  }
-
-  public void setInstrumentSymbol(String symbol) {
-    interactor.setInstrumentSymbol(symbol);
-  }
-
-  public void setInterval(ChartInterval interval) {
-    interactor.setInterval(interval);
-  }
-
-  public void setCloseAvailable(boolean value) {
-    interactor.setCloseAvailable(value);
   }
 
   public void onInstrumentSelectionRequested(Runnable callback) {
@@ -71,8 +63,10 @@ public final class ChartMenu {
     closeAction = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
+  @Override
   public void close() {
-    viewBuilder.close();
+    viewBuilder.closeTransientUi();
+    interactor.close();
   }
 
   private void requestAction(Item item) {

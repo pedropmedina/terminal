@@ -2,6 +2,7 @@ package com.acteque.terminal.chartworkspace;
 
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartSplitDirection;
+import com.acteque.terminal.chart.ChartType;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -105,6 +106,26 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     }
   }
 
+  void showActiveInstrumentSearch() {
+    requireActiveChart().showInstrumentSearch();
+  }
+
+  void showActiveIntervalSelection() {
+    requireActiveChart().showIntervalSelection();
+  }
+
+  void setActiveChartType(ChartType chartType) {
+    requireActiveChart().setChartType(Objects.requireNonNull(chartType, "chartType cannot be null"));
+  }
+
+  void splitActive(ChartSplitDirection direction) {
+    split(requireActiveChart(), direction);
+  }
+
+  void removeActive() {
+    remove(requireActiveChart());
+  }
+
   void remove(Chart chart) {
     requireOpen();
     Objects.requireNonNull(chart, "chart cannot be null");
@@ -157,16 +178,12 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     Color identifierColor = identifierColorGenerator.next(identifierColors.values());
     identifierColors.put(chart, identifierColor);
     chart.setIdentifierColor(identifierColor);
-    chart.onSplitRequested(direction -> split(chart, direction));
-    chart.onCloseRequested(() -> remove(chart));
   }
 
   private void updateMultiChartAvailability() {
     boolean available = count(model.getRoot()) > 1;
-    charts(model.getRoot()).forEach(chart -> {
-      chart.setCloseAvailable(available);
-      chart.setIdentifierVisible(available);
-    });
+    model.setMultipleCharts(available);
+    charts(model.getRoot()).forEach(chart -> chart.setIdentifierVisible(available));
   }
 
   private void startChart(Chart chart) {
@@ -178,6 +195,11 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     if (closed) {
       throw new IllegalStateException("Workspace is closed");
     }
+  }
+
+  private Chart requireActiveChart() {
+    requireOpen();
+    return Objects.requireNonNull(model.getActiveChart(), "workspace must have an active chart");
   }
 
   private static ChartWorkspaceItem replace(ChartWorkspaceItem item, Chart source, ChartWorkspaceItem replacement) {

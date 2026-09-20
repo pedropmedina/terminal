@@ -1,6 +1,7 @@
 package com.acteque.terminal.chartworkspace;
 
 import com.acteque.terminal.chart.Chart;
+import com.acteque.terminal.ui.drawer.Drawer;
 import com.acteque.terminal.ui.resizable.ResizableHandle;
 import com.acteque.terminal.ui.resizable.ResizablePanel;
 import com.acteque.terminal.ui.resizable.ResizablePanelGroup;
@@ -10,6 +11,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.css.PseudoClass;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -25,13 +28,30 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
   private final Consumer<Chart> chartActivatedHandler;
   private final Map<Chart, ChartContainer> chartContainers = new IdentityHashMap<>();
   private final StackPane root = new StackPane();
+  private final StackPane chartLayer = new StackPane();
+  private final StackPane menuOverlay;
+  private final Drawer inspectorDrawer;
 
-  ChartWorkspaceViewBuilder(ChartWorkspaceModel model, Consumer<Chart> chartActivatedHandler) {
+  ChartWorkspaceViewBuilder(
+    ChartWorkspaceModel model,
+    Consumer<Chart> chartActivatedHandler,
+    Node menu,
+    Drawer inspectorDrawer
+  ) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
     this.chartActivatedHandler = Objects.requireNonNull(chartActivatedHandler, "chartActivatedHandler cannot be null");
+    this.inspectorDrawer = Objects.requireNonNull(inspectorDrawer, "inspectorDrawer cannot be null");
+    menuOverlay = new StackPane(Objects.requireNonNull(menu, "menu cannot be null"));
+    menuOverlay.getStyleClass().add("chart-workspace-menu-overlay");
+    menuOverlay.setMaxHeight(StackPane.USE_PREF_SIZE);
+    menuOverlay.setPickOnBounds(false);
+    StackPane.setAlignment(menuOverlay, Pos.TOP_CENTER);
+    menuOverlay.boundsInParentProperty().addListener((ignored, previous, current) -> positionInspectorBelowMenu());
     root.getStyleClass().add("chart-workspace");
+    root.getChildren().setAll(chartLayer, menuOverlay, inspectorDrawer);
     model.rootProperty().addListener((ignored, previous, current) -> rebuild());
     model.activeChartProperty().addListener((ignored, previous, current) -> refreshActiveChart());
+    model.multipleChartsProperty().addListener((ignored, previous, current) -> refreshActiveChart());
     rebuild();
   }
 
@@ -41,14 +61,19 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
   }
 
   private void rebuild() {
-    List<Node> previous = List.copyOf(root.getChildren());
-    root.getChildren().clear();
+    List<Node> previous = List.copyOf(chartLayer.getChildren());
+    chartLayer.getChildren().clear();
     previous.forEach(ChartWorkspaceViewBuilder::detach);
     chartContainers.clear();
     if (model.getRoot() != null) {
-      root.getChildren().add(build(model.getRoot()));
+      chartLayer.getChildren().add(build(model.getRoot()));
     }
     refreshActiveChart();
+  }
+
+  private void positionInspectorBelowMenu() {
+    double menuBottom = Math.max(0.0, menuOverlay.getBoundsInParent().getMaxY());
+    StackPane.setMargin(inspectorDrawer, new Insets(menuBottom, 0.0, 0.0, 0.0));
   }
 
   private Node build(ChartWorkspaceItem item) {
@@ -78,7 +103,7 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
 
   private void refreshActiveChart() {
     Chart activeChart = model.getActiveChart();
-    boolean multipleCharts = model.getRoot() instanceof ChartWorkspaceSplit;
+    boolean multipleCharts = model.hasMultipleCharts();
     chartContainers.forEach((chart, container) ->
       container.pseudoClassStateChanged(ACTIVE_PSEUDO_CLASS, multipleCharts && chart == activeChart)
     );

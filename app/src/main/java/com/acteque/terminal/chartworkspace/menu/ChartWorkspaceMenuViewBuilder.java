@@ -1,10 +1,10 @@
-package com.acteque.terminal.chart.menu;
+package com.acteque.terminal.chartworkspace.menu;
 
 import com.acteque.terminal.chart.ChartIntervalText;
 import com.acteque.terminal.chart.ChartSplitDirection;
 import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.chart.ChartTypePresentation;
-import com.acteque.terminal.chart.menu.ChartMenuModel.Item;
+import com.acteque.terminal.chartworkspace.menu.ChartWorkspaceMenuModel.Item;
 import com.acteque.terminal.reload.ReloadHooks;
 import com.acteque.terminal.reload.ReloadTarget;
 import com.acteque.terminal.ui.Button;
@@ -21,28 +21,29 @@ import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import javafx.util.Builder;
 
-/** Builds the reactive JavaFX view for the chart menu. */
-final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
+/** Builds the reactive JavaFX view for the workspace menu. */
+final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarget {
 
-  private static final double TOP_MARGIN = 12.0;
   private static final PseudoClass DRAWER_OPEN = PseudoClass.getPseudoClass("drawer-open");
+  private static final CornerRadii IDENTIFIER_RADII = new CornerRadii(8.0);
 
-  private final ChartMenuModel model;
+  private final ChartWorkspaceMenuModel model;
   private final Consumer<Item> actionRequestedHandler;
   private final Consumer<ChartSplitDirection> splitRequestedHandler;
-  private final ChartMenuItems root = new ChartMenuItems();
+  private final ChartWorkspaceMenuItems root = new ChartWorkspaceMenuItems();
   private final Popover splitPopover;
   private Button chartTypeButton;
   private boolean chartTypeSelectionOpen;
 
-  ChartMenuViewBuilder(
-    ChartMenuModel model,
+  ChartWorkspaceMenuViewBuilder(
+    ChartWorkspaceMenuModel model,
     Consumer<Item> actionRequestedHandler,
     Consumer<ChartSplitDirection> splitRequestedHandler
   ) {
@@ -55,8 +56,17 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
     splitPopover = createSplitPopover();
 
     root.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-    StackPane.setAlignment(root, Pos.TOP_CENTER);
-    StackPane.setMargin(root, new Insets(TOP_MARGIN, 0.0, 0.0, 0.0));
+    root
+      .getIdentifier()
+      .backgroundProperty()
+      .bind(
+        Bindings.createObjectBinding(
+          () ->
+            new Background(new BackgroundFill(model.identifierColorProperty().get(), IDENTIFIER_RADII, Insets.EMPTY)),
+          model.identifierColorProperty()
+        )
+      );
+    root.getIdentifier().visibleProperty().bind(model.identifierVisibleProperty());
 
     model.itemsProperty().addListener((ListChangeListener<Item>) ignored -> rebuildItems());
     model.chartTypeProperty().addListener((ignored, previous, current) -> updateChartTypeButton());
@@ -81,7 +91,7 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
     }
   }
 
-  void close() {
+  void closeTransientUi() {
     splitPopover.setOpen(false);
   }
 
@@ -104,7 +114,7 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
         Size.ICON,
         splitPopover
       );
-      trigger.getStyleClass().add("chart-menu-split");
+      trigger.getStyleClass().add("chart-workspace-menu-split");
       trigger.setAccessibleText(item.description());
       trigger.setFocusTraversable(true);
       return trigger;
@@ -145,12 +155,12 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
       }
       case CHART_TYPE -> {
         chartTypeButton = button;
-        button.getStyleClass().add("chart-menu-chart-type");
+        button.getStyleClass().add("chart-workspace-menu-chart-type");
         button.pseudoClassStateChanged(DRAWER_OPEN, chartTypeSelectionOpen);
         updateChartTypeButton();
       }
       case CLOSE -> {
-        button.getStyleClass().add("chart-menu-close");
+        button.getStyleClass().add("chart-workspace-menu-close");
         button.setGraphic(new LucideIcon(LucideIcons.X));
       }
       case SPLIT -> throw new IllegalStateException("Split item must use its popover trigger");
@@ -160,20 +170,20 @@ final class ChartMenuViewBuilder implements Builder<Region>, ReloadTarget {
 
   private Popover createSplitPopover() {
     GridPane actions = new GridPane();
-    actions.getStyleClass().add("chart-split-actions");
+    actions.getStyleClass().add("chart-workspace-split-actions");
     addSplitAction(actions, "Top", ChartSplitDirection.TOP, 1, 0);
     addSplitAction(actions, "Left", ChartSplitDirection.LEFT, 0, 1);
     addSplitAction(actions, "Right", ChartSplitDirection.RIGHT, 2, 1);
     addSplitAction(actions, "Bottom", ChartSplitDirection.BOTTOM, 1, 2);
 
     PopoverContent content = new PopoverContent(actions);
-    content.getStyleClass().add("chart-split-popover");
+    content.getStyleClass().add("chart-workspace-split-popover");
     return new Popover(content);
   }
 
   private void addSplitAction(GridPane actions, String label, ChartSplitDirection direction, int column, int row) {
     Button button = new Button(label, Variant.GHOST, Size.DEFAULT);
-    button.getStyleClass().add("chart-split-action");
+    button.getStyleClass().add("chart-workspace-split-action");
     button.setAccessibleText("Create chart to the " + label.toLowerCase());
     button.setFocusTraversable(true);
     button.setMaxWidth(Double.MAX_VALUE);

@@ -21,9 +21,14 @@ import com.acteque.terminal.marketdata.MarketDataSession;
 import com.acteque.terminal.marketlogos.InstrumentLogo;
 import com.acteque.terminal.marketlogos.LogoSession;
 import com.acteque.terminal.test.FxTestSupport;
+import com.acteque.terminal.ui.Button;
+import com.acteque.terminal.ui.dialog.Dialog;
+import com.acteque.terminal.ui.drawer.Drawer;
+import com.acteque.terminal.ui.popover.PopoverTrigger;
 import com.acteque.terminal.ui.resizable.ResizableHandle;
 import com.acteque.terminal.ui.resizable.ResizablePanel;
 import com.acteque.terminal.ui.resizable.ResizablePanelGroup;
+import com.acteque.terminal.ui.togglegroup.ToggleGroupItem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,9 +39,11 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 import javafx.scene.AccessibleAction;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -46,6 +53,98 @@ import org.junit.jupiter.api.Test;
 class ChartWorkspaceTest {
 
   private static final PseudoClass ACTIVE_PSEUDO_CLASS = PseudoClass.getPseudoClass("workspace-active");
+
+  @Test
+  void workspaceMenuTracksAndControlsTheActiveChart() {
+    FxTestSupport.runAndWait(() -> {
+      List<Chart> charts = new ArrayList<>();
+      List<Resources> resources = new ArrayList<>();
+      ChartWorkspace workspace = new ChartWorkspace(
+        new ChartWorkspaceSettings("IBM", ChartInterval.DAILY, ChartType.BAR),
+        settings -> {
+          StubMarketData marketData = new StubMarketData();
+          StubLogos logos = new StubLogos();
+          Chart chart = chart(settings, marketData, logos);
+          charts.add(chart);
+          resources.add(new Resources(marketData, logos));
+          return chart;
+        }
+      );
+
+      try {
+        StackPane view = workspace.getView();
+        new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
+        layout(view);
+
+        Chart left = charts.getFirst();
+        assertEquals(1, view.lookupAll(".chart-workspace-menu").size());
+        assertNull(left.getView().lookup(".chart-workspace-menu"));
+        HBox menuItems = assertInstanceOf(HBox.class, view.lookup(".chart-workspace-menu-items"));
+        Region menuIdentifier = assertInstanceOf(Region.class, view.lookup(".chart-workspace-menu-identifier"));
+        assertEquals(4, menuItems.getChildren().size());
+        assertFalse(menuIdentifier.isVisible());
+
+        PopoverTrigger split = assertInstanceOf(PopoverTrigger.class, menuItems.getChildren().get(3));
+        split
+          .getPopover()
+          .getContent()
+          .lookupAll(".chart-workspace-split-action")
+          .stream()
+          .map(Button.class::cast)
+          .filter(button -> "Right".equals(button.getText()))
+          .findFirst()
+          .orElseThrow()
+          .fire();
+        layout(view);
+
+        Chart right = charts.get(1);
+        right.setInstrument("AAPL", "Apple", List.of(), Optional.empty());
+        layout(view);
+        assertTrue(isActive(right));
+        assertFalse(isActive(left));
+        assertEquals(5, menuItems.getChildren().size());
+        assertEquals("AAPL", assertInstanceOf(Button.class, menuItems.getChildren().getFirst()).getText());
+        assertTrue(menuIdentifier.isVisible());
+        assertEquals(4.0, menuIdentifier.getWidth());
+        assertEquals(
+          right.identifierColorProperty().get(),
+          menuIdentifier.getBackground().getFills().getFirst().getFill()
+        );
+
+        Button chartType = assertInstanceOf(Button.class, menuItems.getChildren().get(2));
+        chartType.fire();
+        Drawer drawer = assertInstanceOf(Drawer.class, view.lookup(".chart-inspector-drawer"));
+        assertTrue(drawer.isOpen());
+        view
+          .lookupAll(".chart-inspector-option")
+          .stream()
+          .map(ToggleGroupItem.class::cast)
+          .filter(button -> button.getAccessibleText().startsWith("Area."))
+          .findFirst()
+          .orElseThrow()
+          .fire();
+        assertEquals(ChartType.BAR, left.getChartType());
+        assertEquals(ChartType.AREA, right.getChartType());
+
+        assertInstanceOf(Button.class, menuItems.getChildren().getFirst()).fire();
+        Dialog rightInstrumentSearch = assertInstanceOf(
+          Dialog.class,
+          right.getView().lookup(".instrument-search-dialog")
+        );
+        assertTrue(rightInstrumentSearch.isOpen());
+        assertFalse(assertInstanceOf(Dialog.class, left.getView().lookup(".instrument-search-dialog")).isOpen());
+        rightInstrumentSearch.close();
+
+        assertInstanceOf(Button.class, menuItems.getChildren().getLast()).fire();
+        assertEquals(1, resources.get(1).marketData.closes);
+        assertEquals(1, resources.get(1).logos.closes);
+        assertEquals(4, menuItems.getChildren().size());
+        assertFalse(menuIdentifier.isVisible());
+      } finally {
+        workspace.close();
+      }
+    });
+  }
 
   @Test
   void createsEveryDirectionInTheRequestedOrderAndOrientation() {
@@ -88,7 +187,9 @@ class ChartWorkspaceTest {
       Chart source = fixture.initialize();
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
-        fixture.interactor::activate
+        fixture.interactor::activate,
+        new Region(),
+        new Drawer()
       );
       StackPane view = viewBuilder.build();
       new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
@@ -109,7 +210,9 @@ class ChartWorkspaceTest {
       Chart created = ((ChartWorkspaceLeaf) ((ChartWorkspaceSplit) fixture.model.getRoot()).second()).chart();
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
-        fixture.interactor::activate
+        fixture.interactor::activate,
+        new Region(),
+        new Drawer()
       );
       StackPane view = viewBuilder.build();
       AppThemeManager themeManager = new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
@@ -208,13 +311,15 @@ class ChartWorkspaceTest {
       Chart source = fixture.initialize();
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
-        fixture.interactor::activate
+        fixture.interactor::activate,
+        new Region(),
+        new Drawer()
       );
       StackPane view = viewBuilder.build();
       new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
 
       fixture.interactor.split(source, ChartSplitDirection.RIGHT);
-      ResizablePanelGroup firstView = assertInstanceOf(ResizablePanelGroup.class, view.getChildren().getFirst());
+      ResizablePanelGroup firstView = assertInstanceOf(ResizablePanelGroup.class, workspaceContent(view));
       layout(view);
       ResizableHandle firstHandle = assertInstanceOf(ResizableHandle.class, firstView.getChildren().get(1));
       firstHandle.executeAccessibleAction(AccessibleAction.SET_VALUE, 70.0);
@@ -236,7 +341,7 @@ class ChartWorkspaceTest {
       assertEquals(Orientation.VERTICAL, nested.orientation());
       assertEquals(3, fixture.charts.size());
       Chart bottom = assertInstanceOf(ChartWorkspaceLeaf.class, nested.second()).chart();
-      ResizablePanelGroup rebuilt = assertInstanceOf(ResizablePanelGroup.class, view.getChildren().getFirst());
+      ResizablePanelGroup rebuilt = assertInstanceOf(ResizablePanelGroup.class, workspaceContent(view));
       assertEquals(Orientation.HORIZONTAL, rebuilt.getOrientation());
       assertEquals(0.7, rebuilt.getDividerPositions()[0]);
       ResizablePanel second = assertInstanceOf(ResizablePanel.class, rebuilt.getChildren().get(2));
@@ -262,19 +367,18 @@ class ChartWorkspaceTest {
     FxTestSupport.runAndWait(() -> {
       Fixture fixture = new Fixture();
       Chart source = fixture.initialize();
-      assertTrue(source.getView().lookup(".chart-menu-close") == null);
+      assertFalse(fixture.model.hasMultipleCharts());
 
       fixture.interactor.split(source, ChartSplitDirection.RIGHT);
       ChartWorkspaceSplit split = (ChartWorkspaceSplit) fixture.model.getRoot();
       Chart created = ((ChartWorkspaceLeaf) split.second()).chart();
-      assertTrue(source.getView().lookup(".chart-menu-close") != null);
-      assertTrue(created.getView().lookup(".chart-menu-close") != null);
+      assertTrue(fixture.model.hasMultipleCharts());
 
       fixture.interactor.remove(created);
 
       assertSame(source, assertInstanceOf(ChartWorkspaceLeaf.class, fixture.model.getRoot()).chart());
       assertSame(source, fixture.model.getActiveChart());
-      assertTrue(source.getView().lookup(".chart-menu-close") == null);
+      assertFalse(fixture.model.hasMultipleCharts());
       assertEquals(1, fixture.resources.get(1).marketData.closes);
       assertEquals(1, fixture.resources.get(1).logos.closes);
 
@@ -395,6 +499,11 @@ class ChartWorkspaceTest {
   private static Bounds containerBounds(Chart chart) {
     Region container = assertInstanceOf(Region.class, chart.getView().getParent());
     return container.localToScene(container.getBoundsInLocal());
+  }
+
+  private static Node workspaceContent(StackPane view) {
+    StackPane chartLayer = assertInstanceOf(StackPane.class, view.getChildren().getFirst());
+    return chartLayer.getChildren().getFirst();
   }
 
   private static boolean isActive(Chart chart) {

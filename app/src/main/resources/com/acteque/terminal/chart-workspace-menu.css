@@ -1,0 +1,47 @@
+.chart-workspace-menu-overlay {
+  -fx-alignment: top-center;
+  -fx-padding: 12px 0 0 0;
+}
+
+.chart-workspace-menu {
+  -fx-background-color: -app-card;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-border;
+  -fx-border-radius: 8px;
+}
+
+.chart-workspace-menu-items {
+  -fx-alignment: center;
+  -fx-spacing: 8px;
+  -fx-padding: 4px;
+}
+
+.chart-workspace-menu-identifier {
+  -fx-min-width: 4px;
+  -fx-pref-width: 4px;
+  -fx-max-width: 4px;
+  -fx-max-height: infinity;
+}
+
+.chart-workspace-menu-chart-type.core-button.button-variant-ghost:drawer-open {
+  -fx-background-color: -app-button-ghost-hover;
+}
+
+.chart-workspace-menu-close.core-button.button-variant-ghost:hover {
+  -fx-text-fill: -app-destructive;
+}
+
+.chart-workspace-split-popover.core-popover-content {
+  -fx-min-width: 228px;
+  -fx-pref-width: 228px;
+}
+
+.chart-workspace-split-actions {
+  -fx-alignment: center;
+  -fx-hgap: 4px;
+  -fx-vgap: 4px;
+}
+
+.chart-workspace-split-action.core-button {
+  -fx-min-width: 68px;
+}

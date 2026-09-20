@@ -1,6 +1,8 @@
 package com.acteque.terminal.chartworkspace;
 
 import com.acteque.terminal.chart.Chart;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 
@@ -8,6 +10,7 @@ final class ChartWorkspaceModel {
 
   private final ReadOnlyObjectWrapper<ChartWorkspaceItem> root = new ReadOnlyObjectWrapper<>(this, "root");
   private final ReadOnlyObjectWrapper<Chart> activeChart = new ReadOnlyObjectWrapper<>(this, "activeChart");
+  private final ReadOnlyBooleanWrapper multipleCharts = new ReadOnlyBooleanWrapper(this, "multipleCharts");
 
   ChartWorkspaceItem getRoot() {
     return root.get();
@@ -31,5 +34,17 @@ final class ChartWorkspaceModel {
 
   void setActiveChart(Chart value) {
     activeChart.set(value);
+  }
+
+  boolean hasMultipleCharts() {
+    return multipleCharts.get();
+  }
+
+  ReadOnlyBooleanProperty multipleChartsProperty() {
+    return multipleCharts.getReadOnlyProperty();
+  }
+
+  void setMultipleCharts(boolean value) {
+    multipleCharts.set(value);
   }
 }

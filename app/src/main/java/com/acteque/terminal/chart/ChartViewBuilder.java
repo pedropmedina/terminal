@@ -3,7 +3,6 @@ package com.acteque.terminal.chart;
 import com.acteque.terminal.reload.ReloadHooks;
 import com.acteque.terminal.reload.ReloadTarget;
 import com.acteque.terminal.ui.dialog.Dialog;
-import com.acteque.terminal.ui.drawer.Drawer;
 import java.util.List;
 import java.util.Objects;
 import javafx.beans.binding.Bindings;
@@ -34,8 +33,6 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
 
   private final ChartModel model;
   private final Canvas canvas;
-  private final Region menu;
-  private final Drawer inspectorDrawer;
   private final Region statusLine;
   private final Dialog instrumentSearchDialog;
   private final Dialog intervalSelectionDialog;
@@ -47,8 +44,6 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
   ChartViewBuilder(
     ChartModel model,
     Canvas canvas,
-    Region menu,
-    Drawer inspectorDrawer,
     Region statusLine,
     Dialog instrumentSearchDialog,
     Dialog intervalSelectionDialog,
@@ -57,8 +52,6 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
   ) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
     this.canvas = Objects.requireNonNull(canvas, "canvas cannot be null");
-    this.menu = Objects.requireNonNull(menu, "menu cannot be null");
-    this.inspectorDrawer = Objects.requireNonNull(inspectorDrawer, "inspectorDrawer cannot be null");
     this.statusLine = Objects.requireNonNull(statusLine, "statusLine cannot be null");
     this.instrumentSearchDialog = Objects.requireNonNull(
       instrumentSearchDialog,
@@ -98,10 +91,8 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
     root.addEventFilter(KeyEvent.KEY_PRESSED, this::handleShortcut);
     canvas.widthProperty().bind(root.widthProperty());
     canvas.heightProperty().bind(root.heightProperty());
-    menu.boundsInParentProperty().addListener((ignored, previous, current) -> positionSettingsDrawerBelowMenu());
 
     refreshView();
-    positionSettingsDrawerBelowMenu();
     ReloadHooks.register(this);
   }
 
@@ -122,9 +113,7 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
     statusOverlay.getStyleClass().add("chart-status-overlay");
     statusOverlay.setPickOnBounds(false);
 
-    root
-      .getChildren()
-      .setAll(canvas, menu, statusOverlay, inspectorDrawer, instrumentSearchDialog, intervalSelectionDialog);
+    root.getChildren().setAll(canvas, statusOverlay, instrumentSearchDialog, intervalSelectionDialog);
   }
 
   private void handleShortcut(KeyEvent event) {
@@ -138,11 +127,6 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
       intervalSelectionRequestedHandler.run();
       event.consume();
     }
-  }
-
-  private void positionSettingsDrawerBelowMenu() {
-    double menuBottom = Math.max(0.0, menu.getBoundsInParent().getMaxY());
-    StackPane.setMargin(inspectorDrawer, new Insets(menuBottom, 0.0, 0.0, 0.0));
   }
 
   static boolean isInstrumentSearchShortcut(KeyEvent event) {

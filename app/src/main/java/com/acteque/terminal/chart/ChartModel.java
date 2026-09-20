@@ -91,12 +91,20 @@ final class ChartModel {
     return chartType.get();
   }
 
+  ReadOnlyObjectProperty<ChartType> chartTypeProperty() {
+    return chartType.getReadOnlyProperty();
+  }
+
   void setChartType(ChartType value) {
     chartType.set(value);
   }
 
   String getSymbol() {
     return symbol.get();
+  }
+
+  ReadOnlyObjectProperty<String> symbolProperty() {
+    return symbol.getReadOnlyProperty();
   }
 
   void setSymbol(String value) {
