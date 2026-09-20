@@ -14,6 +14,7 @@ import javafx.scene.Node;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Rectangle;
 import javafx.util.Builder;
 
 final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
@@ -55,7 +56,7 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
       Chart chart = leaf.chart();
       ChartContainer container = new ChartContainer(chart.getView(), () -> chartActivatedHandler.accept(chart));
       chartContainers.put(chart, container);
-      return container;
+      return new ChartSlot(container);
     }
 
     ChartWorkspaceSplit split = (ChartWorkspaceSplit) item;
@@ -77,12 +78,19 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
 
   private void refreshActiveChart() {
     Chart activeChart = model.getActiveChart();
+    boolean multipleCharts = model.getRoot() instanceof ChartWorkspaceSplit;
     chartContainers.forEach((chart, container) ->
-      container.pseudoClassStateChanged(ACTIVE_PSEUDO_CLASS, chart == activeChart)
+      container.pseudoClassStateChanged(ACTIVE_PSEUDO_CLASS, multipleCharts && chart == activeChart)
     );
   }
 
   private static void detach(Node node) {
+    if (node instanceof ChartSlot slot) {
+      List<Node> children = List.copyOf(slot.getChildren());
+      slot.getChildren().clear();
+      children.forEach(ChartWorkspaceViewBuilder::detach);
+      return;
+    }
     if (node instanceof ChartContainer container) {
       container.getChildren().clear();
       return;
@@ -100,18 +108,43 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
     }
   }
 
+  private static final class ChartSlot extends StackPane {
+
+    private ChartSlot(ChartContainer container) {
+      getStyleClass().add("chart-workspace-chart-slot");
+      setMinSize(0.0, 0.0);
+      getChildren().add(container);
+    }
+  }
+
   private static final class ChartContainer extends StackPane {
+
+    private final Rectangle clip = new Rectangle();
 
     private ChartContainer(StackPane chart, Runnable chartActivatedHandler) {
       getStyleClass().add("chart-workspace-chart");
       setMinSize(0.0, 0.0);
       chart.setMinSize(0.0, 0.0);
+      clip.widthProperty().bind(chart.widthProperty());
+      clip.heightProperty().bind(chart.heightProperty());
+      chart.setClip(clip);
+      chart.backgroundProperty().addListener((ignored, previous, current) -> updateClipRadius(chart));
       getChildren().add(chart);
+      updateClipRadius(chart);
       addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
         if (event.getButton() == MouseButton.PRIMARY) {
           chartActivatedHandler.run();
         }
       });
+    }
+
+    private void updateClipRadius(StackPane chart) {
+      if (chart.getBackground() == null || chart.getBackground().getFills().isEmpty()) {
+        return;
+      }
+      double radius = chart.getBackground().getFills().getFirst().getRadii().getTopLeftHorizontalRadius();
+      clip.setArcWidth(radius * 2.0);
+      clip.setArcHeight(radius * 2.0);
     }
   }
 }

@@ -37,21 +37,51 @@
 }
 
 .chart-workspace {
-  -fx-background-color: -app-background;
+  -fx-background-color: -app-muted;
+  -fx-padding: 2.5px;
+  -fx-snap-to-pixel: false;
+}
+
+.chart-workspace-chart-slot {
+  -fx-padding: 1.5px;
+  -fx-snap-to-pixel: false;
 }
 
 .chart-workspace-chart {
-  -fx-border-color: transparent;
-  -fx-border-width: 2px;
+  -fx-background-color:
+    -app-card,
+    -app-card;
+  -fx-background-insets: 0, 2px;
+  -fx-background-radius: 6px, 4px;
+  -fx-border-width: 0;
+  -fx-effect: null;
+  -fx-padding: 2px;
 }
 
 .chart-workspace-chart:workspace-active {
-  -fx-border-color: -app-foreground;
+  -fx-background-color:
+    -app-ring,
+    -app-card;
+}
+
+.chart-workspace-chart > .chart {
+  -fx-background-color: -app-card;
+  -fx-background-radius: 4px;
 }
 
 .chart-workspace-split {
   -fx-background-color: transparent;
   -fx-padding: 0;
+}
+
+.chart-workspace-split .core-resizable-handle > .resizable-handle-line,
+.chart-workspace-split .core-resizable-handle > .resizable-handle-grip {
+  -fx-background-color: transparent;
+}
+
+.chart-workspace-split .core-resizable-handle:hover > .resizable-handle-grip,
+.chart-workspace-split .core-resizable-handle:focus-visible > .resizable-handle-grip {
+  -fx-background-color: -app-ring;
 }
 
 .chart-inspector-drawer .core-drawer-content {

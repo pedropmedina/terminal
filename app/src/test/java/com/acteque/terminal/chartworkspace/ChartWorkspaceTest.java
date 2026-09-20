@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,6 +31,7 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.css.PseudoClass;
+import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 import javafx.scene.AccessibleAction;
 import javafx.scene.Scene;
@@ -38,6 +40,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import org.junit.jupiter.api.Test;
 
 class ChartWorkspaceTest {
@@ -79,6 +82,25 @@ class ChartWorkspaceTest {
   }
 
   @Test
+  void hidesTheActiveRingUntilTheWorkspaceHasMultipleCharts() {
+    FxTestSupport.runAndWait(() -> {
+      Fixture fixture = new Fixture();
+      Chart source = fixture.initialize();
+      ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
+        fixture.model,
+        fixture.interactor::activate
+      );
+      StackPane view = viewBuilder.build();
+      new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
+      layout(view);
+
+      assertSame(source, fixture.model.getActiveChart());
+      assertFalse(isActive(source));
+      fixture.interactor.close();
+    });
+  }
+
+  @Test
   void activatesAChartFromItsMousePressWithoutConsumingTheEvent() {
     FxTestSupport.runAndWait(() -> {
       Fixture fixture = new Fixture();
@@ -90,7 +112,7 @@ class ChartWorkspaceTest {
         fixture.interactor::activate
       );
       StackPane view = viewBuilder.build();
-      new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
+      AppThemeManager themeManager = new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
       AtomicInteger chartPresses = new AtomicInteger();
       source.getView().addEventHandler(MouseEvent.MOUSE_PRESSED, ignored -> chartPresses.incrementAndGet());
       layout(view);
@@ -101,12 +123,33 @@ class ChartWorkspaceTest {
       assertSame(created, fixture.model.getActiveChart());
       assertFalse(isActive(source));
       assertTrue(isActive(created));
-      assertEquals(Color.TRANSPARENT, sourceContainer.getBorder().getStrokes().getFirst().getTopStroke());
-      assertEquals(Color.web("#0a0a0a"), createdContainer.getBorder().getStrokes().getFirst().getTopStroke());
-      assertEquals(2.0, createdContainer.getBorder().getStrokes().getFirst().getWidths().getTop());
-      assertEquals(0.0, createdContainer.getBorder().getStrokes().getFirst().getRadii().getTopLeftHorizontalRadius());
+      assertEquals(Color.web("#f5f5f5"), view.getBackground().getFills().getFirst().getFill());
+      assertEquals(2.5, view.getPadding().getTop());
+      assertEquals(Color.WHITE, sourceContainer.getBackground().getFills().getFirst().getFill());
+      assertEquals(Color.web("#a1a1a1"), createdContainer.getBackground().getFills().getFirst().getFill());
+      assertEquals(Color.WHITE, createdContainer.getBackground().getFills().get(1).getFill());
+      assertNull(createdContainer.getBorder());
+      assertNull(createdContainer.getEffect());
+      Region createdSlot = assertInstanceOf(Region.class, createdContainer.getParent());
+      assertTrue(createdSlot.getStyleClass().contains("chart-workspace-chart-slot"));
+      assertEquals(1.5, createdSlot.getPadding().getTop());
       assertEquals(2.0, created.getView().getLayoutX());
       assertEquals(2.0, created.getView().getLayoutY());
+
+      Bounds sourceBounds = sourceContainer.localToScene(sourceContainer.getBoundsInLocal());
+      Bounds createdBounds = createdContainer.localToScene(createdContainer.getBoundsInLocal());
+      assertEquals(4.0, sourceBounds.getMinX(), 0.75);
+      assertEquals(4.0, sourceBounds.getMinY(), 0.75);
+      assertEquals(4.0, view.getWidth() - createdBounds.getMaxX(), 0.75);
+      assertEquals(4.0, view.getHeight() - createdBounds.getMaxY(), 0.75);
+      assertEquals(4.0, createdBounds.getMinX() - sourceBounds.getMaxX(), 0.75);
+
+      assertNull(createdContainer.getClip());
+      Rectangle clip = assertInstanceOf(Rectangle.class, created.getView().getClip());
+      assertEquals(created.getView().getWidth(), clip.getWidth());
+      assertEquals(created.getView().getHeight(), clip.getHeight());
+      assertEquals(8.0, clip.getArcWidth());
+      assertEquals(8.0, clip.getArcHeight());
 
       source.getView().fireEvent(primaryMousePress());
       view.applyCss();
@@ -114,9 +157,23 @@ class ChartWorkspaceTest {
       assertSame(source, fixture.model.getActiveChart());
       assertTrue(isActive(source));
       assertFalse(isActive(created));
-      assertEquals(Color.web("#0a0a0a"), sourceContainer.getBorder().getStrokes().getFirst().getTopStroke());
-      assertEquals(Color.TRANSPARENT, createdContainer.getBorder().getStrokes().getFirst().getTopStroke());
+      assertEquals(Color.web("#a1a1a1"), sourceContainer.getBackground().getFills().getFirst().getFill());
+      assertEquals(Color.WHITE, createdContainer.getBackground().getFills().getFirst().getFill());
       assertEquals(1, chartPresses.get());
+
+      themeManager.setTheme(AppTheme.DARK);
+      view.applyCss();
+
+      assertEquals(Color.web("#262626"), view.getBackground().getFills().getFirst().getFill());
+      assertEquals(Color.web("#737373"), sourceContainer.getBackground().getFills().getFirst().getFill());
+      assertEquals(Color.web("#171717"), sourceContainer.getBackground().getFills().get(1).getFill());
+      assertEquals(Color.web("#171717"), createdContainer.getBackground().getFills().getFirst().getFill());
+
+      fixture.interactor.remove(created);
+      layout(view);
+
+      assertSame(source, fixture.model.getActiveChart());
+      assertFalse(isActive(source));
       fixture.interactor.close();
     });
   }
@@ -154,6 +211,7 @@ class ChartWorkspaceTest {
         fixture.interactor::activate
       );
       StackPane view = viewBuilder.build();
+      new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
 
       fixture.interactor.split(source, ChartSplitDirection.RIGHT);
       ResizablePanelGroup firstView = assertInstanceOf(ResizablePanelGroup.class, view.getChildren().getFirst());
@@ -164,8 +222,12 @@ class ChartWorkspaceTest {
       ChartWorkspaceSplit firstSplit = (ChartWorkspaceSplit) fixture.model.getRoot();
       assertEquals(0.7, firstSplit.dividerPosition(), 0.01);
       Chart right = ((ChartWorkspaceLeaf) firstSplit.second()).chart();
+      assertEquals(8.0, assertInstanceOf(Rectangle.class, source.getView().getClip()).getArcWidth());
 
       fixture.interactor.split(right, ChartSplitDirection.BOTTOM);
+
+      assertEquals(8.0, assertInstanceOf(Rectangle.class, source.getView().getClip()).getArcWidth());
+      assertEquals(8.0, assertInstanceOf(Rectangle.class, right.getView().getClip()).getArcWidth());
 
       ChartWorkspaceSplit root = assertInstanceOf(ChartWorkspaceSplit.class, fixture.model.getRoot());
       assertEquals(Orientation.HORIZONTAL, root.orientation());
@@ -173,12 +235,24 @@ class ChartWorkspaceTest {
       ChartWorkspaceSplit nested = assertInstanceOf(ChartWorkspaceSplit.class, root.second());
       assertEquals(Orientation.VERTICAL, nested.orientation());
       assertEquals(3, fixture.charts.size());
+      Chart bottom = assertInstanceOf(ChartWorkspaceLeaf.class, nested.second()).chart();
       ResizablePanelGroup rebuilt = assertInstanceOf(ResizablePanelGroup.class, view.getChildren().getFirst());
       assertEquals(Orientation.HORIZONTAL, rebuilt.getOrientation());
       assertEquals(0.7, rebuilt.getDividerPositions()[0]);
       ResizablePanel second = assertInstanceOf(ResizablePanel.class, rebuilt.getChildren().get(2));
       ResizablePanelGroup nestedView = assertInstanceOf(ResizablePanelGroup.class, second.getChildren().getFirst());
       assertEquals(Orientation.VERTICAL, nestedView.getOrientation());
+
+      layout(view);
+      Bounds sourceBounds = containerBounds(source);
+      Bounds rightBounds = containerBounds(right);
+      Bounds bottomBounds = containerBounds(bottom);
+      assertEquals(4.0, sourceBounds.getMinX(), 0.75);
+      assertEquals(4.0, sourceBounds.getMinY(), 0.75);
+      assertEquals(4.0, rightBounds.getMinX() - sourceBounds.getMaxX(), 0.75);
+      assertEquals(4.0, bottomBounds.getMinY() - rightBounds.getMaxY(), 0.75);
+      assertEquals(4.0, view.getWidth() - bottomBounds.getMaxX(), 0.75);
+      assertEquals(4.0, view.getHeight() - bottomBounds.getMaxY(), 0.75);
       fixture.interactor.close();
     });
   }
@@ -316,6 +390,11 @@ class ChartWorkspaceTest {
 
   private static Color identifierColor(Region identifier) {
     return assertInstanceOf(Color.class, identifier.getBackground().getFills().getFirst().getFill());
+  }
+
+  private static Bounds containerBounds(Chart chart) {
+    Region container = assertInstanceOf(Region.class, chart.getView().getParent());
+    return container.localToScene(container.getBoundsInLocal());
   }
 
   private static boolean isActive(Chart chart) {
