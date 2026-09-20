@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.acteque.terminal.AppTheme;
+import com.acteque.terminal.AppThemeManager;
 import com.acteque.terminal.StubInstrumentCatalog;
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
@@ -26,8 +28,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import javafx.css.PseudoClass;
 import javafx.geometry.Orientation;
 import javafx.scene.AccessibleAction;
+import javafx.scene.Scene;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -35,12 +42,15 @@ import org.junit.jupiter.api.Test;
 
 class ChartWorkspaceTest {
 
+  private static final PseudoClass ACTIVE_PSEUDO_CLASS = PseudoClass.getPseudoClass("workspace-active");
+
   @Test
   void createsEveryDirectionInTheRequestedOrderAndOrientation() {
     FxTestSupport.runAndWait(() -> {
       for (ChartSplitDirection direction : ChartSplitDirection.values()) {
         Fixture fixture = new Fixture();
         Chart source = fixture.initialize();
+        assertSame(source, fixture.model.getActiveChart());
 
         fixture.interactor.split(source, direction);
 
@@ -61,8 +71,53 @@ class ChartWorkspaceTest {
           assertSame(source, first);
           assertFalse(second == source);
         }
+        Chart created = first == source ? second : first;
+        assertSame(created, fixture.model.getActiveChart());
         fixture.interactor.close();
       }
+    });
+  }
+
+  @Test
+  void activatesAChartFromItsMousePressWithoutConsumingTheEvent() {
+    FxTestSupport.runAndWait(() -> {
+      Fixture fixture = new Fixture();
+      Chart source = fixture.initialize();
+      fixture.interactor.split(source, ChartSplitDirection.RIGHT);
+      Chart created = ((ChartWorkspaceLeaf) ((ChartWorkspaceSplit) fixture.model.getRoot()).second()).chart();
+      ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
+        fixture.model,
+        fixture.interactor::activate
+      );
+      StackPane view = viewBuilder.build();
+      new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
+      AtomicInteger chartPresses = new AtomicInteger();
+      source.getView().addEventHandler(MouseEvent.MOUSE_PRESSED, ignored -> chartPresses.incrementAndGet());
+      layout(view);
+
+      Region sourceContainer = assertInstanceOf(Region.class, source.getView().getParent());
+      Region createdContainer = assertInstanceOf(Region.class, created.getView().getParent());
+
+      assertSame(created, fixture.model.getActiveChart());
+      assertFalse(isActive(source));
+      assertTrue(isActive(created));
+      assertEquals(Color.TRANSPARENT, sourceContainer.getBorder().getStrokes().getFirst().getTopStroke());
+      assertEquals(Color.web("#0a0a0a"), createdContainer.getBorder().getStrokes().getFirst().getTopStroke());
+      assertEquals(2.0, createdContainer.getBorder().getStrokes().getFirst().getWidths().getTop());
+      assertEquals(0.0, createdContainer.getBorder().getStrokes().getFirst().getRadii().getTopLeftHorizontalRadius());
+      assertEquals(2.0, created.getView().getLayoutX());
+      assertEquals(2.0, created.getView().getLayoutY());
+
+      source.getView().fireEvent(primaryMousePress());
+      view.applyCss();
+
+      assertSame(source, fixture.model.getActiveChart());
+      assertTrue(isActive(source));
+      assertFalse(isActive(created));
+      assertEquals(Color.web("#0a0a0a"), sourceContainer.getBorder().getStrokes().getFirst().getTopStroke());
+      assertEquals(Color.TRANSPARENT, createdContainer.getBorder().getStrokes().getFirst().getTopStroke());
+      assertEquals(1, chartPresses.get());
+      fixture.interactor.close();
     });
   }
 
@@ -94,7 +149,10 @@ class ChartWorkspaceTest {
     FxTestSupport.runAndWait(() -> {
       Fixture fixture = new Fixture();
       Chart source = fixture.initialize();
-      ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(fixture.model);
+      ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
+        fixture.model,
+        fixture.interactor::activate
+      );
       StackPane view = viewBuilder.build();
 
       fixture.interactor.split(source, ChartSplitDirection.RIGHT);
@@ -141,6 +199,7 @@ class ChartWorkspaceTest {
       fixture.interactor.remove(created);
 
       assertSame(source, assertInstanceOf(ChartWorkspaceLeaf.class, fixture.model.getRoot()).chart());
+      assertSame(source, fixture.model.getActiveChart());
       assertTrue(source.getView().lookup(".chart-menu-close") == null);
       assertEquals(1, fixture.resources.get(1).marketData.closes);
       assertEquals(1, fixture.resources.get(1).logos.closes);
@@ -150,6 +209,28 @@ class ChartWorkspaceTest {
       fixture.interactor.close();
       assertEquals(1, fixture.resources.getFirst().marketData.closes);
       assertEquals(1, fixture.resources.getFirst().logos.closes);
+    });
+  }
+
+  @Test
+  void activatesThePromotedSiblingWhenTheActiveChartCloses() {
+    FxTestSupport.runAndWait(() -> {
+      Fixture fixture = new Fixture();
+      Chart left = fixture.initialize();
+      fixture.interactor.split(left, ChartSplitDirection.RIGHT);
+      ChartWorkspaceSplit firstSplit = (ChartWorkspaceSplit) fixture.model.getRoot();
+      Chart right = ((ChartWorkspaceLeaf) firstSplit.second()).chart();
+      fixture.interactor.split(right, ChartSplitDirection.BOTTOM);
+      ChartWorkspaceSplit root = (ChartWorkspaceSplit) fixture.model.getRoot();
+      Chart bottom = ((ChartWorkspaceLeaf) ((ChartWorkspaceSplit) root.second()).second()).chart();
+
+      fixture.interactor.remove(bottom);
+      assertSame(right, fixture.model.getActiveChart());
+
+      fixture.interactor.activate(left);
+      fixture.interactor.remove(left);
+      assertSame(right, fixture.model.getActiveChart());
+      fixture.interactor.close();
     });
   }
 
@@ -204,6 +285,7 @@ class ChartWorkspaceTest {
 
       interactor.split(source, ChartSplitDirection.LEFT);
       assertSame(original, model.getRoot());
+      assertSame(source, model.getActiveChart());
       interactor.close();
     });
   }
@@ -234,6 +316,33 @@ class ChartWorkspaceTest {
 
   private static Color identifierColor(Region identifier) {
     return assertInstanceOf(Color.class, identifier.getBackground().getFills().getFirst().getFill());
+  }
+
+  private static boolean isActive(Chart chart) {
+    return chart.getView().getParent().getPseudoClassStates().contains(ACTIVE_PSEUDO_CLASS);
+  }
+
+  private static MouseEvent primaryMousePress() {
+    return new MouseEvent(
+      MouseEvent.MOUSE_PRESSED,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      MouseButton.PRIMARY,
+      1,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      null
+    );
   }
 
   private static final class Fixture {

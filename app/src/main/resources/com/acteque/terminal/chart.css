@@ -40,6 +40,15 @@
   -fx-background-color: -app-background;
 }
 
+.chart-workspace-chart {
+  -fx-border-color: transparent;
+  -fx-border-width: 2px;
+}
+
+.chart-workspace-chart:workspace-active {
+  -fx-border-color: -app-foreground;
+}
+
 .chart-workspace-split {
   -fx-background-color: transparent;
   -fx-padding: 0;

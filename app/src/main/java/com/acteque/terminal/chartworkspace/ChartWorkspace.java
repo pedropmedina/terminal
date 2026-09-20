@@ -33,7 +33,7 @@ public final class ChartWorkspace implements AutoCloseable {
     ChartWorkspaceModel model = new ChartWorkspaceModel();
     interactor = new ChartWorkspaceInteractor(model, chartFactory);
     interactor.initialize(settings);
-    viewBuilder = new ChartWorkspaceViewBuilder(model);
+    viewBuilder = new ChartWorkspaceViewBuilder(model, interactor::activate);
   }
 
   public StackPane getView() {

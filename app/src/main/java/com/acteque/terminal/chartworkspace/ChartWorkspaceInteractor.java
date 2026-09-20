@@ -43,6 +43,7 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     Chart chart = chartFactory.create(Objects.requireNonNull(settings, "settings cannot be null"));
     configure(chart);
     model.setRoot(new ChartWorkspaceLeaf(chart));
+    model.setActiveChart(chart);
     updateMultiChartAvailability();
   }
 
@@ -89,9 +90,18 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     ChartWorkspaceSplit replacement = new ChartWorkspaceSplit(orientation, first, second);
 
     model.setRoot(replace(model.getRoot(), source, replacement));
+    model.setActiveChart(created);
     updateMultiChartAvailability();
     if (started) {
       startChart(created);
+    }
+  }
+
+  void activate(Chart chart) {
+    requireOpen();
+    Chart requested = Objects.requireNonNull(chart, "chart cannot be null");
+    if (contains(model.getRoot(), requested)) {
+      model.setActiveChart(requested);
     }
   }
 
@@ -107,6 +117,9 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
       return;
     }
     model.setRoot(removal.item());
+    if (model.getActiveChart() == chart) {
+      model.setActiveChart(Objects.requireNonNull(removal.fallback(), "removed chart must have a fallback"));
+    }
     identifierColors.remove(chart);
     updateMultiChartAvailability();
     try {
@@ -181,7 +194,7 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
 
   private static Removal remove(ChartWorkspaceItem item, Chart target) {
     if (item instanceof ChartWorkspaceLeaf leaf) {
-      return leaf.chart() == target ? new Removal(null, true) : new Removal(leaf, false);
+      return leaf.chart() == target ? new Removal(null, true, null) : new Removal(leaf, false, null);
     }
 
     ChartWorkspaceSplit split = (ChartWorkspaceSplit) item;
@@ -191,7 +204,8 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
         first.item() == null
           ? split.second()
           : new ChartWorkspaceSplit(split.orientation(), first.item(), split.second(), split.dividerPosition()),
-        true
+        true,
+        first.fallback() != null ? first.fallback() : firstChart(split.second())
       );
     }
     Removal second = remove(split.second(), target);
@@ -200,10 +214,18 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
         second.item() == null
           ? split.first()
           : new ChartWorkspaceSplit(split.orientation(), split.first(), second.item(), split.dividerPosition()),
-        true
+        true,
+        second.fallback() != null ? second.fallback() : firstChart(split.first())
       );
     }
-    return new Removal(split, false);
+    return new Removal(split, false, null);
+  }
+
+  private static Chart firstChart(ChartWorkspaceItem item) {
+    if (item instanceof ChartWorkspaceLeaf leaf) {
+      return leaf.chart();
+    }
+    return firstChart(((ChartWorkspaceSplit) item).first());
   }
 
   private static boolean contains(ChartWorkspaceItem item, Chart target) {
@@ -244,5 +266,5 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     collectCharts(split.second(), charts);
   }
 
-  private record Removal(ChartWorkspaceItem item, boolean removed) {}
+  private record Removal(ChartWorkspaceItem item, boolean removed, Chart fallback) {}
 }
