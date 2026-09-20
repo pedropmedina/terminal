@@ -1,8 +1,10 @@
-package com.acteque.terminal.chart.intervalselection;
+package com.acteque.terminal.chartworkspace.intervalselection;
 
 import com.acteque.terminal.chart.ChartInterval;
 import java.util.List;
 import java.util.Map;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyListProperty;
 import javafx.beans.property.ReadOnlyListWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -11,12 +13,13 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 
 /** Observable state shared by the interval-selection MVCI components. */
-final class ChartIntervalSelectionModel {
+final class ChartWorkspaceIntervalSelectionModel {
 
   private final ReadOnlyObjectWrapper<ChartInterval> currentInterval = new ReadOnlyObjectWrapper<>(
     this,
     "currentInterval"
   );
+  private final ReadOnlyBooleanWrapper open = new ReadOnlyBooleanWrapper(this, "open");
   private final ReadOnlyStringWrapper query = new ReadOnlyStringWrapper(this, "query", "");
   private final ReadOnlyListWrapper<ChartInterval> intervals = new ReadOnlyListWrapper<>(
     this,
@@ -39,6 +42,14 @@ final class ChartIntervalSelectionModel {
 
   void setCurrentInterval(ChartInterval value) {
     currentInterval.set(value);
+  }
+
+  ReadOnlyBooleanProperty openProperty() {
+    return open.getReadOnlyProperty();
+  }
+
+  void setOpen(boolean value) {
+    open.set(value);
   }
 
   String getQuery() {

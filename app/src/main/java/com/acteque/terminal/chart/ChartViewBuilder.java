@@ -35,7 +35,6 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
   private final Canvas canvas;
   private final Region statusLine;
   private final Dialog instrumentSearchDialog;
-  private final Dialog intervalSelectionDialog;
   private final Region identifier;
   private final Runnable instrumentSearchRequestedHandler;
   private final Runnable intervalSelectionRequestedHandler;
@@ -46,7 +45,6 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
     Canvas canvas,
     Region statusLine,
     Dialog instrumentSearchDialog,
-    Dialog intervalSelectionDialog,
     Runnable instrumentSearchRequestedHandler,
     Runnable intervalSelectionRequestedHandler
   ) {
@@ -56,10 +54,6 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
     this.instrumentSearchDialog = Objects.requireNonNull(
       instrumentSearchDialog,
       "instrumentSearchDialog cannot be null"
-    );
-    this.intervalSelectionDialog = Objects.requireNonNull(
-      intervalSelectionDialog,
-      "intervalSelectionDialog cannot be null"
     );
     this.instrumentSearchRequestedHandler = Objects.requireNonNull(
       instrumentSearchRequestedHandler,
@@ -85,7 +79,7 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
     identifier.managedProperty().bind(model.identifierVisibleProperty());
     identifier.setMouseTransparent(true);
 
-    root = new ChartPane(instrumentSearchDialog, intervalSelectionDialog);
+    root = new ChartPane(instrumentSearchDialog);
 
     root.getStyleClass().add("chart");
     root.addEventFilter(KeyEvent.KEY_PRESSED, this::handleShortcut);
@@ -113,7 +107,7 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
     statusOverlay.getStyleClass().add("chart-status-overlay");
     statusOverlay.setPickOnBounds(false);
 
-    root.getChildren().setAll(canvas, statusOverlay, instrumentSearchDialog, intervalSelectionDialog);
+    root.getChildren().setAll(canvas, statusOverlay, instrumentSearchDialog);
   }
 
   private void handleShortcut(KeyEvent event) {
@@ -144,18 +138,15 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
   private static final class ChartPane extends StackPane {
 
     private final Dialog instrumentSearchDialog;
-    private final Dialog intervalSelectionDialog;
 
-    private ChartPane(Dialog instrumentSearchDialog, Dialog intervalSelectionDialog) {
+    private ChartPane(Dialog instrumentSearchDialog) {
       this.instrumentSearchDialog = instrumentSearchDialog;
-      this.intervalSelectionDialog = intervalSelectionDialog;
     }
 
     @Override
     protected void layoutChildren() {
       super.layoutChildren();
       instrumentSearchDialog.resizeRelocate(0.0, 0.0, getWidth(), getHeight());
-      intervalSelectionDialog.resizeRelocate(0.0, 0.0, getWidth(), getHeight());
     }
   }
 }

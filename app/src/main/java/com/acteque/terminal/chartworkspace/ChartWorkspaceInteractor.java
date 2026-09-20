@@ -1,6 +1,7 @@
 package com.acteque.terminal.chartworkspace;
 
 import com.acteque.terminal.chart.Chart;
+import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartSplitDirection;
 import com.acteque.terminal.chart.ChartType;
 import java.util.ArrayList;
@@ -112,6 +113,14 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
 
   void showActiveIntervalSelection() {
     requireActiveChart().showIntervalSelection();
+  }
+
+  void closeActiveIntervalSelection() {
+    requireActiveChart().closeIntervalSelection();
+  }
+
+  void setActiveChartInterval(ChartInterval interval) {
+    requireActiveChart().setInterval(Objects.requireNonNull(interval, "interval cannot be null"));
   }
 
   void setActiveChartType(ChartType chartType) {

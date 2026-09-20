@@ -13,6 +13,7 @@ import com.acteque.terminal.AppThemeManager;
 import com.acteque.terminal.StubInstrumentCatalog;
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.ChartInterval.Classification;
 import com.acteque.terminal.chart.ChartSplitDirection;
 import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.marketdata.CalendarData;
@@ -22,6 +23,8 @@ import com.acteque.terminal.marketlogos.InstrumentLogo;
 import com.acteque.terminal.marketlogos.LogoSession;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Button;
+import com.acteque.terminal.ui.Input;
+import com.acteque.terminal.ui.Select;
 import com.acteque.terminal.ui.dialog.Dialog;
 import com.acteque.terminal.ui.drawer.Drawer;
 import com.acteque.terminal.ui.popover.PopoverTrigger;
@@ -113,10 +116,10 @@ class ChartWorkspaceTest {
 
         Button chartType = assertInstanceOf(Button.class, menuItems.getChildren().get(2));
         chartType.fire();
-        Drawer drawer = assertInstanceOf(Drawer.class, view.lookup(".chart-inspector-drawer"));
+        Drawer drawer = assertInstanceOf(Drawer.class, view.lookup(".chart-workspace-inspector-drawer"));
         assertTrue(drawer.isOpen());
         view
-          .lookupAll(".chart-inspector-option")
+          .lookupAll(".chart-workspace-inspector-option")
           .stream()
           .map(ToggleGroupItem.class::cast)
           .filter(button -> button.getAccessibleText().startsWith("Area."))
@@ -125,6 +128,41 @@ class ChartWorkspaceTest {
           .fire();
         assertEquals(ChartType.BAR, left.getChartType());
         assertEquals(ChartType.AREA, right.getChartType());
+
+        assertEquals(1, view.lookupAll(".chart-workspace-interval-selection-dialog").size());
+        assertNull(left.getView().lookup(".chart-workspace-interval-selection-dialog"));
+        assertNull(right.getView().lookup(".chart-workspace-interval-selection-dialog"));
+        assertInstanceOf(Button.class, menuItems.getChildren().get(1)).fire();
+        Dialog intervalSelection = assertInstanceOf(
+          Dialog.class,
+          view.lookup(".chart-workspace-interval-selection-dialog")
+        );
+        assertTrue(intervalSelection.isOpen());
+
+        assertInstanceOf(Button.class, intervalSelection.lookup(".chart-workspace-interval-add-button")).fire();
+        @SuppressWarnings("unchecked")
+        Select<Classification> classification = (Select<Classification>) intervalSelection.lookup(
+          ".chart-workspace-add-interval-classification"
+        );
+        classification.setValue(Classification.HOURS);
+        Input amount = assertInstanceOf(Input.class, intervalSelection.lookup(".chart-workspace-add-interval-amount"));
+        amount.setText("7");
+        assertInstanceOf(Button.class, intervalSelection.lookup(".chart-workspace-add-interval-submit")).fire();
+        intervalButton(intervalSelection, "4H").fire();
+        assertEquals(ChartInterval.DAILY, left.getInterval());
+        assertEquals(ChartInterval.FOUR_HOURS, right.getInterval());
+        assertFalse(intervalSelection.isOpen());
+
+        left.getView().getParent().fireEvent(primaryMousePress());
+        assertTrue(isActive(left));
+        assertInstanceOf(Button.class, menuItems.getChildren().get(1)).fire();
+        ToggleGroupItem customInterval = intervalButton(intervalSelection, "7H");
+        customInterval.fire();
+        assertEquals("7H", left.getInterval().name());
+        assertEquals(ChartInterval.FOUR_HOURS, right.getInterval());
+
+        right.getView().getParent().fireEvent(primaryMousePress());
+        assertTrue(isActive(right));
 
         assertInstanceOf(Button.class, menuItems.getChildren().getFirst()).fire();
         Dialog rightInstrumentSearch = assertInstanceOf(
@@ -189,7 +227,8 @@ class ChartWorkspaceTest {
         fixture.model,
         fixture.interactor::activate,
         new Region(),
-        new Drawer()
+        new Drawer(),
+        new Dialog()
       );
       StackPane view = viewBuilder.build();
       new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
@@ -212,7 +251,8 @@ class ChartWorkspaceTest {
         fixture.model,
         fixture.interactor::activate,
         new Region(),
-        new Drawer()
+        new Drawer(),
+        new Dialog()
       );
       StackPane view = viewBuilder.build();
       AppThemeManager themeManager = new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
@@ -313,7 +353,8 @@ class ChartWorkspaceTest {
         fixture.model,
         fixture.interactor::activate,
         new Region(),
-        new Drawer()
+        new Drawer(),
+        new Dialog()
       );
       StackPane view = viewBuilder.build();
       new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
@@ -508,6 +549,16 @@ class ChartWorkspaceTest {
 
   private static boolean isActive(Chart chart) {
     return chart.getView().getParent().getPseudoClassStates().contains(ACTIVE_PSEUDO_CLASS);
+  }
+
+  private static ToggleGroupItem intervalButton(Dialog dialog, String text) {
+    return dialog
+      .lookupAll(".chart-workspace-interval-button")
+      .stream()
+      .map(ToggleGroupItem.class::cast)
+      .filter(button -> text.equals(button.getText()))
+      .findFirst()
+      .orElseThrow();
   }
 
   private static MouseEvent primaryMousePress() {

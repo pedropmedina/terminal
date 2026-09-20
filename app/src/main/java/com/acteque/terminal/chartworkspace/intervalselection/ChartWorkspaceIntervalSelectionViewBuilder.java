@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart.intervalselection;
+package com.acteque.terminal.chartworkspace.intervalselection;
 
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartIntervalText;
@@ -30,11 +30,11 @@ import javafx.scene.layout.VBox;
 import javafx.util.Builder;
 
 /** Builds the reactive JavaFX view for chart interval selection. */
-final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, ReloadTarget {
+final class ChartWorkspaceIntervalSelectionViewBuilder implements Builder<Dialog>, ReloadTarget {
 
   private static final int COLUMN_COUNT = 6;
 
-  private final ChartIntervalSelectionModel model;
+  private final ChartWorkspaceIntervalSelectionModel model;
   private final Consumer<ChartInterval> intervalSelectedHandler;
   private final Dialog root = new Dialog();
   private final InputGroupInput intervalField = new InputGroupInput();
@@ -42,14 +42,13 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Reload
     "Add interval",
     new LucideIcon(LucideIcons.PLUS)
   );
-  private final ChartAddIntervalDialogView addIntervalDialog = new ChartAddIntervalDialogView();
+  private final ChartWorkspaceAddIntervalDialogView addIntervalDialog = new ChartWorkspaceAddIntervalDialogView();
   private final VBox categories = new VBox();
   private final Label noMatches = new Label("No matching intervals");
   private final Map<ChartInterval, ToggleGroupItem> intervalItems = new HashMap<>();
 
-  ChartIntervalSelectionViewBuilder(
-    ChartIntervalSelectionModel model,
-    ObservableBooleanValue open,
+  ChartWorkspaceIntervalSelectionViewBuilder(
+    ChartWorkspaceIntervalSelectionModel model,
     Consumer<String> queryChangedHandler,
     Consumer<ChartInterval> intervalAddedHandler,
     Consumer<ChartInterval> intervalSelectedHandler,
@@ -65,11 +64,11 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Reload
     Objects.requireNonNull(intervalAddedHandler, "intervalAddedHandler cannot be null");
     Objects.requireNonNull(soleMatchRequestedHandler, "soleMatchRequestedHandler cannot be null");
     Objects.requireNonNull(closeRequestHandler, "closeRequestHandler cannot be null");
-    Objects.requireNonNull(open, "open cannot be null");
+    ObservableBooleanValue open = model.openProperty();
 
-    root.getStyleClass().add("chart-interval-selection-dialog");
-    intervalField.getStyleClass().add("chart-interval-search-field");
-    addIntervalButton.getStyleClass().add("chart-interval-add-button");
+    root.getStyleClass().add("chart-workspace-interval-selection-dialog");
+    intervalField.getStyleClass().add("chart-workspace-interval-search-field");
+    addIntervalButton.getStyleClass().add("chart-workspace-interval-add-button");
     addIntervalButton.setAccessibleText("Add chart interval");
     addIntervalButton.setOnAction(ignored -> addIntervalDialog.openForEntry());
     addIntervalDialog.onIntervalAdded(intervalAddedHandler);
@@ -81,8 +80,8 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Reload
     });
     root.getChildren().add(addIntervalDialog);
 
-    categories.getStyleClass().add("chart-interval-categories");
-    noMatches.getStyleClass().add("chart-interval-no-matches");
+    categories.getStyleClass().add("chart-workspace-interval-categories");
+    noMatches.getStyleClass().add("chart-workspace-interval-no-matches");
     noMatches.setMaxWidth(Double.MAX_VALUE);
     intervalField.textProperty().addListener((ignored, oldValue, newValue) -> queryChangedHandler.accept(newValue));
     intervalField.setOnAction(ignored -> soleMatchRequestedHandler.run());
@@ -124,14 +123,10 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Reload
       new InputGroupAddon(InputGroupAlignment.INLINE_END, addIntervalButton)
     );
     DialogContent card = new DialogContent(searchGroup, categories, noMatches);
-    card.getStyleClass().add("chart-interval-selection-card");
+    card.getStyleClass().add("chart-workspace-interval-selection-card");
     card.setShowCloseButton(false);
     card.setMaxHeight(Dialog.USE_PREF_SIZE);
     root.setContent(card);
-  }
-
-  void close() {
-    root.close();
   }
 
   private void rebuildCategories() {
@@ -153,10 +148,10 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Reload
 
   private VBox createCategory(String name, List<ChartInterval> intervals) {
     Label heading = new Label(name);
-    heading.getStyleClass().add("chart-interval-category-title");
+    heading.getStyleClass().add("chart-workspace-interval-category-title");
 
     VBox rows = new VBox();
-    rows.getStyleClass().add("chart-interval-toggle-rows");
+    rows.getStyleClass().add("chart-workspace-interval-toggle-rows");
     for (int start = 0; start < intervals.size(); start += COLUMN_COUNT) {
       int end = Math.min(start + COLUMN_COUNT, intervals.size());
       ToggleGroupItem[] items = intervals
@@ -165,19 +160,19 @@ final class ChartIntervalSelectionViewBuilder implements Builder<Dialog>, Reload
         .map(this::createIntervalItem)
         .toArray(ToggleGroupItem[]::new);
       ToggleGroup group = new ToggleGroup(items);
-      group.getStyleClass().add("chart-interval-toggle-group");
+      group.getStyleClass().add("chart-workspace-interval-toggle-group");
       group.setVariant(Toggle.Variant.OUTLINE);
       rows.getChildren().add(group);
     }
 
     VBox category = new VBox(heading, rows);
-    category.getStyleClass().add("chart-interval-category");
+    category.getStyleClass().add("chart-workspace-interval-category");
     return category;
   }
 
   private ToggleGroupItem createIntervalItem(ChartInterval interval) {
     ToggleGroupItem item = new ToggleGroupItem(interval.name());
-    item.getStyleClass().add("chart-interval-button");
+    item.getStyleClass().add("chart-workspace-interval-button");
     item.setFocusTraversable(true);
     item.setAccessibleText(ChartIntervalText.description(interval));
     item.setSelected(interval.equals(model.getCurrentInterval()));

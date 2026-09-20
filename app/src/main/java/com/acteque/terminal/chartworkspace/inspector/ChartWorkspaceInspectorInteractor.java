@@ -1,16 +1,16 @@
-package com.acteque.terminal.chart.inspector;
+package com.acteque.terminal.chartworkspace.inspector;
 
 import com.acteque.terminal.chart.ChartType;
 import java.util.Objects;
 import java.util.function.Consumer;
 
 /** Applies chart-inspector state transitions without depending on its layout. */
-final class ChartInspectorInteractor {
+final class ChartWorkspaceInspectorInteractor {
 
-  private final ChartInspectorModel model;
+  private final ChartWorkspaceInspectorModel model;
   private Consumer<ChartType> chartTypeSelectedHandler = ignored -> {};
 
-  ChartInspectorInteractor(ChartInspectorModel model) {
+  ChartWorkspaceInspectorInteractor(ChartWorkspaceInspectorModel model) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
   }
 

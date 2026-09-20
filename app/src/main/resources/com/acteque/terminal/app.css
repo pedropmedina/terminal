@@ -1,5 +1,6 @@
 @import "chart.css";
 @import "chart-workspace.css";
 @import "chart-workspace-menu.css";
-@import "chart-interval-selection.css";
+@import "chart-workspace-inspector.css";
+@import "chart-workspace-interval-selection.css";
 @import "instrument-search.css";

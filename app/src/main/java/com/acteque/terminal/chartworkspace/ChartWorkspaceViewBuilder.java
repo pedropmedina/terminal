@@ -1,6 +1,7 @@
 package com.acteque.terminal.chartworkspace;
 
 import com.acteque.terminal.chart.Chart;
+import com.acteque.terminal.ui.dialog.Dialog;
 import com.acteque.terminal.ui.drawer.Drawer;
 import com.acteque.terminal.ui.resizable.ResizableHandle;
 import com.acteque.terminal.ui.resizable.ResizablePanel;
@@ -31,16 +32,22 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
   private final StackPane chartLayer = new StackPane();
   private final StackPane menuOverlay;
   private final Drawer inspectorDrawer;
+  private final Dialog intervalSelectionDialog;
 
   ChartWorkspaceViewBuilder(
     ChartWorkspaceModel model,
     Consumer<Chart> chartActivatedHandler,
     Node menu,
-    Drawer inspectorDrawer
+    Drawer inspectorDrawer,
+    Dialog intervalSelectionDialog
   ) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
     this.chartActivatedHandler = Objects.requireNonNull(chartActivatedHandler, "chartActivatedHandler cannot be null");
     this.inspectorDrawer = Objects.requireNonNull(inspectorDrawer, "inspectorDrawer cannot be null");
+    this.intervalSelectionDialog = Objects.requireNonNull(
+      intervalSelectionDialog,
+      "intervalSelectionDialog cannot be null"
+    );
     menuOverlay = new StackPane(Objects.requireNonNull(menu, "menu cannot be null"));
     menuOverlay.getStyleClass().add("chart-workspace-menu-overlay");
     menuOverlay.setMaxHeight(StackPane.USE_PREF_SIZE);
@@ -48,7 +55,7 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
     StackPane.setAlignment(menuOverlay, Pos.TOP_CENTER);
     menuOverlay.boundsInParentProperty().addListener((ignored, previous, current) -> positionInspectorBelowMenu());
     root.getStyleClass().add("chart-workspace");
-    root.getChildren().setAll(chartLayer, menuOverlay, inspectorDrawer);
+    root.getChildren().setAll(chartLayer, menuOverlay, inspectorDrawer, intervalSelectionDialog);
     model.rootProperty().addListener((ignored, previous, current) -> rebuild());
     model.activeChartProperty().addListener((ignored, previous, current) -> refreshActiveChart());
     model.multipleChartsProperty().addListener((ignored, previous, current) -> refreshActiveChart());

@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart.inspector;
+package com.acteque.terminal.chartworkspace.inspector;
 
 import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.chart.ChartTypePresentation;
@@ -26,15 +26,15 @@ import javafx.scene.layout.VBox;
 import javafx.util.Builder;
 
 /** Builds the contextual chart inspector drawer. */
-final class ChartInspectorViewBuilder implements Builder<Drawer> {
+final class ChartWorkspaceInspectorViewBuilder implements Builder<Drawer> {
 
-  private final ChartInspectorModel model;
+  private final ChartWorkspaceInspectorModel model;
   private final Drawer drawer = new Drawer();
   private final ToggleGroup chartTypes = new ToggleGroup(Orientation.VERTICAL);
   private final Map<ChartType, ToggleGroupItem> chartTypeItems = new EnumMap<>(ChartType.class);
 
-  ChartInspectorViewBuilder(
-    ChartInspectorModel model,
+  ChartWorkspaceInspectorViewBuilder(
+    ChartWorkspaceInspectorModel model,
     Consumer<ChartType> chartTypeSelectedHandler,
     Consumer<Boolean> openChangedHandler
   ) {
@@ -42,13 +42,13 @@ final class ChartInspectorViewBuilder implements Builder<Drawer> {
     Objects.requireNonNull(chartTypeSelectedHandler, "chartTypeSelectedHandler cannot be null");
     Objects.requireNonNull(openChangedHandler, "openChangedHandler cannot be null");
 
-    drawer.getStyleClass().add("chart-inspector-drawer");
+    drawer.getStyleClass().add("chart-workspace-inspector-drawer");
     drawer.setDirection(DrawerDirection.LEFT);
     drawer.setMode(DrawerMode.NON_MODAL);
     drawer.setMaxHeight(Region.USE_PREF_SIZE);
     StackPane.setAlignment(drawer, Pos.TOP_LEFT);
 
-    chartTypes.getStyleClass().add("chart-inspector-options");
+    chartTypes.getStyleClass().add("chart-workspace-inspector-options");
     chartTypes.setMinWidth(0.0);
     chartTypes.setMaxWidth(Double.MAX_VALUE);
     for (ChartType type : ChartType.values()) {
@@ -93,19 +93,19 @@ final class ChartInspectorViewBuilder implements Builder<Drawer> {
 
   private ToggleGroupItem createChartTypeItem(ChartType type, Consumer<ChartType> onSelect) {
     Label name = new Label(ChartTypePresentation.displayName(type));
-    name.getStyleClass().add("chart-inspector-option-name");
+    name.getStyleClass().add("chart-workspace-inspector-option-name");
     Label description = new Label(ChartTypePresentation.description(type));
-    description.getStyleClass().add("chart-inspector-option-description");
+    description.getStyleClass().add("chart-workspace-inspector-option-description");
     description.setWrapText(true);
 
     VBox text = new VBox(name, description);
-    text.getStyleClass().add("chart-inspector-option-text");
+    text.getStyleClass().add("chart-workspace-inspector-option-text");
     HBox.setHgrow(text, Priority.ALWAYS);
 
     HBox row = new HBox(new LucideIcon(ChartTypePresentation.icon(type)), text);
-    row.getStyleClass().add("chart-inspector-option-content");
+    row.getStyleClass().add("chart-workspace-inspector-option-content");
     ToggleGroupItem item = new ToggleGroupItem("", row);
-    item.getStyleClass().add("chart-inspector-option");
+    item.getStyleClass().add("chart-workspace-inspector-option");
     item.setAccessibleText(ChartTypePresentation.displayName(type) + ". " + ChartTypePresentation.description(type));
     item.setOnAction(event -> {
       onSelect.accept(type);

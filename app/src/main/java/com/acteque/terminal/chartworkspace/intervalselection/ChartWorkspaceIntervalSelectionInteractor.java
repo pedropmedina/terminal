@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart.intervalselection;
+package com.acteque.terminal.chartworkspace.intervalselection;
 
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartIntervalText;
@@ -9,20 +9,34 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import javafx.beans.value.ObservableBooleanValue;
 
 /** Applies interval-selection state transitions without depending on its layout. */
-final class ChartIntervalSelectionInteractor {
+final class ChartWorkspaceIntervalSelectionInteractor {
 
-  private final ChartIntervalSelectionModel model;
+  private final ChartWorkspaceIntervalSelectionModel model;
 
-  ChartIntervalSelectionInteractor(ChartIntervalSelectionModel model) {
+  ChartWorkspaceIntervalSelectionInteractor(ChartWorkspaceIntervalSelectionModel model) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
   }
 
   void initialize(ChartInterval currentInterval) {
     model.setCurrentInterval(Objects.requireNonNull(currentInterval, "currentInterval cannot be null"));
     model.setIntervals(List.of(ChartInterval.values()));
+    model.setOpen(false);
     setQuery("");
+  }
+
+  ObservableBooleanValue openProperty() {
+    return model.openProperty();
+  }
+
+  void show() {
+    model.setOpen(true);
+  }
+
+  void close() {
+    model.setOpen(false);
   }
 
   void setCurrentInterval(ChartInterval interval) {

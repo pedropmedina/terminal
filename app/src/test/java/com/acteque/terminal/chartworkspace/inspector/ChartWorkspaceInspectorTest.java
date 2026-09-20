@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart.inspector;
+package com.acteque.terminal.chartworkspace.inspector;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,12 +27,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.junit.jupiter.api.Test;
 
-class ChartInspectorTest {
+class ChartWorkspaceInspectorTest {
 
   @Test
   void presentsEveryChartTypeInTheLeftSettingsDrawer() {
     FxTestSupport.runAndWait(() -> {
-      ChartInspector inspector = new ChartInspector();
+      ChartWorkspaceInspector inspector = new ChartWorkspaceInspector();
       Drawer drawer = inspector.getView();
       StackPane root = new StackPane(drawer);
       new AppThemeManager(new Scene(root, 800, 600), AppTheme.LIGHT);
@@ -78,7 +78,7 @@ class ChartInspectorTest {
   @Test
   void selectingATypeClosesTheDrawerAndRetainsSelectionOnReopen() {
     FxTestSupport.runAndWait(() -> {
-      ChartInspector inspector = new ChartInspector();
+      ChartWorkspaceInspector inspector = new ChartWorkspaceInspector();
       AtomicReference<ChartType> selected = new AtomicReference<>();
       inspector.onChartTypeSelected(selected::set);
       inspector.setChartType(ChartType.CANDLESTICK);
@@ -103,7 +103,7 @@ class ChartInspectorTest {
   @Test
   void mirrorsDrawerDismissalsIntoTheFeatureState() {
     FxTestSupport.runAndWait(() -> {
-      ChartInspector inspector = new ChartInspector();
+      ChartWorkspaceInspector inspector = new ChartWorkspaceInspector();
 
       inspector.showChartTypes();
       assertTrue(inspector.openProperty().get());
@@ -116,7 +116,7 @@ class ChartInspectorTest {
   @Test
   void presentsChartTypesWithoutHeaderOrScrollContainer() {
     FxTestSupport.runAndWait(() -> {
-      ChartInspector inspector = new ChartInspector();
+      ChartWorkspaceInspector inspector = new ChartWorkspaceInspector();
       Drawer drawer = inspector.getView();
       StackPane root = new StackPane(drawer);
       new AppThemeManager(new Scene(root, 800, 360), AppTheme.LIGHT);
@@ -138,7 +138,7 @@ class ChartInspectorTest {
   @Test
   void fitsTheDrawerHeightToItsContent() {
     FxTestSupport.runAndWait(() -> {
-      ChartInspector inspector = new ChartInspector();
+      ChartWorkspaceInspector inspector = new ChartWorkspaceInspector();
       Drawer drawer = inspector.getView();
       StackPane root = new StackPane(drawer);
       new AppThemeManager(new Scene(root, 800, 760), AppTheme.LIGHT);

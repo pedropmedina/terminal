@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart.intervalselection;
+package com.acteque.terminal.chartworkspace.intervalselection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -37,7 +36,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.Test;
 
-class ChartIntervalSelectionDialogTest {
+class ChartWorkspaceIntervalSelectionDialogTest {
 
   @Test
   void displaysCategorizedIntervalButtonsAndHighlightsTheCurrentInterval() {
@@ -45,13 +44,13 @@ class ChartIntervalSelectionDialogTest {
       Dialog dialog = createFeature().view();
       dialog.show();
 
-      Button addInterval = (Button) dialog.lookup(".chart-interval-add-button");
+      Button addInterval = (Button) dialog.lookup(".chart-workspace-interval-add-button");
       LucideIcon addIntervalIcon = assertInstanceOf(LucideIcon.class, addInterval.getGraphic());
       assertEquals("Add interval", addInterval.getText());
       assertSame(LucideIcons.PLUS, addIntervalIcon.getGlyph());
-      assertEquals(27, dialog.lookupAll(".chart-interval-button").size());
+      assertEquals(27, dialog.lookupAll(".chart-workspace-interval-button").size());
       ToggleGroupItem daily = button(dialog, "1D");
-      Input input = (Input) dialog.lookup(".chart-interval-search-field");
+      Input input = (Input) dialog.lookup(".chart-workspace-interval-search-field");
       InputGroup searchGroup = assertInstanceOf(InputGroup.class, input.getParent());
       InputGroupAddon addIntervalAddon = assertInstanceOf(InputGroupAddon.class, addInterval.getParent());
       assertEquals(InputGroupAlignment.INLINE_END, addIntervalAddon.getAlignmentPosition());
@@ -62,13 +61,15 @@ class ChartIntervalSelectionDialogTest {
       assertEquals("System", daily.getFont().getFamily());
       assertEquals(13.0, daily.getFont().getSize());
       assertEquals(8.0, searchGroup.getBorder().getStrokes().getFirst().getRadii().getTopLeftHorizontalRadius());
-      assertEquals(6, dialog.lookupAll(".chart-interval-toggle-group").size());
-      assertTrue(dialog.lookupAll(".chart-interval-toggle-group").stream().allMatch(ToggleGroup.class::isInstance));
-      assertEquals(5, dialog.lookupAll(".chart-interval-category-title").size());
+      assertEquals(6, dialog.lookupAll(".chart-workspace-interval-toggle-group").size());
+      assertTrue(
+        dialog.lookupAll(".chart-workspace-interval-toggle-group").stream().allMatch(ToggleGroup.class::isInstance)
+      );
+      assertEquals(5, dialog.lookupAll(".chart-workspace-interval-category-title").size());
       assertEquals(
         "Ticks",
         dialog
-          .lookupAll(".chart-interval-category-title")
+          .lookupAll(".chart-workspace-interval-category-title")
           .stream()
           .map(Label.class::cast)
           .findFirst()
@@ -106,7 +107,7 @@ class ChartIntervalSelectionDialogTest {
           "12Mo"
         ),
         dialog
-          .lookupAll(".chart-interval-button")
+          .lookupAll(".chart-workspace-interval-button")
           .stream()
           .map(ToggleGroupItem.class::cast)
           .map(ToggleGroupItem::getText)
@@ -138,20 +139,21 @@ class ChartIntervalSelectionDialogTest {
     FxTestSupport.runAndWait(() -> {
       Dialog dialog = createFeature().view();
       dialog.show();
-      Input field = (Input) dialog.lookup(".chart-interval-search-field");
+      Input field = (Input) dialog.lookup(".chart-workspace-interval-search-field");
 
       field.setText("hour");
-      assertEquals(4, dialog.lookupAll(".chart-interval-button").size());
+      assertEquals(4, dialog.lookupAll(".chart-workspace-interval-button").size());
       assertTrue(
-        dialog.lookup(".chart-interval-no-matches") == null || !dialog.lookup(".chart-interval-no-matches").isVisible()
+        dialog.lookup(".chart-workspace-interval-no-matches") == null ||
+          !dialog.lookup(".chart-workspace-interval-no-matches").isVisible()
       );
 
       field.setText("1m");
-      assertEquals(1, dialog.lookupAll(".chart-interval-button").size());
+      assertEquals(1, dialog.lookupAll(".chart-workspace-interval-button").size());
       assertEquals(
         "1M",
         dialog
-          .lookupAll(".chart-interval-button")
+          .lookupAll(".chart-workspace-interval-button")
           .stream()
           .map(ToggleGroupItem.class::cast)
           .findFirst()
@@ -160,22 +162,21 @@ class ChartIntervalSelectionDialogTest {
       );
 
       field.setText("unsupported");
-      Node noMatches = dialog.lookup(".chart-interval-no-matches");
+      Node noMatches = dialog.lookup(".chart-workspace-interval-no-matches");
       assertTrue(noMatches.isVisible());
-      assertFalse(dialog.lookup(".chart-interval-categories").isVisible());
+      assertFalse(dialog.lookup(".chart-workspace-interval-categories").isVisible());
     });
   }
 
   @Test
   void pressingEnterClosesAndReportsTheSelectedInterval() {
     FxTestSupport.runAndWait(() -> {
-      SimpleBooleanProperty open = new SimpleBooleanProperty(true);
-      ChartIntervalSelection selection = new ChartIntervalSelection(ChartInterval.DAILY, open);
+      ChartWorkspaceIntervalSelection selection = new ChartWorkspaceIntervalSelection(ChartInterval.DAILY);
       Dialog dialog = selection.getView();
       new Scene(new StackPane(dialog), 800.0, 600.0);
       AtomicReference<ChartInterval> selected = new AtomicReference<>();
       selection.onIntervalSelected(selected::set);
-      selection.onRequestClose(() -> open.set(false));
+      selection.show();
 
       ToggleGroupItem previous = button(dialog, "1D");
       ToggleGroupItem latest = button(dialog, "4H");
@@ -187,14 +188,14 @@ class ChartIntervalSelectionDialogTest {
       assertEquals(
         1,
         dialog
-          .lookupAll(".chart-interval-button")
+          .lookupAll(".chart-workspace-interval-button")
           .stream()
           .map(ToggleGroupItem.class::cast)
           .filter(ToggleGroupItem::isSelected)
           .count()
       );
       assertFalse(dialog.isOpen());
-      assertFalse(open.get());
+      assertFalse(selection.openProperty().get());
     });
   }
 
@@ -212,7 +213,7 @@ class ChartIntervalSelectionDialogTest {
       stage.show();
       stage.requestFocus();
       dialogReference.set(dialog);
-      inputReference.set((Input) dialog.lookup(".chart-interval-search-field"));
+      inputReference.set((Input) dialog.lookup(".chart-workspace-interval-search-field"));
       stageReference.set(stage);
     });
 
@@ -221,10 +222,13 @@ class ChartIntervalSelectionDialogTest {
       FxTestSupport.runAndWait(() -> {
         Input input = inputReference.get();
         pressTab(input, false);
-        assertSame(dialogReference.get().lookup(".chart-interval-add-button"), input.getScene().getFocusOwner());
+        assertSame(
+          dialogReference.get().lookup(".chart-workspace-interval-add-button"),
+          input.getScene().getFocusOwner()
+        );
       });
       FxTestSupport.runAndWait(() -> {
-        Node addButton = dialogReference.get().lookup(".chart-interval-add-button");
+        Node addButton = dialogReference.get().lookup(".chart-workspace-interval-add-button");
         pressTab(addButton, false);
         assertSame(button(dialogReference.get(), "1T"), addButton.getScene().getFocusOwner());
       });
@@ -243,7 +247,7 @@ class ChartIntervalSelectionDialogTest {
         input.setText("hour");
         input.requestFocus();
         pressTab(input, false);
-        Node addButton = dialogReference.get().lookup(".chart-interval-add-button");
+        Node addButton = dialogReference.get().lookup(".chart-workspace-interval-add-button");
         assertSame(addButton, input.getScene().getFocusOwner());
         pressTab(addButton, false);
         assertSame(button(dialogReference.get(), "1H"), input.getScene().getFocusOwner());
@@ -261,7 +265,7 @@ class ChartIntervalSelectionDialogTest {
         input.setText("1d");
         input.requestFocus();
         pressTab(input, false);
-        pressTab(dialogReference.get().lookup(".chart-interval-add-button"), false);
+        pressTab(dialogReference.get().lookup(".chart-workspace-interval-add-button"), false);
         ToggleGroupItem selected = button(dialogReference.get(), "1D");
 
         assertSame(selected, input.getScene().getFocusOwner());
@@ -281,17 +285,17 @@ class ChartIntervalSelectionDialogTest {
       feature.selection().onIntervalSelected(selected::set);
       dialog.show();
 
-      ((Button) dialog.lookup(".chart-interval-add-button")).fire();
-      Node addDialog = dialog.lookup(".chart-add-interval-dialog");
+      ((Button) dialog.lookup(".chart-workspace-interval-add-button")).fire();
+      Node addDialog = dialog.lookup(".chart-workspace-add-interval-dialog");
       assertTrue(addDialog.isVisible());
       assertTrue(dialog.getContent().isDisabled());
 
       @SuppressWarnings("unchecked")
       Select<ChartInterval.Classification> classification = (Select<ChartInterval.Classification>) dialog.lookup(
-        ".chart-add-interval-classification"
+        ".chart-workspace-add-interval-classification"
       );
-      Input amount = (Input) dialog.lookup(".chart-add-interval-amount");
-      Button submit = (Button) dialog.lookup(".chart-add-interval-submit");
+      Input amount = (Input) dialog.lookup(".chart-workspace-add-interval-amount");
+      Button submit = (Button) dialog.lookup(".chart-workspace-add-interval-submit");
       assertTrue(submit.isDisabled());
 
       amount.setText("7hours");
@@ -303,7 +307,7 @@ class ChartIntervalSelectionDialogTest {
 
       assertFalse(addDialog.isVisible());
       assertFalse(dialog.getContent().isDisabled());
-      assertEquals(28, dialog.lookupAll(".chart-interval-button").size());
+      assertEquals(28, dialog.lookupAll(".chart-workspace-interval-button").size());
       ToggleGroupItem custom = button(dialog, "7H");
       custom.fire();
       assertEquals("7H", selected.get().name());
@@ -317,31 +321,29 @@ class ChartIntervalSelectionDialogTest {
       Dialog dialog = createFeature().view();
       dialog.show();
 
-      ((Button) dialog.lookup(".chart-interval-add-button")).fire();
-      ((Button) dialog.lookup(".chart-add-interval-cancel")).fire();
+      ((Button) dialog.lookup(".chart-workspace-interval-add-button")).fire();
+      ((Button) dialog.lookup(".chart-workspace-add-interval-cancel")).fire();
 
-      assertEquals(27, dialog.lookupAll(".chart-interval-button").size());
-      assertFalse(dialog.lookup(".chart-add-interval-dialog").isVisible());
+      assertEquals(27, dialog.lookupAll(".chart-workspace-interval-button").size());
+      assertFalse(dialog.lookup(".chart-workspace-add-interval-dialog").isVisible());
     });
   }
 
   private static IntervalSelectionFeature createFeature() {
-    ChartIntervalSelection selection = new ChartIntervalSelection(
-      ChartInterval.DAILY,
-      new SimpleBooleanProperty(false)
-    );
+    ChartWorkspaceIntervalSelection selection = new ChartWorkspaceIntervalSelection(ChartInterval.DAILY);
     Dialog dialog = selection.getView();
     StackPane root = new StackPane(dialog);
     new AppThemeManager(new Scene(root, 800.0, 600.0), AppTheme.LIGHT);
+    selection.show();
     root.applyCss();
     return new IntervalSelectionFeature(selection, dialog);
   }
 
-  private record IntervalSelectionFeature(ChartIntervalSelection selection, Dialog view) {}
+  private record IntervalSelectionFeature(ChartWorkspaceIntervalSelection selection, Dialog view) {}
 
   private static ToggleGroupItem button(Dialog dialog, String text) {
     return dialog
-      .lookupAll(".chart-interval-button")
+      .lookupAll(".chart-workspace-interval-button")
       .stream()
       .map(ToggleGroupItem.class::cast)
       .filter(button -> text.equals(button.getText()))

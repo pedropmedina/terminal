@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart.inspector;
+package com.acteque.terminal.chartworkspace.inspector;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -8,12 +8,12 @@ import com.acteque.terminal.chart.ChartType;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
-class ChartInspectorInteractorTest {
+class ChartWorkspaceInspectorInteractorTest {
 
   @Test
   void initializesAndUpdatesSettingsState() {
-    ChartInspectorModel model = new ChartInspectorModel();
-    ChartInspectorInteractor interactor = new ChartInspectorInteractor(model);
+    ChartWorkspaceInspectorModel model = new ChartWorkspaceInspectorModel();
+    ChartWorkspaceInspectorInteractor interactor = new ChartWorkspaceInspectorInteractor(model);
 
     interactor.initialize(ChartType.LINE);
     assertSame(ChartType.LINE, model.getChartType());
@@ -31,8 +31,8 @@ class ChartInspectorInteractorTest {
 
   @Test
   void selectingAChartTypeUpdatesStateClosesAndRoutesTheSelection() {
-    ChartInspectorModel model = new ChartInspectorModel();
-    ChartInspectorInteractor interactor = new ChartInspectorInteractor(model);
+    ChartWorkspaceInspectorModel model = new ChartWorkspaceInspectorModel();
+    ChartWorkspaceInspectorInteractor interactor = new ChartWorkspaceInspectorInteractor(model);
     AtomicReference<ChartType> selected = new AtomicReference<>();
     interactor.initialize(ChartType.LINE);
     interactor.onChartTypeSelected(selected::set);

@@ -1,7 +1,6 @@
 package com.acteque.terminal.chart;
 
 import com.acteque.terminal.chart.canvas.ChartCanvas;
-import com.acteque.terminal.chart.intervalselection.ChartIntervalSelection;
 import com.acteque.terminal.chart.statusline.ChartStatusLine;
 import com.acteque.terminal.instrumentsearch.InstrumentSearch;
 import com.acteque.terminal.marketdata.CalendarData;
@@ -12,7 +11,6 @@ import com.acteque.terminal.marketlogos.InstrumentLogo;
 import com.acteque.terminal.marketlogos.LogoException;
 import com.acteque.terminal.marketlogos.LogoRequest;
 import com.acteque.terminal.marketlogos.LogoSession;
-import com.acteque.terminal.ui.dialog.Dialog;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -146,13 +144,6 @@ public final class Chart implements AutoCloseable {
     );
     instrumentSearch.onRequestClose(interactor::closeInstrumentSearch);
 
-    ChartIntervalSelection intervalSelection = new ChartIntervalSelection(
-      interval,
-      model.intervalSelectionOpenProperty()
-    );
-    intervalSelection.onRequestClose(interactor::closeIntervalSelection);
-    Dialog intervalSelectionDialog = intervalSelection.getView();
-
     statusLine = new ChartStatusLine(
       symbol,
       interval,
@@ -162,8 +153,6 @@ public final class Chart implements AutoCloseable {
       logoSource,
       uiExecutor
     );
-    intervalSelection.onIntervalSelected(interactor::selectInterval);
-
     canvas = new ChartCanvas(pricePoints, interval, statusLine);
     Canvas canvasView = canvas.getView();
     viewBuilder = new ChartViewBuilder(
@@ -171,11 +160,10 @@ public final class Chart implements AutoCloseable {
       canvasView,
       statusLine.getView(),
       instrumentSearch.getView(),
-      intervalSelectionDialog,
       interactor::openInstrumentSearch,
       interactor::openIntervalSelection
     );
-    interactor.onIntervalSelected(selectedInterval -> applySelectedInterval(selectedInterval, intervalSelection));
+    interactor.onIntervalSelected(this::applySelectedInterval);
     if (ownsMarketData) {
       interactor.onInstrumentLoadStarted(statusLine::cancelLogoLoad);
       interactor.onInstrumentLoaded(this::applyLoadedInstrument);
@@ -235,12 +223,20 @@ public final class Chart implements AutoCloseable {
     return model.modalOpenProperty();
   }
 
+  public ObservableBooleanValue intervalSelectionOpenProperty() {
+    return model.intervalSelectionOpenProperty();
+  }
+
   public void showInstrumentSearch() {
     interactor.openInstrumentSearch();
   }
 
   public void showIntervalSelection() {
     interactor.openIntervalSelection();
+  }
+
+  public void closeIntervalSelection() {
+    interactor.closeIntervalSelection();
   }
 
   public void setIdentifierColor(Color color) {
@@ -276,6 +272,10 @@ public final class Chart implements AutoCloseable {
     canvas.setChartType(chartType);
   }
 
+  public void setInterval(ChartInterval interval) {
+    interactor.selectInterval(Objects.requireNonNull(interval, "interval cannot be null"));
+  }
+
   public void drawChart() {
     canvas.drawChart();
   }
@@ -294,8 +294,7 @@ public final class Chart implements AutoCloseable {
     }
   }
 
-  private void applySelectedInterval(ChartInterval interval, ChartIntervalSelection intervalSelection) {
-    intervalSelection.setCurrentInterval(interval);
+  private void applySelectedInterval(ChartInterval interval) {
     statusLine.setInterval(interval);
     canvas.setInterval(interval);
     intervalSelectedHandler.accept(interval);

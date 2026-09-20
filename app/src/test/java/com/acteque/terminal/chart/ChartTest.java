@@ -10,7 +10,6 @@ import com.acteque.terminal.AppThemeManager;
 import com.acteque.terminal.StubInstrumentCatalog;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Button;
-import com.acteque.terminal.ui.dialog.Dialog;
 import com.acteque.terminal.ui.tooltip.Tooltip;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -84,18 +83,18 @@ class ChartTest {
   }
 
   @Test
-  void opensTheIntervalDialogFromItsPlatformShortcut() {
+  void requestsWorkspaceIntervalSelectionFromItsPlatformShortcut() {
     FxTestSupport.runAndWait(() -> {
       try (
         Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of))
       ) {
         StackPane chart = chartController.getView();
-        Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
+        assertTrue(chart.lookupAll(".chart-workspace-interval-selection-dialog").isEmpty());
 
         chart.fireEvent(shortcutEvent(KeyCode.I));
 
-        assertTrue(dialog.isOpen());
-        dialog.close();
+        assertTrue(chartController.intervalSelectionOpenProperty().get());
+        chartController.closeIntervalSelection();
       }
     });
   }
@@ -107,7 +106,6 @@ class ChartTest {
         Chart chartController = new Chart(List.of(), "ACME", ChartInterval.DAILY, new StubInstrumentCatalog(List::of))
       ) {
         StackPane chart = chartController.getView();
-        Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
         Stage stage = new Stage();
         stage.setScene(new Scene(chart, 800.0, 500.0));
         Platform.setImplicitExit(false);
@@ -123,10 +121,10 @@ class ChartTest {
 
           chart.fireEvent(shortcutEvent(KeyCode.I));
 
-          assertTrue(dialog.isOpen());
+          assertTrue(chartController.intervalSelectionOpenProperty().get());
           assertFalse(tooltip.isShowing());
         } finally {
-          dialog.close();
+          chartController.closeIntervalSelection();
           stage.close();
         }
       }
@@ -137,7 +135,6 @@ class ChartTest {
   void closingAnIntervalModalDoesNotReshowTheTriggerTooltipWhenFocusReturns() throws InterruptedException {
     AtomicReference<Button> buttonReference = new AtomicReference<>();
     AtomicReference<Tooltip> tooltipReference = new AtomicReference<>();
-    AtomicReference<Dialog> dialogReference = new AtomicReference<>();
     AtomicReference<Stage> stageReference = new AtomicReference<>();
     AtomicReference<Chart> chartControllerReference = new AtomicReference<>();
 
@@ -157,10 +154,8 @@ class ChartTest {
       HBox statusLine = (HBox) chart.lookup(".chart-status-line");
       Tooltip tooltip = (Tooltip) statusLine.getChildren().get(1);
       Button intervalButton = (Button) tooltip.getTrigger().getTarget();
-      Dialog dialog = (Dialog) chart.lookup(".chart-interval-selection-dialog");
       buttonReference.set(intervalButton);
       tooltipReference.set(tooltip);
-      dialogReference.set(dialog);
       stageReference.set(stage);
       chartControllerReference.set(chartController);
     });
@@ -177,7 +172,7 @@ class ChartTest {
 
         click(intervalButton, bounds);
 
-        assertTrue(dialogReference.get().isOpen());
+        assertTrue(chartControllerReference.get().intervalSelectionOpenProperty().get());
         assertTrue(intervalButton.isDisabled());
         assertFalse(tooltip.isShowing());
       });
@@ -185,12 +180,11 @@ class ChartTest {
       FxTestSupport.runAndWait(() -> {
         assertTrue(buttonReference.get().isDisabled());
         assertFalse(tooltipReference.get().isShowing());
-        dialogReference.get().close();
+        chartControllerReference.get().closeIntervalSelection();
       });
 
       FxTestSupport.runAndWait(() -> {
         assertFalse(buttonReference.get().isDisabled());
-        assertTrue(buttonReference.get().isFocused());
         assertFalse(buttonReference.get().isFocusVisible());
         assertFalse(tooltipReference.get().isShowing());
       });

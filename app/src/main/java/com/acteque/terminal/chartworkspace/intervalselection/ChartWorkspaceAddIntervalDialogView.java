@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart.intervalselection;
+package com.acteque.terminal.chartworkspace.intervalselection;
 
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartInterval.Classification;
@@ -23,7 +23,7 @@ import javafx.scene.control.TextFormatter;
 import javafx.util.StringConverter;
 
 /** Form dialog for creating a chart interval that lives for the current application session. */
-final class ChartAddIntervalDialogView extends Dialog {
+final class ChartWorkspaceAddIntervalDialogView extends Dialog {
 
   private final Select<Classification> classification = new Select<>(
     FXCollections.observableArrayList(List.of(Classification.values()))
@@ -32,11 +32,11 @@ final class ChartAddIntervalDialogView extends Dialog {
   private final Button addButton = new Button("Add");
   private Consumer<ChartInterval> intervalAddedHandler = ignored -> {};
 
-  ChartAddIntervalDialogView() {
-    getStyleClass().add("chart-add-interval-dialog");
+  ChartWorkspaceAddIntervalDialogView() {
+    getStyleClass().add("chart-workspace-add-interval-dialog");
     setFocusTraversable(false);
 
-    classification.getStyleClass().add("chart-add-interval-classification");
+    classification.getStyleClass().add("chart-workspace-add-interval-classification");
     classification.setPromptText("Select interval type");
     classification.setAccessibleText("Interval classification");
     classification.setMaxWidth(Double.MAX_VALUE);
@@ -54,7 +54,7 @@ final class ChartAddIntervalDialogView extends Dialog {
       }
     );
 
-    amount.getStyleClass().add("chart-add-interval-amount");
+    amount.getStyleClass().add("chart-workspace-add-interval-amount");
     amount.setPromptText("Enter a number");
     amount.setAccessibleText("Interval amount");
     amount.setTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches("\\d*") ? change : null));
@@ -64,12 +64,12 @@ final class ChartAddIntervalDialogView extends Dialog {
     FieldLabel amountLabel = new FieldLabel("Interval");
     amountLabel.setLabelFor(amount);
     FieldGroup form = new FieldGroup(new Field(classificationLabel, classification), new Field(amountLabel, amount));
-    form.getStyleClass().add("chart-add-interval-form");
+    form.getStyleClass().add("chart-workspace-add-interval-form");
 
     Button cancelButton = new Button("Cancel", Button.Variant.OUTLINE, Button.Size.DEFAULT);
-    cancelButton.getStyleClass().add("chart-add-interval-cancel");
+    cancelButton.getStyleClass().add("chart-workspace-add-interval-cancel");
     cancelButton.setOnAction(ignored -> close());
-    addButton.getStyleClass().add("chart-add-interval-submit");
+    addButton.getStyleClass().add("chart-workspace-add-interval-submit");
     addButton.setOnAction(ignored -> addInterval());
     amount.setOnAction(ignored -> {
       if (!addButton.isDisabled()) {
@@ -87,7 +87,7 @@ final class ChartAddIntervalDialogView extends Dialog {
     );
     DialogFooter footer = new DialogFooter(cancelButton, addButton);
     DialogContent card = new DialogContent(header, form, footer);
-    card.getStyleClass().add("chart-add-interval-card");
+    card.getStyleClass().add("chart-workspace-add-interval-card");
     card.setShowCloseButton(false);
     card.setMaxHeight(USE_PREF_SIZE);
     setContent(card);

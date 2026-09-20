@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart.inspector;
+package com.acteque.terminal.chartworkspace.inspector;
 
 import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.ui.drawer.Drawer;
@@ -7,17 +7,17 @@ import java.util.function.Consumer;
 import javafx.beans.value.ObservableBooleanValue;
 
 /** Composes and exposes the chart inspector MVCI feature. */
-public final class ChartInspector {
+public final class ChartWorkspaceInspector {
 
-  private final ChartInspectorModel model;
-  private final ChartInspectorInteractor interactor;
-  private final ChartInspectorViewBuilder viewBuilder;
+  private final ChartWorkspaceInspectorModel model;
+  private final ChartWorkspaceInspectorInteractor interactor;
+  private final ChartWorkspaceInspectorViewBuilder viewBuilder;
 
-  public ChartInspector() {
-    model = new ChartInspectorModel();
-    interactor = new ChartInspectorInteractor(model);
+  public ChartWorkspaceInspector() {
+    model = new ChartWorkspaceInspectorModel();
+    interactor = new ChartWorkspaceInspectorInteractor(model);
     interactor.initialize(ChartType.LINE);
-    viewBuilder = new ChartInspectorViewBuilder(model, interactor::selectChartType, interactor::setOpen);
+    viewBuilder = new ChartWorkspaceInspectorViewBuilder(model, interactor::selectChartType, interactor::setOpen);
   }
 
   public Drawer getView() {

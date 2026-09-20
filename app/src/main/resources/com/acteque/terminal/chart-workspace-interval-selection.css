@@ -1,12 +1,12 @@
-.chart-interval-selection-dialog {
+.chart-workspace-interval-selection-dialog {
   -fx-alignment: center;
 }
 
-.chart-interval-selection-dialog > .core-dialog-portal > .core-dialog-overlay {
+.chart-workspace-interval-selection-dialog > .core-dialog-portal > .core-dialog-overlay {
   -fx-fill: -app-overlay;
 }
 
-.chart-interval-selection-card {
+.chart-workspace-interval-selection-card {
   -fx-pref-width: 400px;
   -fx-max-width: 400px;
   -fx-padding: 25px;
@@ -17,40 +17,40 @@
   -fx-border-radius: 8px;
 }
 
-.chart-add-interval-card {
+.chart-workspace-add-interval-card {
   -fx-pref-width: 384px;
   -fx-max-width: 384px;
 }
 
-.chart-add-interval-form {
+.chart-workspace-add-interval-form {
   -fx-padding: 8px 0;
 }
 
-.chart-interval-categories {
+.chart-workspace-interval-categories {
   -fx-spacing: 16px;
   -fx-padding: 8px 0 0 0;
 }
 
-.chart-interval-category {
+.chart-workspace-interval-category {
   -fx-spacing: 8px;
 }
 
-.chart-interval-category-title {
+.chart-workspace-interval-category-title {
   -fx-padding: 0 4px;
   -fx-font-size: 12px;
   -fx-font-weight: 600;
   -fx-text-fill: -app-muted-foreground;
 }
 
-.chart-interval-toggle-rows {
+.chart-workspace-interval-toggle-rows {
   -fx-spacing: 4px;
 }
 
-.chart-interval-toggle-group {
+.chart-workspace-interval-toggle-group {
   -fx-spacing: 4px;
 }
 
-.chart-interval-toggle-group > .chart-interval-button {
+.chart-workspace-interval-toggle-group > .chart-workspace-interval-button {
   -fx-font-size: 13px;
   -fx-font-weight: normal;
   -fx-min-width: 62px;
@@ -59,13 +59,13 @@
   -fx-padding: 0 6px;
 }
 
-.chart-interval-toggle-group > .chart-interval-button:selected {
+.chart-workspace-interval-toggle-group > .chart-workspace-interval-button:selected {
   -fx-background-color: -app-primary;
   -fx-border-color: -app-primary;
   -fx-text-fill: -app-primary-foreground;
 }
 
-.chart-interval-toggle-group > .chart-interval-button:selected:focused {
+.chart-workspace-interval-toggle-group > .chart-workspace-interval-button:selected:focused {
   -fx-border-color:
     -app-ring,
     -app-input-focus-ring;
@@ -76,7 +76,7 @@
   -fx-border-width: 1px, 3px;
 }
 
-.chart-interval-no-matches {
+.chart-workspace-interval-no-matches {
   -fx-alignment: center;
   -fx-padding: 24px 8px;
   -fx-text-fill: -app-muted-foreground;

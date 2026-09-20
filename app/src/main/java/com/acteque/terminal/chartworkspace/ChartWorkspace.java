@@ -4,7 +4,8 @@ import com.acteque.terminal.AppService;
 import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartType;
-import com.acteque.terminal.chart.inspector.ChartInspector;
+import com.acteque.terminal.chartworkspace.inspector.ChartWorkspaceInspector;
+import com.acteque.terminal.chartworkspace.intervalselection.ChartWorkspaceIntervalSelection;
 import com.acteque.terminal.chartworkspace.menu.ChartWorkspaceMenu;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import com.acteque.terminal.marketlogos.LogoSession;
@@ -22,8 +23,11 @@ public final class ChartWorkspace implements AutoCloseable {
   private final ChartWorkspaceViewBuilder viewBuilder;
   private final ChartWorkspaceModel model;
   private final ChartWorkspaceMenu menu;
-  private final ChartInspector inspector;
+  private final ChartWorkspaceInspector inspector;
+  private final ChartWorkspaceIntervalSelection intervalSelection;
   private final ChangeListener<Boolean> modalOpenListener;
+  private final ChangeListener<Boolean> intervalSelectionOpenListener;
+  private final ChangeListener<ChartInterval> intervalListener;
   private final ChangeListener<ChartType> chartTypeListener;
   private Chart observedChart;
 
@@ -44,14 +48,26 @@ public final class ChartWorkspace implements AutoCloseable {
     interactor = new ChartWorkspaceInteractor(model, chartFactory);
     interactor.initialize(settings);
 
-    inspector = new ChartInspector();
+    inspector = new ChartWorkspaceInspector();
+    intervalSelection = new ChartWorkspaceIntervalSelection(model.getActiveChart().getInterval());
     modalOpenListener = (ignored, wasOpen, isOpen) -> {
       if (isOpen) {
         inspector.close();
       }
     };
+    intervalSelectionOpenListener = (ignored, wasOpen, isOpen) -> {
+      if (isOpen) {
+        inspector.close();
+        intervalSelection.show();
+      } else {
+        intervalSelection.close();
+      }
+    };
+    intervalListener = (ignored, previous, current) -> intervalSelection.setCurrentInterval(current);
     chartTypeListener = (ignored, previous, current) -> inspector.setChartType(current);
     inspector.onChartTypeSelected(interactor::setActiveChartType);
+    intervalSelection.onIntervalSelected(interactor::setActiveChartInterval);
+    intervalSelection.onRequestClose(interactor::closeActiveIntervalSelection);
     menu = new ChartWorkspaceMenu(model.getActiveChart());
     menu.onInstrumentSelectionRequested(() -> {
       inspector.close();
@@ -70,7 +86,13 @@ public final class ChartWorkspace implements AutoCloseable {
     model.multipleChartsProperty().addListener((ignored, previous, current) -> menu.setMultipleCharts(current));
     observeActiveChart(model.getActiveChart());
 
-    viewBuilder = new ChartWorkspaceViewBuilder(model, interactor::activate, menu.getView(), inspector.getView());
+    viewBuilder = new ChartWorkspaceViewBuilder(
+      model,
+      interactor::activate,
+      menu.getView(),
+      inspector.getView(),
+      intervalSelection.getView()
+    );
   }
 
   public StackPane getView() {
@@ -84,6 +106,7 @@ public final class ChartWorkspace implements AutoCloseable {
   @Override
   public void close() {
     stopObservingActiveChart();
+    intervalSelection.close();
     inspector.close();
     menu.close();
     interactor.close();
@@ -95,8 +118,15 @@ public final class ChartWorkspace implements AutoCloseable {
     menu.setActiveChart(observedChart);
     inspector.close();
     inspector.setChartType(observedChart.getChartType());
+    intervalSelection.close();
+    intervalSelection.setCurrentInterval(observedChart.getInterval());
     observedChart.modalOpenProperty().addListener(modalOpenListener);
+    observedChart.intervalSelectionOpenProperty().addListener(intervalSelectionOpenListener);
+    observedChart.intervalProperty().addListener(intervalListener);
     observedChart.chartTypeProperty().addListener(chartTypeListener);
+    if (observedChart.intervalSelectionOpenProperty().get()) {
+      intervalSelection.show();
+    }
   }
 
   private void stopObservingActiveChart() {
@@ -105,7 +135,10 @@ public final class ChartWorkspace implements AutoCloseable {
     }
     ObservableBooleanValue modalOpen = observedChart.modalOpenProperty();
     modalOpen.removeListener(modalOpenListener);
+    observedChart.intervalSelectionOpenProperty().removeListener(intervalSelectionOpenListener);
+    observedChart.intervalProperty().removeListener(intervalListener);
     observedChart.chartTypeProperty().removeListener(chartTypeListener);
+    observedChart.closeIntervalSelection();
     observedChart = null;
   }
 

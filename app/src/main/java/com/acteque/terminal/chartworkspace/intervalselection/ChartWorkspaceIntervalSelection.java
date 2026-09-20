@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart.intervalselection;
+package com.acteque.terminal.chartworkspace.intervalselection;
 
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.ui.dialog.Dialog;
@@ -7,20 +7,19 @@ import java.util.function.Consumer;
 import javafx.beans.value.ObservableBooleanValue;
 
 /** Composes and exposes the chart interval-selection MVCI feature. */
-public final class ChartIntervalSelection {
+public final class ChartWorkspaceIntervalSelection {
 
-  private final ChartIntervalSelectionInteractor interactor;
-  private final ChartIntervalSelectionViewBuilder viewBuilder;
+  private final ChartWorkspaceIntervalSelectionInteractor interactor;
+  private final ChartWorkspaceIntervalSelectionViewBuilder viewBuilder;
   private Consumer<ChartInterval> intervalSelectedHandler = ignored -> {};
   private Runnable closeRequestHandler = () -> {};
 
-  public ChartIntervalSelection(ChartInterval currentInterval, ObservableBooleanValue open) {
-    ChartIntervalSelectionModel model = new ChartIntervalSelectionModel();
-    interactor = new ChartIntervalSelectionInteractor(model);
+  public ChartWorkspaceIntervalSelection(ChartInterval currentInterval) {
+    ChartWorkspaceIntervalSelectionModel model = new ChartWorkspaceIntervalSelectionModel();
+    interactor = new ChartWorkspaceIntervalSelectionInteractor(model);
     interactor.initialize(currentInterval);
-    viewBuilder = new ChartIntervalSelectionViewBuilder(
+    viewBuilder = new ChartWorkspaceIntervalSelectionViewBuilder(
       model,
-      Objects.requireNonNull(open, "open cannot be null"),
       interactor::setQuery,
       interactor::addInterval,
       this::select,
@@ -37,6 +36,18 @@ public final class ChartIntervalSelection {
     interactor.setCurrentInterval(interval);
   }
 
+  public ObservableBooleanValue openProperty() {
+    return interactor.openProperty();
+  }
+
+  public void show() {
+    interactor.show();
+  }
+
+  public void close() {
+    interactor.close();
+  }
+
   public void onIntervalSelected(Consumer<ChartInterval> callback) {
     intervalSelectedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
@@ -47,7 +58,7 @@ public final class ChartIntervalSelection {
 
   private void select(ChartInterval interval) {
     interactor.select(interval);
-    viewBuilder.close();
+    interactor.close();
     intervalSelectedHandler.accept(interval);
   }
 
@@ -59,6 +70,7 @@ public final class ChartIntervalSelection {
   }
 
   private void requestClose() {
+    interactor.close();
     closeRequestHandler.run();
   }
 }

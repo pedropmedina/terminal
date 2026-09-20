@@ -1,4 +1,4 @@
-package com.acteque.terminal.chart.intervalselection;
+package com.acteque.terminal.chartworkspace.intervalselection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -8,12 +8,12 @@ import com.acteque.terminal.chart.ChartInterval;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class ChartIntervalSelectionInteractorTest {
+class ChartWorkspaceIntervalSelectionInteractorTest {
 
   @Test
   void initializesCategorizedIntervalsAndFiltersNormalizedQueries() {
-    ChartIntervalSelectionModel model = new ChartIntervalSelectionModel();
-    ChartIntervalSelectionInteractor interactor = new ChartIntervalSelectionInteractor(model);
+    ChartWorkspaceIntervalSelectionModel model = new ChartWorkspaceIntervalSelectionModel();
+    ChartWorkspaceIntervalSelectionInteractor interactor = new ChartWorkspaceIntervalSelectionInteractor(model);
 
     interactor.initialize(ChartInterval.DAILY);
 
@@ -31,8 +31,8 @@ class ChartIntervalSelectionInteractorTest {
 
   @Test
   void addsCustomIntervalsToTheCurrentResults() {
-    ChartIntervalSelectionModel model = new ChartIntervalSelectionModel();
-    ChartIntervalSelectionInteractor interactor = new ChartIntervalSelectionInteractor(model);
+    ChartWorkspaceIntervalSelectionModel model = new ChartWorkspaceIntervalSelectionModel();
+    ChartWorkspaceIntervalSelectionInteractor interactor = new ChartWorkspaceIntervalSelectionInteractor(model);
     interactor.initialize(ChartInterval.DAILY);
     interactor.setQuery("7h");
     assertEquals(List.of(), names(model));
@@ -46,8 +46,8 @@ class ChartIntervalSelectionInteractorTest {
 
   @Test
   void findsASoleMatchAndUpdatesTheSelection() {
-    ChartIntervalSelectionModel model = new ChartIntervalSelectionModel();
-    ChartIntervalSelectionInteractor interactor = new ChartIntervalSelectionInteractor(model);
+    ChartWorkspaceIntervalSelectionModel model = new ChartWorkspaceIntervalSelectionModel();
+    ChartWorkspaceIntervalSelectionInteractor interactor = new ChartWorkspaceIntervalSelectionInteractor(model);
     interactor.initialize(ChartInterval.DAILY);
 
     assertNull(interactor.soleMatch());
@@ -60,7 +60,7 @@ class ChartIntervalSelectionInteractorTest {
     assertSame(ChartInterval.FOUR_HOURS, model.getCurrentInterval());
   }
 
-  private static List<String> names(ChartIntervalSelectionModel model) {
+  private static List<String> names(ChartWorkspaceIntervalSelectionModel model) {
     return model.getMatchingIntervals().values().stream().flatMap(List::stream).map(ChartInterval::name).toList();
   }
 }
