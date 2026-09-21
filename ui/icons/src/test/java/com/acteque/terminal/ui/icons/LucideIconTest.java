@@ -91,6 +91,7 @@ class LucideIconTest {
     assertEquals("chart-candlestick", LucideIcons.CHART_CANDLESTICK.sourceName());
     assertEquals("chart-line", LucideIcons.CHART_LINE.sourceName());
     assertEquals("chart-network", LucideIcons.CHART_NETWORK.sourceName());
+    assertEquals("square-split-horizontal", LucideIcons.SQUARE_SPLIT_HORIZONTAL.sourceName());
 
     for (LucideIcons icon : LucideIcons.values()) {
       assertFalse(icon.sourceName().isBlank());

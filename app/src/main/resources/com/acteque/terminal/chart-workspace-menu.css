@@ -27,10 +27,6 @@
   -fx-background-color: -app-button-ghost-hover;
 }
 
-.chart-workspace-menu-close.core-button.button-variant-ghost:hover {
-  -fx-text-fill: -app-destructive;
-}
-
 .chart-workspace-split-popover.core-popover-content {
   -fx-min-width: 228px;
   -fx-pref-width: 228px;

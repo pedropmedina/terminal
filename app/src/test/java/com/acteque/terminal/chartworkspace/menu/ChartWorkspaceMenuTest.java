@@ -14,16 +14,22 @@ import com.acteque.terminal.chart.ChartSplitDirection;
 import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Button;
+import com.acteque.terminal.ui.Button.Variant;
+import com.acteque.terminal.ui.icons.LucideIcon;
+import com.acteque.terminal.ui.icons.LucideIcons;
 import com.acteque.terminal.ui.popover.PopoverTrigger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import org.junit.jupiter.api.Test;
 
 class ChartWorkspaceMenuTest {
@@ -60,6 +66,22 @@ class ChartWorkspaceMenuTest {
         assertTrue(identifier.isVisible());
         assertEquals(4.0, identifier.getWidth());
         assertEquals(color, identifier.getBackground().getFills().getFirst().getFill());
+        CornerRadii menuRadii = root.getBackground().getFills().getFirst().getRadii();
+        CornerRadii identifierRadii = identifier.getBackground().getFills().getFirst().getRadii();
+        assertEquals(0.0, identifierRadii.getTopLeftHorizontalRadius());
+        assertEquals(0.0, identifierRadii.getBottomLeftHorizontalRadius());
+        assertEquals(0.0, identifierRadii.getTopRightHorizontalRadius());
+        assertEquals(0.0, identifierRadii.getBottomRightHorizontalRadius());
+        assertFalse(identifier.isManaged());
+        assertEquals(Pos.TOP_LEFT, StackPane.getAlignment(identifier));
+        assertEquals(0.0, identifier.getLayoutX());
+        assertEquals(0.0, identifier.getLayoutY());
+        assertEquals(root.getHeight(), identifier.getHeight());
+        Rectangle clip = assertInstanceOf(Rectangle.class, root.getClip());
+        assertEquals(root.getWidth(), clip.getWidth());
+        assertEquals(root.getHeight(), clip.getHeight());
+        assertEquals(menuRadii.getTopLeftHorizontalRadius() * 2.0, clip.getArcWidth());
+        assertEquals(menuRadii.getTopLeftVerticalRadius() * 2.0, clip.getArcHeight());
 
         first.setInstrument("IGNORED", "Ignored", List.of(), Optional.empty());
         assertEquals("AAPL", assertInstanceOf(Button.class, buttons.getChildren().getFirst()).getText());
@@ -89,6 +111,10 @@ class ChartWorkspaceMenuTest {
         assertInstanceOf(Button.class, buttons.getChildren().get(1)).fire();
         assertInstanceOf(Button.class, buttons.getChildren().get(2)).fire();
         PopoverTrigger split = assertInstanceOf(PopoverTrigger.class, buttons.getChildren().get(3));
+        assertSame(
+          LucideIcons.SQUARE_SPLIT_HORIZONTAL,
+          assertInstanceOf(LucideIcon.class, split.getGraphic()).getGlyph()
+        );
         split
           .getPopover()
           .getContent()
@@ -97,7 +123,10 @@ class ChartWorkspaceMenuTest {
           .map(Button.class::cast)
           .sorted((first, second) -> first.getText().compareTo(second.getText()))
           .forEach(Button::fire);
-        assertInstanceOf(Button.class, buttons.getChildren().get(4)).fire();
+        Button close = assertInstanceOf(Button.class, buttons.getChildren().get(4));
+        assertEquals(Variant.GHOST, close.getVariant());
+        assertSame(LucideIcons.X, assertInstanceOf(LucideIcon.class, close.getGraphic()).getGlyph());
+        close.fire();
 
         assertEquals(1, instrumentRequests.get());
         assertEquals(1, intervalRequests.get());

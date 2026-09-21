@@ -11,5 +11,6 @@ export {
   Plus,
   Search,
   Settings,
+  SquareSplitHorizontal,
   X,
 } from "@lucide/icons";

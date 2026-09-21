@@ -32,7 +32,6 @@ import javafx.util.Builder;
 final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarget {
 
   private static final PseudoClass DRAWER_OPEN = PseudoClass.getPseudoClass("drawer-open");
-  private static final CornerRadii IDENTIFIER_RADII = new CornerRadii(8.0);
 
   private final ChartWorkspaceMenuModel model;
   private final Consumer<Item> actionRequestedHandler;
@@ -62,7 +61,7 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
       .bind(
         Bindings.createObjectBinding(
           () ->
-            new Background(new BackgroundFill(model.identifierColorProperty().get(), IDENTIFIER_RADII, Insets.EMPTY)),
+            new Background(new BackgroundFill(model.identifierColorProperty().get(), CornerRadii.EMPTY, Insets.EMPTY)),
           model.identifierColorProperty()
         )
       );
@@ -109,7 +108,7 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
     if (item == Item.SPLIT) {
       PopoverTrigger trigger = new PopoverTrigger(
         "",
-        new LucideIcon(LucideIcons.PLUS),
+        new LucideIcon(LucideIcons.SQUARE_SPLIT_HORIZONTAL),
         Variant.GHOST,
         Size.ICON,
         splitPopover
