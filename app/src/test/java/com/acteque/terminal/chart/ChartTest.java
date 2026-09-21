@@ -3,6 +3,7 @@ package com.acteque.terminal.chart;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.AppTheme;
@@ -10,16 +11,17 @@ import com.acteque.terminal.AppThemeManager;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.tooltip.Tooltip;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -43,21 +45,43 @@ class ChartTest {
         chart.layout();
 
         Region identifier = assertInstanceOf(Region.class, chart.lookup(".chart-identifier"));
-        HBox statusContent = assertInstanceOf(HBox.class, chart.lookup(".chart-status-content"));
-        Region statusLine = assertInstanceOf(Region.class, chart.lookup(".chart-status-line"));
+        FlowPane statusLine = assertInstanceOf(FlowPane.class, chart.lookup(".chart-status-line"));
+        HBox instrument = assertInstanceOf(HBox.class, statusLine.lookup(".chart-status-instrument"));
+        Tooltip symbolTooltip = assertInstanceOf(Tooltip.class, instrument.getChildren().get(1));
         var identifierFill = identifier.getBackground().getFills().getFirst();
         assertEquals(color, identifierFill.getFill());
         assertTrue(identifierFill.getRadii().isUniform());
         assertEquals(3.0, identifierFill.getRadii().getTopLeftHorizontalRadius());
         assertEquals(6.0, identifier.getWidth());
-        assertEquals(statusLine.getHeight() * 0.8, identifier.getBoundsInParent().getHeight(), 0.01);
-        assertEquals(Pos.CENTER_LEFT, statusContent.getAlignment());
-        assertEquals(6.0, statusContent.getSpacing());
-        assertTrue(identifier.getBoundsInParent().getMaxX() <= statusLine.getBoundsInParent().getMinX());
-        assertEquals(statusLine.getBoundsInParent().getCenterY(), identifier.getBoundsInParent().getCenterY(), 0.01);
+        assertEquals(instrument.getHeight() * 0.8, identifier.getBoundsInParent().getHeight(), 0.01);
+        assertSame(instrument, identifier.getParent());
+        assertTrue(identifier.getBoundsInParent().getMaxX() <= symbolTooltip.getBoundsInParent().getMinX());
+        assertEquals(instrument.getHeight() / 2.0, identifier.getBoundsInParent().getCenterY(), 0.01);
         Bounds identifierBounds = chart.sceneToLocal(identifier.localToScene(identifier.getBoundsInLocal()));
         assertEquals(12.0, identifierBounds.getMinX(), 0.01);
         assertTrue(identifier.isMouseTransparent());
+      }
+    });
+  }
+
+  @Test
+  void keepsWrappedStatusMetadataInsideTheChart() {
+    FxTestSupport.runAndWait(() -> {
+      PricePoint point = new PricePoint(LocalDate.of(2026, 8, 24), 104.00, 108.25, 103.50, 107.75, 2_500_000);
+      try (Chart chartController = new Chart(List.of(point), "ACME", ChartInterval.DAILY)) {
+        StackPane chart = chartController.getView();
+        new AppThemeManager(new Scene(chart, 420.0, 500.0), AppTheme.LIGHT);
+        chart.applyCss();
+        chart.layout();
+
+        FlowPane statusLine = assertInstanceOf(FlowPane.class, chart.lookup(".chart-status-line"));
+        HBox instrument = assertInstanceOf(HBox.class, statusLine.lookup(".chart-status-instrument"));
+        HBox metadata = assertInstanceOf(HBox.class, statusLine.lookup(".chart-status-metadata"));
+        Bounds metadataBounds = chart.sceneToLocal(metadata.localToScene(metadata.getBoundsInLocal()));
+
+        assertEquals(chart.getWidth() - 24.0, statusLine.getWidth(), 0.01);
+        assertTrue(metadata.getBoundsInParent().getMinY() >= instrument.getBoundsInParent().getMaxY());
+        assertTrue(metadataBounds.getMaxX() <= chart.getWidth() - 12.0 + 0.01);
       }
     });
   }
@@ -107,8 +131,7 @@ class ChartTest {
         chart.layout();
 
         try {
-          HBox statusLine = (HBox) chart.lookup(".chart-status-line");
-          Tooltip tooltip = (Tooltip) statusLine.getChildren().get(1);
+          Tooltip tooltip = intervalTooltip(chart);
           tooltip.show();
           assertTrue(tooltip.isShowing());
 
@@ -144,8 +167,7 @@ class ChartTest {
       chart.applyCss();
       chart.layout();
 
-      HBox statusLine = (HBox) chart.lookup(".chart-status-line");
-      Tooltip tooltip = (Tooltip) statusLine.getChildren().get(1);
+      Tooltip tooltip = intervalTooltip(chart);
       Button intervalButton = (Button) tooltip.getTrigger().getTarget();
       buttonReference.set(intervalButton);
       tooltipReference.set(tooltip);
@@ -195,6 +217,12 @@ class ChartTest {
   private static void click(Button button, Bounds screenBounds) {
     button.fireEvent(mouseEvent(MouseEvent.MOUSE_PRESSED, screenBounds, true));
     button.fireEvent(mouseEvent(MouseEvent.MOUSE_RELEASED, screenBounds, false));
+  }
+
+  private static Tooltip intervalTooltip(StackPane chart) {
+    FlowPane statusLine = (FlowPane) chart.lookup(".chart-status-line");
+    HBox instrument = (HBox) statusLine.lookup(".chart-status-instrument");
+    return (Tooltip) instrument.getChildren().get(2);
   }
 
   private static KeyEvent shortcutEvent(KeyCode keyCode) {

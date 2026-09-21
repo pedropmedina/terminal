@@ -1,6 +1,6 @@
 .chart-workspace-menu-overlay {
   -fx-alignment: top-center;
-  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 6px, 0.1, 0, 4px);
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 4px, 0, 0, 2px);
   -fx-padding: 12px 0 0 0;
 }
 

@@ -7,9 +7,13 @@ import com.acteque.terminal.marketlogos.LogoSession;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 
 /** Composes and exposes the chart status line's MVCI feature. */
 public final class ChartStatusLine {
@@ -46,6 +50,30 @@ public final class ChartStatusLine {
     LogoSession logoSource,
     Executor uiExecutor
   ) {
+    this(
+      instrumentName,
+      interval,
+      new SimpleObjectProperty<>(Color.TRANSPARENT),
+      new SimpleBooleanProperty(false),
+      tooltipsSuppressed,
+      instrumentSelectionAction,
+      intervalSelectionAction,
+      logoSource,
+      uiExecutor
+    );
+  }
+
+  public ChartStatusLine(
+    String instrumentName,
+    ChartInterval interval,
+    ObservableValue<Color> identifierColor,
+    ObservableBooleanValue identifierVisible,
+    ObservableBooleanValue tooltipsSuppressed,
+    Runnable instrumentSelectionAction,
+    Runnable intervalSelectionAction,
+    LogoSession logoSource,
+    Executor uiExecutor
+  ) {
     this.instrumentSelectionAction = Objects.requireNonNull(
       instrumentSelectionAction,
       "instrumentSelectionAction cannot be null"
@@ -59,6 +87,8 @@ public final class ChartStatusLine {
     interactor.initialize(instrumentName, interval);
     viewBuilder = new ChartStatusLineViewBuilder(
       model,
+      Objects.requireNonNull(identifierColor, "identifierColor cannot be null"),
+      Objects.requireNonNull(identifierVisible, "identifierVisible cannot be null"),
       Objects.requireNonNull(tooltipsSuppressed, "tooltipsSuppressed cannot be null"),
       this::selectInstrument,
       this::selectInterval

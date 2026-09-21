@@ -19,12 +19,14 @@ import com.acteque.terminal.ui.Button.Variant;
 import com.acteque.terminal.ui.tooltip.Tooltip;
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -52,7 +54,7 @@ class ChartStatusLineTest {
   void displaysAFixedSizeFallbackWithoutAttributionUntilTheLogoArrives() {
     FxTestSupport.runAndWait(() -> {
       ChartStatusLine feature = statusLine();
-      HBox statusLine = view(feature);
+      FlowPane statusLine = view(feature);
       StackPane root = new StackPane(statusLine);
       Scene scene = new Scene(root, 800, 500);
       AppThemeManager themes = new AppThemeManager(scene, AppTheme.LIGHT);
@@ -94,7 +96,7 @@ class ChartStatusLineTest {
         () -> {},
         () -> {}
       );
-      HBox statusLine = assertInstanceOf(HBox.class, builder.build());
+      FlowPane statusLine = assertInstanceOf(FlowPane.class, builder.build());
       WritableImage image = new WritableImage(64, 64);
       interactor.setInstrumentLogo(LOGO, image);
       interactor.setPricePoint(PRICE_POINT);
@@ -120,12 +122,15 @@ class ChartStatusLineTest {
   void displaysTheSelectedPricePointInAChartOverlay() {
     FxTestSupport.runAndWait(() -> {
       ChartStatusLine feature = statusLine();
-      HBox statusLine = view(feature);
+      FlowPane statusLine = view(feature);
       feature.setPricePoint(PRICE_POINT);
 
-      assertEquals(3, statusLine.getChildren().size());
+      assertEquals(2, statusLine.getChildren().size());
+      assertTrue(instrument(statusLine).getStyleClass().contains("chart-status-instrument"));
+      assertTrue(metadata(statusLine).getStyleClass().contains("chart-status-metadata"));
+      assertSame(identifier(statusLine), instrument(statusLine).getChildren().get(0));
       Tooltip symbolTooltip = symbolTooltip(statusLine);
-      assertSame(symbolTooltip, statusLine.getChildren().get(0));
+      assertSame(symbolTooltip, instrument(statusLine).getChildren().get(1));
       Button symbolButton = triggerTarget(symbolTooltip);
       assertEquals("ACME", symbolButton.getText());
       assertEquals(Variant.GHOST, symbolButton.getVariant());
@@ -143,7 +148,7 @@ class ChartStatusLineTest {
       assertSame(logoAttribution(statusLine), symbolTooltipContent.getChildren().get(2));
 
       Tooltip intervalTooltip = intervalTooltip(statusLine);
-      assertSame(intervalTooltip, statusLine.getChildren().get(1));
+      assertSame(intervalTooltip, instrument(statusLine).getChildren().get(2));
       Button intervalButton = triggerTarget(intervalTooltip);
       assertEquals("Daily", intervalButton.getText());
       assertEquals("Select interval, currently Daily", intervalButton.getAccessibleText());
@@ -163,6 +168,56 @@ class ChartStatusLineTest {
   }
 
   @Test
+  void wrapsTheMetadataAsAWholeBlockWhenWidthIsConstrained() {
+    FxTestSupport.runAndWait(() -> {
+      ChartStatusLine feature = statusLine();
+      FlowPane statusLine = view(feature);
+      feature.setPricePoint(PRICE_POINT);
+      StackPane host = new StackPane(statusLine);
+      Scene scene = new Scene(host, 800, 200);
+      new AppThemeManager(scene, AppTheme.LIGHT);
+      host.applyCss();
+
+      HBox instrument = instrument(statusLine);
+      HBox metadata = metadata(statusLine);
+      double wideWidth = instrument.prefWidth(-1) + statusLine.getHgap() + metadata.prefWidth(-1) + 2.0;
+      statusLine.resize(wideWidth, statusLine.prefHeight(wideWidth));
+      statusLine.layout();
+
+      assertEquals(instrument.getBoundsInParent().getCenterY(), metadata.getBoundsInParent().getCenterY(), 0.01);
+
+      double narrowWidth = Math.max(instrument.prefWidth(-1), metadata.prefWidth(-1));
+      statusLine.resize(narrowWidth, statusLine.prefHeight(narrowWidth));
+      statusLine.layout();
+
+      assertTrue(metadata.getBoundsInParent().getMinY() >= instrument.getBoundsInParent().getMaxY());
+      assertTrue(metadata.getBoundsInParent().getMaxX() <= statusLine.getWidth() + 0.01);
+      assertSame(ohlcv(statusLine), metadata.getChildren().getFirst());
+    });
+  }
+
+  @Test
+  void usesCompactHorizontalPaddingForStatusButtons() {
+    FxTestSupport.runAndWait(() -> {
+      FlowPane statusLine = view(statusLine());
+      StackPane root = new StackPane(statusLine);
+      Scene scene = new Scene(root, 800, 200);
+      new AppThemeManager(scene, AppTheme.LIGHT);
+      root.applyCss();
+
+      for (Button button : List.of(
+        triggerTarget(symbolTooltip(statusLine)),
+        triggerTarget(intervalTooltip(statusLine))
+      )) {
+        assertEquals(0.0, button.getPadding().getTop());
+        assertEquals(2.0, button.getPadding().getRight());
+        assertEquals(0.0, button.getPadding().getBottom());
+        assertEquals(2.0, button.getPadding().getLeft());
+      }
+    });
+  }
+
+  @Test
   void handlesInstrumentAndIntervalClicks() {
     FxTestSupport.runAndWait(() -> {
       AtomicBoolean instrumentClicked = new AtomicBoolean();
@@ -174,7 +229,7 @@ class ChartStatusLineTest {
         () -> instrumentClicked.set(true),
         () -> intervalClicked.set(true)
       );
-      HBox statusLine = view(feature);
+      FlowPane statusLine = view(feature);
 
       triggerTarget(symbolTooltip(statusLine)).fire();
       triggerTarget(intervalTooltip(statusLine)).fire();
@@ -188,7 +243,7 @@ class ChartStatusLineTest {
   void updatesBoundIntervalAndInstrumentNodes() {
     FxTestSupport.runAndWait(() -> {
       ChartStatusLine feature = statusLine();
-      HBox statusLine = view(feature);
+      FlowPane statusLine = view(feature);
       feature.setPricePoint(PRICE_POINT);
 
       feature.setInterval(ChartInterval.FIVE_MINUTES);
@@ -209,30 +264,42 @@ class ChartStatusLineTest {
     return new ChartStatusLine("ACME", ChartInterval.DAILY, new SimpleBooleanProperty(false), () -> {}, () -> {});
   }
 
-  private static HBox view(ChartStatusLine feature) {
+  private static FlowPane view(ChartStatusLine feature) {
     Region firstView = feature.getView();
     assertSame(firstView, feature.getView());
-    return assertInstanceOf(HBox.class, firstView);
+    return assertInstanceOf(FlowPane.class, firstView);
   }
 
-  private static Tooltip symbolTooltip(HBox statusLine) {
-    return assertInstanceOf(Tooltip.class, statusLine.getChildren().get(0));
+  private static HBox instrument(FlowPane statusLine) {
+    return assertInstanceOf(HBox.class, statusLine.getChildren().get(0));
   }
 
-  private static Tooltip intervalTooltip(HBox statusLine) {
-    return assertInstanceOf(Tooltip.class, statusLine.getChildren().get(1));
+  private static HBox metadata(FlowPane statusLine) {
+    return assertInstanceOf(HBox.class, statusLine.getChildren().get(1));
   }
 
-  private static VBox symbolTooltipContent(HBox statusLine) {
+  private static Region identifier(FlowPane statusLine) {
+    return assertInstanceOf(Region.class, instrument(statusLine).getChildren().get(0));
+  }
+
+  private static Tooltip symbolTooltip(FlowPane statusLine) {
+    return assertInstanceOf(Tooltip.class, instrument(statusLine).getChildren().get(1));
+  }
+
+  private static Tooltip intervalTooltip(FlowPane statusLine) {
+    return assertInstanceOf(Tooltip.class, instrument(statusLine).getChildren().get(2));
+  }
+
+  private static VBox symbolTooltipContent(FlowPane statusLine) {
     return assertInstanceOf(VBox.class, symbolTooltip(statusLine).getContentNodes().getFirst());
   }
 
-  private static Label logoAttribution(HBox statusLine) {
+  private static Label logoAttribution(FlowPane statusLine) {
     return assertInstanceOf(Label.class, symbolTooltipContent(statusLine).getChildren().get(2));
   }
 
-  private static Label ohlcv(HBox statusLine) {
-    return assertInstanceOf(Label.class, statusLine.getChildren().get(2));
+  private static Label ohlcv(FlowPane statusLine) {
+    return assertInstanceOf(Label.class, metadata(statusLine).getChildren().getFirst());
   }
 
   private static Button triggerTarget(Tooltip tooltip) {

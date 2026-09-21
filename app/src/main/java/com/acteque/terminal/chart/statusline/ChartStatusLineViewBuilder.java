@@ -13,23 +13,37 @@ import com.acteque.terminal.ui.tooltip.TooltipTrigger;
 import java.util.Locale;
 import java.util.Objects;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.util.Builder;
 
 /** Builds the reactive JavaFX view for the chart status line. */
 final class ChartStatusLineViewBuilder implements Builder<Region>, ReloadTarget {
 
+  private static final CornerRadii IDENTIFIER_RADII = new CornerRadii(3.0);
+
   private final ChartStatusLineModel model;
   private final Runnable instrumentClickHandler;
   private final Runnable intervalClickHandler;
-  private final HBox root = new HBox();
+  private final FlowPane root = new FlowPane();
+  private final Region identifier = new Region();
+  private final HBox instrument = new HBox();
+  private final HBox metadata = new HBox();
   private final Label logoAttribution = new Label();
   private final Tooltip symbolTooltip;
   private final Tooltip intervalTooltip;
@@ -40,17 +54,52 @@ final class ChartStatusLineViewBuilder implements Builder<Region>, ReloadTarget 
     Runnable instrumentClickHandler,
     Runnable intervalClickHandler
   ) {
+    this(
+      model,
+      new SimpleObjectProperty<>(Color.TRANSPARENT),
+      new SimpleBooleanProperty(false),
+      tooltipsSuppressed,
+      instrumentClickHandler,
+      intervalClickHandler
+    );
+  }
+
+  ChartStatusLineViewBuilder(
+    ChartStatusLineModel model,
+    ObservableValue<Color> identifierColor,
+    ObservableBooleanValue identifierVisible,
+    ObservableBooleanValue tooltipsSuppressed,
+    Runnable instrumentClickHandler,
+    Runnable intervalClickHandler
+  ) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
     this.instrumentClickHandler = Objects.requireNonNull(
       instrumentClickHandler,
       "instrumentClickHandler cannot be null"
     );
     this.intervalClickHandler = Objects.requireNonNull(intervalClickHandler, "intervalClickHandler cannot be null");
+    Objects.requireNonNull(identifierColor, "identifierColor cannot be null");
+    Objects.requireNonNull(identifierVisible, "identifierVisible cannot be null");
     Objects.requireNonNull(tooltipsSuppressed, "tooltipsSuppressed cannot be null");
 
     root.getStyleClass().add("chart-status-line");
-    root.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
     root.setPickOnBounds(false);
+    instrument.getStyleClass().add("chart-status-instrument");
+    metadata.getStyleClass().add("chart-status-metadata");
+    root.getChildren().setAll(instrument, metadata);
+
+    identifier.getStyleClass().add("chart-identifier");
+    identifier
+      .backgroundProperty()
+      .bind(
+        Bindings.createObjectBinding(
+          () -> new Background(new BackgroundFill(identifierColor.getValue(), IDENTIFIER_RADII, Insets.EMPTY)),
+          identifierColor
+        )
+      );
+    identifier.visibleProperty().bind(identifierVisible);
+    identifier.managedProperty().bind(identifierVisible);
+    identifier.setMouseTransparent(true);
 
     logoAttribution.getStyleClass().add("chart-symbol-tooltip-attribution");
     logoAttribution
@@ -88,7 +137,7 @@ final class ChartStatusLineViewBuilder implements Builder<Region>, ReloadTarget 
 
   @Override
   public void refreshView() {
-    Button symbolSection = new Button("", Variant.GHOST, Size.DEFAULT);
+    Button symbolSection = new Button(null, Variant.GHOST, Size.DEFAULT);
     symbolSection.getStyleClass().add("chart-symbol-button");
     symbolSection.setAccessibleText("Select symbol or instrument");
     symbolSection.textProperty().bind(model.instrumentNameProperty());
@@ -103,7 +152,7 @@ final class ChartStatusLineViewBuilder implements Builder<Region>, ReloadTarget 
     });
     symbolTooltip.getTrigger().setTarget(symbolSection);
 
-    Button intervalSection = new Button("", Variant.GHOST, Size.DEFAULT);
+    Button intervalSection = new Button(null, Variant.GHOST, Size.DEFAULT);
     intervalSection.getStyleClass().add("chart-interval-button");
     intervalSection
       .textProperty()
@@ -132,7 +181,8 @@ final class ChartStatusLineViewBuilder implements Builder<Region>, ReloadTarget 
       .textProperty()
       .bind(Bindings.createStringBinding(() -> ohlcvText(model.getPricePoint()), model.pricePointProperty()));
 
-    root.getChildren().setAll(symbolTooltip, intervalTooltip, ohlcv);
+    instrument.getChildren().setAll(identifier, symbolTooltip, intervalTooltip);
+    metadata.getChildren().setAll(ohlcv);
   }
 
   private Node createLogoSlot() {

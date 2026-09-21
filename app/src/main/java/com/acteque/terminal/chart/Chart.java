@@ -107,6 +107,8 @@ public final class Chart implements AutoCloseable {
     statusLine = new ChartStatusLine(
       symbol,
       interval,
+      model.identifierColorProperty(),
+      model.identifierVisibleProperty(),
       model.modalOpenProperty(),
       interactor::openInstrumentSearch,
       interactor::openIntervalSelection,

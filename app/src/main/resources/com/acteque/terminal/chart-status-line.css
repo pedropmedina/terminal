@@ -1,0 +1,68 @@
+.chart-status-line {
+  -fx-alignment: center-left;
+  -fx-hgap: 2px;
+  -fx-vgap: 2px;
+  -fx-row-valignment: center;
+}
+
+.chart-status-instrument,
+.chart-status-metadata {
+  -fx-alignment: center-left;
+  -fx-spacing: 2px;
+}
+
+.chart-identifier {
+  -fx-min-width: 6px;
+  -fx-pref-width: 6px;
+  -fx-max-width: 6px;
+  -fx-max-height: infinity;
+  -fx-scale-y: 0.8;
+}
+
+.chart-instrument-logo {
+  -fx-min-width: 20px;
+  -fx-pref-width: 20px;
+  -fx-max-width: 20px;
+  -fx-min-height: 20px;
+  -fx-pref-height: 20px;
+  -fx-max-height: 20px;
+  -fx-background-color: -app-secondary;
+  -fx-background-radius: 4px;
+}
+
+.chart-instrument-logo-fallback {
+  -fx-text-fill: -app-secondary-foreground;
+  -fx-font-size: 12px;
+  -fx-font-weight: bold;
+}
+
+.chart-symbol-tooltip-content {
+  -fx-spacing: 2px;
+}
+
+.chart-symbol-tooltip-attribution {
+  -fx-font-size: 12pt;
+}
+
+.chart-tooltip-shortcut {
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.chart-status-label {
+  -fx-text-fill: -app-foreground;
+  -fx-font-size: 14px;
+}
+
+.chart-symbol-button {
+  -fx-font-size: 14px;
+  -fx-graphic-text-gap: 6px;
+}
+
+.chart-interval-button {
+  -fx-font-size: 14px;
+}
+
+.chart-status-line .core-button.chart-symbol-button,
+.chart-status-line .core-button.chart-interval-button {
+  -fx-padding: 0 2px;
+}

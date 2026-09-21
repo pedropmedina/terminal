@@ -91,11 +91,11 @@ class ChartWorkspaceTest {
         assertNull(left.getView().lookup(".chart-workspace-menu"));
         StackPane menuOverlay = assertInstanceOf(StackPane.class, view.lookup(".chart-workspace-menu-overlay"));
         DropShadow menuShadow = assertInstanceOf(DropShadow.class, menuOverlay.getEffect());
-        assertEquals(Color.rgb(0, 0, 0, 0.1), menuShadow.getColor());
-        assertEquals(6.0, menuShadow.getRadius());
-        assertEquals(0.1, menuShadow.getSpread());
+        assertEquals(Color.rgb(0, 0, 0, 0.06), menuShadow.getColor());
+        assertEquals(4.0, menuShadow.getRadius());
+        assertEquals(0.0, menuShadow.getSpread());
         assertEquals(0.0, menuShadow.getOffsetX());
-        assertEquals(4.0, menuShadow.getOffsetY());
+        assertEquals(2.0, menuShadow.getOffsetY());
         HBox menuItems = assertInstanceOf(HBox.class, view.lookup(".chart-workspace-menu-items"));
         Region menuIdentifier = assertInstanceOf(Region.class, view.lookup(".chart-workspace-menu-identifier"));
         assertEquals(5, menuItems.getChildren().size());
