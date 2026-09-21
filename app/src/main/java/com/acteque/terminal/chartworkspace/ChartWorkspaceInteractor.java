@@ -5,6 +5,7 @@ import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartSplitDirection;
 import com.acteque.terminal.chart.ChartType;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,6 +106,32 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     if (contains(model.getRoot(), requested)) {
       model.setActiveChart(requested);
     }
+  }
+
+  void navigateActive(ChartWorkspaceNavigationDirection direction) {
+    requireOpen();
+    Objects.requireNonNull(direction, "direction cannot be null");
+
+    Chart activeChart = requireActiveChart();
+    List<ChartBounds> chartBounds = new ArrayList<>();
+    collectChartBounds(model.getRoot(), 0.0, 0.0, 1.0, 1.0, chartBounds);
+    ChartBounds activeBounds = chartBounds
+      .stream()
+      .filter(bounds -> bounds.chart() == activeChart)
+      .findFirst()
+      .orElseThrow(() -> new IllegalStateException("active chart must belong to the workspace"));
+
+    chartBounds
+      .stream()
+      .filter(candidate -> candidate.chart() != activeChart)
+      .filter(candidate -> isInDirection(activeBounds, candidate, direction))
+      .min(
+        Comparator.comparingDouble((ChartBounds candidate) -> primaryDistance(activeBounds, candidate, direction))
+          .thenComparingDouble(candidate -> perpendicularDistance(activeBounds, candidate, direction))
+          .thenComparingDouble(ChartBounds::minY)
+          .thenComparingDouble(ChartBounds::minX)
+      )
+      .ifPresent(candidate -> model.setActiveChart(candidate.chart()));
   }
 
   void showActiveInstrumentSearch() {
@@ -292,6 +319,69 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     return charts;
   }
 
+  private static void collectChartBounds(
+    ChartWorkspaceItem item,
+    double minX,
+    double minY,
+    double width,
+    double height,
+    List<ChartBounds> bounds
+  ) {
+    if (item instanceof ChartWorkspaceLeaf leaf) {
+      bounds.add(new ChartBounds(leaf.chart(), minX, minY, minX + width, minY + height));
+      return;
+    }
+
+    ChartWorkspaceSplit split = (ChartWorkspaceSplit) item;
+    double dividerPosition = split.dividerPosition();
+    if (split.orientation() == Orientation.HORIZONTAL) {
+      double firstWidth = width * dividerPosition;
+      collectChartBounds(split.first(), minX, minY, firstWidth, height, bounds);
+      collectChartBounds(split.second(), minX + firstWidth, minY, width - firstWidth, height, bounds);
+    } else {
+      double firstHeight = height * dividerPosition;
+      collectChartBounds(split.first(), minX, minY, width, firstHeight, bounds);
+      collectChartBounds(split.second(), minX, minY + firstHeight, width, height - firstHeight, bounds);
+    }
+  }
+
+  private static boolean isInDirection(
+    ChartBounds active,
+    ChartBounds candidate,
+    ChartWorkspaceNavigationDirection direction
+  ) {
+    return switch (direction) {
+      case LEFT -> candidate.maxX() <= active.minX();
+      case RIGHT -> candidate.minX() >= active.maxX();
+      case ABOVE -> candidate.maxY() <= active.minY();
+      case BELOW -> candidate.minY() >= active.maxY();
+    };
+  }
+
+  private static double primaryDistance(
+    ChartBounds active,
+    ChartBounds candidate,
+    ChartWorkspaceNavigationDirection direction
+  ) {
+    return switch (direction) {
+      case LEFT -> active.minX() - candidate.maxX();
+      case RIGHT -> candidate.minX() - active.maxX();
+      case ABOVE -> active.minY() - candidate.maxY();
+      case BELOW -> candidate.minY() - active.maxY();
+    };
+  }
+
+  private static double perpendicularDistance(
+    ChartBounds active,
+    ChartBounds candidate,
+    ChartWorkspaceNavigationDirection direction
+  ) {
+    return switch (direction) {
+      case LEFT, RIGHT -> Math.abs(active.centerY() - candidate.centerY());
+      case ABOVE, BELOW -> Math.abs(active.centerX() - candidate.centerX());
+    };
+  }
+
   private static void collectCharts(ChartWorkspaceItem item, List<Chart> charts) {
     if (item == null) {
       return;
@@ -306,4 +396,14 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
   }
 
   private record Removal(ChartWorkspaceItem item, boolean removed, Chart fallback) {}
+
+  private record ChartBounds(Chart chart, double minX, double minY, double maxX, double maxY) {
+    private double centerX() {
+      return (minX + maxX) / 2.0;
+    }
+
+    private double centerY() {
+      return (minY + maxY) / 2.0;
+    }
+  }
 }

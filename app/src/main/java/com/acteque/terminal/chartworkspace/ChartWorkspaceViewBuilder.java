@@ -29,16 +29,26 @@ import javafx.util.Builder;
 final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
 
   private static final PseudoClass ACTIVE_PSEUDO_CLASS = PseudoClass.getPseudoClass("workspace-active");
+  private static final List<NavigationShortcut> NAVIGATION_SHORTCUTS = List.of(
+    new NavigationShortcut(control(KeyCode.L), ChartWorkspaceNavigationDirection.RIGHT),
+    new NavigationShortcut(control(KeyCode.J), ChartWorkspaceNavigationDirection.BELOW),
+    new NavigationShortcut(control(KeyCode.K), ChartWorkspaceNavigationDirection.ABOVE),
+    new NavigationShortcut(control(KeyCode.H), ChartWorkspaceNavigationDirection.LEFT)
+  );
   private static final List<SplitShortcut> SPLIT_SHORTCUTS = List.of(
     new SplitShortcut(shortcut(KeyCode.L), ChartSplitDirection.RIGHT),
     new SplitShortcut(shortcut(KeyCode.J), ChartSplitDirection.BOTTOM),
     new SplitShortcut(shortcut(KeyCode.K), ChartSplitDirection.TOP),
     new SplitShortcut(shortcut(KeyCode.H), ChartSplitDirection.LEFT)
   );
+  private static final KeyCombination CLOSE_SHORTCUT = new KeyCodeCombination(KeyCode.W, KeyCombination.META_DOWN);
 
   private final ChartWorkspaceModel model;
   private final Consumer<Chart> chartActivatedHandler;
+  private final Consumer<ChartWorkspaceNavigationDirection> navigationRequestedHandler;
   private final Consumer<ChartSplitDirection> splitRequestedHandler;
+  private final Runnable closeRequestedHandler;
+  private final boolean macOs;
   private final Map<Chart, ChartContainer> chartContainers = new IdentityHashMap<>();
   private final StackPane root = new StackPane();
   private final StackPane chartLayer = new StackPane();
@@ -48,15 +58,49 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
   ChartWorkspaceViewBuilder(
     ChartWorkspaceModel model,
     Consumer<Chart> chartActivatedHandler,
+    Consumer<ChartWorkspaceNavigationDirection> navigationRequestedHandler,
     Consumer<ChartSplitDirection> splitRequestedHandler,
+    Runnable closeRequestedHandler,
     Node menu,
     Drawer inspectorDrawer,
     Dialog intervalSelectionDialog,
     Dialog instrumentSearchDialog
   ) {
+    this(
+      model,
+      chartActivatedHandler,
+      navigationRequestedHandler,
+      splitRequestedHandler,
+      closeRequestedHandler,
+      menu,
+      inspectorDrawer,
+      intervalSelectionDialog,
+      instrumentSearchDialog,
+      isMacOs()
+    );
+  }
+
+  ChartWorkspaceViewBuilder(
+    ChartWorkspaceModel model,
+    Consumer<Chart> chartActivatedHandler,
+    Consumer<ChartWorkspaceNavigationDirection> navigationRequestedHandler,
+    Consumer<ChartSplitDirection> splitRequestedHandler,
+    Runnable closeRequestedHandler,
+    Node menu,
+    Drawer inspectorDrawer,
+    Dialog intervalSelectionDialog,
+    Dialog instrumentSearchDialog,
+    boolean macOs
+  ) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
     this.chartActivatedHandler = Objects.requireNonNull(chartActivatedHandler, "chartActivatedHandler cannot be null");
+    this.navigationRequestedHandler = Objects.requireNonNull(
+      navigationRequestedHandler,
+      "navigationRequestedHandler cannot be null"
+    );
     this.splitRequestedHandler = Objects.requireNonNull(splitRequestedHandler, "splitRequestedHandler cannot be null");
+    this.closeRequestedHandler = Objects.requireNonNull(closeRequestedHandler, "closeRequestedHandler cannot be null");
+    this.macOs = macOs;
     this.inspectorDrawer = Objects.requireNonNull(inspectorDrawer, "inspectorDrawer cannot be null");
 
     menuOverlay = new StackPane(Objects.requireNonNull(menu, "menu cannot be null"));
@@ -134,11 +178,39 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
     if (model.getActiveChart().modalOpenProperty().get()) {
       return;
     }
+    ChartWorkspaceNavigationDirection navigationDirection = navigationDirection(event, macOs);
+    if (navigationDirection != null) {
+      navigationRequestedHandler.accept(navigationDirection);
+      event.consume();
+      return;
+    }
+    if (isCloseShortcut(event, macOs)) {
+      closeRequestedHandler.run();
+      event.consume();
+      return;
+    }
     ChartSplitDirection direction = splitDirection(event);
     if (direction != null) {
       splitRequestedHandler.accept(direction);
       event.consume();
     }
+  }
+
+  static ChartWorkspaceNavigationDirection navigationDirection(KeyEvent event, boolean macOs) {
+    Objects.requireNonNull(event, "event cannot be null");
+    if (!macOs) {
+      return null;
+    }
+    return NAVIGATION_SHORTCUTS.stream()
+      .filter(shortcut -> shortcut.keyCombination().match(event))
+      .map(NavigationShortcut::direction)
+      .findFirst()
+      .orElse(null);
+  }
+
+  static boolean isCloseShortcut(KeyEvent event, boolean macOs) {
+    Objects.requireNonNull(event, "event cannot be null");
+    return macOs && CLOSE_SHORTCUT.match(event);
   }
 
   static ChartSplitDirection splitDirection(KeyEvent event) {
@@ -152,6 +224,14 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
 
   private static KeyCombination shortcut(KeyCode keyCode) {
     return new KeyCodeCombination(keyCode, KeyCombination.SHORTCUT_DOWN);
+  }
+
+  private static KeyCombination control(KeyCode keyCode) {
+    return new KeyCodeCombination(keyCode, KeyCombination.CONTROL_DOWN);
+  }
+
+  private static boolean isMacOs() {
+    return System.getProperty("os.name", "").startsWith("Mac");
   }
 
   private static void detach(Node node) {
@@ -188,6 +268,8 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
   }
 
   private record SplitShortcut(KeyCombination keyCombination, ChartSplitDirection direction) {}
+
+  private record NavigationShortcut(KeyCombination keyCombination, ChartWorkspaceNavigationDirection direction) {}
 
   private static final class ChartContainer extends StackPane {
 

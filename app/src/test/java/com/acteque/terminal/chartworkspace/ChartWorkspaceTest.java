@@ -243,6 +243,140 @@ class ChartWorkspaceTest {
   }
 
   @Test
+  void mapsMacOsControlShortcutsToNavigationDirections() {
+    FxTestSupport.runAndWait(() -> {
+      assertEquals(
+        ChartWorkspaceNavigationDirection.RIGHT,
+        ChartWorkspaceViewBuilder.navigationDirection(controlEvent(KeyCode.L), true)
+      );
+      assertEquals(
+        ChartWorkspaceNavigationDirection.BELOW,
+        ChartWorkspaceViewBuilder.navigationDirection(controlEvent(KeyCode.J), true)
+      );
+      assertEquals(
+        ChartWorkspaceNavigationDirection.ABOVE,
+        ChartWorkspaceViewBuilder.navigationDirection(controlEvent(KeyCode.K), true)
+      );
+      assertEquals(
+        ChartWorkspaceNavigationDirection.LEFT,
+        ChartWorkspaceViewBuilder.navigationDirection(controlEvent(KeyCode.H), true)
+      );
+      assertNull(ChartWorkspaceViewBuilder.navigationDirection(plainKeyEvent(KeyCode.L), true));
+      assertNull(ChartWorkspaceViewBuilder.navigationDirection(shiftControlEvent(KeyCode.L), true));
+      assertNull(ChartWorkspaceViewBuilder.navigationDirection(controlEvent(KeyCode.L), false));
+    });
+  }
+
+  @Test
+  void mapsCommandWToTheMacOsCloseShortcut() {
+    FxTestSupport.runAndWait(() -> {
+      assertTrue(ChartWorkspaceViewBuilder.isCloseShortcut(metaEvent(KeyCode.W), true));
+      assertFalse(ChartWorkspaceViewBuilder.isCloseShortcut(controlEvent(KeyCode.W), true));
+      assertFalse(ChartWorkspaceViewBuilder.isCloseShortcut(metaEvent(KeyCode.W), false));
+    });
+  }
+
+  @Test
+  void navigatesToTheNearestPaneWithoutWrapping() {
+    FxTestSupport.runAndWait(() -> {
+      Fixture fixture = new Fixture();
+      Chart left = fixture.initialize();
+      fixture.interactor.split(left, ChartSplitDirection.RIGHT);
+      Chart topRight = fixture.model.getActiveChart();
+      fixture.interactor.split(topRight, ChartSplitDirection.BOTTOM);
+      Chart bottomRight = fixture.model.getActiveChart();
+
+      fixture.interactor.navigateActive(ChartWorkspaceNavigationDirection.ABOVE);
+      assertSame(topRight, fixture.model.getActiveChart());
+
+      fixture.interactor.navigateActive(ChartWorkspaceNavigationDirection.LEFT);
+      assertSame(left, fixture.model.getActiveChart());
+
+      fixture.interactor.navigateActive(ChartWorkspaceNavigationDirection.RIGHT);
+      assertSame(topRight, fixture.model.getActiveChart());
+
+      fixture.interactor.navigateActive(ChartWorkspaceNavigationDirection.BELOW);
+      assertSame(bottomRight, fixture.model.getActiveChart());
+
+      fixture.interactor.navigateActive(ChartWorkspaceNavigationDirection.RIGHT);
+      assertSame(bottomRight, fixture.model.getActiveChart());
+      fixture.interactor.close();
+    });
+  }
+
+  @Test
+  void handlesMacOsNavigationAndCloseShortcutsWithoutPropagatingThem() {
+    FxTestSupport.runAndWait(() -> {
+      Fixture fixture = new Fixture();
+      Chart left = fixture.initialize();
+      fixture.interactor.split(left, ChartSplitDirection.RIGHT);
+      Chart right = fixture.model.getActiveChart();
+      ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
+        fixture.model,
+        fixture.interactor::activate,
+        fixture.interactor::navigateActive,
+        fixture.interactor::splitActive,
+        fixture.interactor::removeActive,
+        new Region(),
+        new Drawer(),
+        new Dialog(),
+        new Dialog(),
+        true
+      );
+      AtomicInteger propagatedEvents = new AtomicInteger();
+      viewBuilder.build().addEventHandler(KeyEvent.KEY_PRESSED, ignored -> propagatedEvents.incrementAndGet());
+
+      viewBuilder.build().fireEvent(controlEvent(KeyCode.H));
+      assertSame(left, fixture.model.getActiveChart());
+      assertEquals(0, propagatedEvents.get());
+
+      viewBuilder.build().fireEvent(metaEvent(KeyCode.W));
+      assertSame(right, assertInstanceOf(ChartWorkspaceLeaf.class, fixture.model.getRoot()).chart());
+      assertEquals(1, fixture.resources.getFirst().marketData.closes);
+      assertEquals(0, propagatedEvents.get());
+
+      viewBuilder.build().fireEvent(metaEvent(KeyCode.W));
+      assertSame(right, assertInstanceOf(ChartWorkspaceLeaf.class, fixture.model.getRoot()).chart());
+      assertEquals(0, fixture.resources.get(1).marketData.closes);
+      assertEquals(0, propagatedEvents.get());
+      fixture.interactor.close();
+    });
+  }
+
+  @Test
+  void ignoresNavigationAndCloseShortcutsWhileAModalIsOpen() {
+    FxTestSupport.runAndWait(() -> {
+      Fixture fixture = new Fixture();
+      Chart left = fixture.initialize();
+      fixture.interactor.split(left, ChartSplitDirection.RIGHT);
+      Chart right = fixture.model.getActiveChart();
+      ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
+        fixture.model,
+        fixture.interactor::activate,
+        fixture.interactor::navigateActive,
+        fixture.interactor::splitActive,
+        fixture.interactor::removeActive,
+        new Region(),
+        new Drawer(),
+        new Dialog(),
+        new Dialog(),
+        true
+      );
+      right.showInstrumentSearch();
+      AtomicInteger propagatedEvents = new AtomicInteger();
+      viewBuilder.build().addEventHandler(KeyEvent.KEY_PRESSED, ignored -> propagatedEvents.incrementAndGet());
+
+      viewBuilder.build().fireEvent(controlEvent(KeyCode.H));
+      viewBuilder.build().fireEvent(metaEvent(KeyCode.W));
+
+      assertSame(right, fixture.model.getActiveChart());
+      assertEquals(2, fixture.charts.size());
+      assertEquals(2, propagatedEvents.get());
+      fixture.interactor.close();
+    });
+  }
+
+  @Test
   void splitsTheActiveChartFromAPlatformShortcut() {
     FxTestSupport.runAndWait(() -> {
       Fixture fixture = new Fixture();
@@ -250,7 +384,9 @@ class ChartWorkspaceTest {
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
         fixture.interactor::activate,
+        fixture.interactor::navigateActive,
         fixture.interactor::splitActive,
+        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
@@ -279,7 +415,9 @@ class ChartWorkspaceTest {
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
         fixture.interactor::activate,
+        fixture.interactor::navigateActive,
         fixture.interactor::splitActive,
+        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
@@ -307,7 +445,9 @@ class ChartWorkspaceTest {
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
         fixture.interactor::activate,
+        fixture.interactor::navigateActive,
         fixture.interactor::splitActive,
+        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
@@ -333,7 +473,9 @@ class ChartWorkspaceTest {
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
         fixture.interactor::activate,
+        fixture.interactor::navigateActive,
         fixture.interactor::splitActive,
+        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
@@ -437,7 +579,9 @@ class ChartWorkspaceTest {
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
         fixture.interactor::activate,
+        fixture.interactor::navigateActive,
         fixture.interactor::splitActive,
+        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
@@ -666,6 +810,18 @@ class ChartWorkspaceTest {
   private static KeyEvent shortcutEvent(KeyCode keyCode) {
     boolean macOs = System.getProperty("os.name", "").startsWith("Mac");
     return new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode, false, !macOs, false, macOs);
+  }
+
+  private static KeyEvent controlEvent(KeyCode keyCode) {
+    return new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode, false, true, false, false);
+  }
+
+  private static KeyEvent shiftControlEvent(KeyCode keyCode) {
+    return new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode, true, true, false, false);
+  }
+
+  private static KeyEvent metaEvent(KeyCode keyCode) {
+    return new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode, false, false, false, true);
   }
 
   private static KeyEvent plainKeyEvent(KeyCode keyCode) {
