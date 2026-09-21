@@ -46,7 +46,8 @@ class SeparatorTest {
 
       assertEquals(240.0, separator.getWidth());
       assertEquals(1.0, separator.getHeight());
-      assertEquals(Color.web("#e5e5e5"), line(separator).getBackground().getFills().getFirst().getFill());
+      assertEquals(Color.web("#e5e5e5"), separator.getBackground().getFills().getFirst().getFill());
+      assertEquals(0.0, line(separator).getHeight());
     });
   }
 
@@ -63,8 +64,24 @@ class SeparatorTest {
       assertEquals(80.0, separator.getHeight());
       assertEquals(
         Color.web("rgba(255, 255, 255, 0.1)"),
-        line(separator).getBackground().getFills().getFirst().getFill()
+        separator.getBackground().getFills().getFirst().getFill()
       );
+      assertEquals(0.0, line(separator).getWidth());
+    });
+  }
+
+  @Test
+  void allowsStylesToOverrideTheDefaultThickness() {
+    FxTestSupport.runAndWait(() -> {
+      Separator separator = new Separator(Orientation.VERTICAL);
+      separator.setStyle("-fx-min-width: 3px; -fx-pref-width: 3px; -fx-max-width: 3px;");
+      StackPane root = themedRoot(separator, AppTheme.LIGHT, 240.0, 80.0);
+
+      root.applyCss();
+      root.layout();
+
+      assertEquals(3.0, separator.getWidth());
+      assertEquals(Color.web("#e5e5e5"), separator.getBackground().getFills().getFirst().getFill());
     });
   }
 

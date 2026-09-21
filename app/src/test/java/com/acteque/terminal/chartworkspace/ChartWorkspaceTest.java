@@ -25,6 +25,7 @@ import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.Input;
 import com.acteque.terminal.ui.Select;
+import com.acteque.terminal.ui.Separator;
 import com.acteque.terminal.ui.dialog.Dialog;
 import com.acteque.terminal.ui.drawer.Drawer;
 import com.acteque.terminal.ui.popover.PopoverTrigger;
@@ -89,10 +90,12 @@ class ChartWorkspaceTest {
         assertNull(left.getView().lookup(".chart-workspace-menu"));
         HBox menuItems = assertInstanceOf(HBox.class, view.lookup(".chart-workspace-menu-items"));
         Region menuIdentifier = assertInstanceOf(Region.class, view.lookup(".chart-workspace-menu-identifier"));
-        assertEquals(4, menuItems.getChildren().size());
+        assertEquals(5, menuItems.getChildren().size());
         assertFalse(menuIdentifier.isVisible());
 
-        PopoverTrigger split = assertInstanceOf(PopoverTrigger.class, menuItems.getChildren().get(3));
+        Separator separator = assertInstanceOf(Separator.class, menuItems.getChildren().get(3));
+        assertEquals(Orientation.VERTICAL, separator.getOrientation());
+        PopoverTrigger split = assertInstanceOf(PopoverTrigger.class, menuItems.getChildren().get(4));
         split
           .getPopover()
           .getContent()
@@ -110,7 +113,7 @@ class ChartWorkspaceTest {
         layout(view);
         assertTrue(isActive(right));
         assertFalse(isActive(left));
-        assertEquals(5, menuItems.getChildren().size());
+        assertEquals(6, menuItems.getChildren().size());
         assertEquals("AAPL", assertInstanceOf(Button.class, menuItems.getChildren().getFirst()).getText());
         assertTrue(menuIdentifier.isVisible());
         assertEquals(4.0, menuIdentifier.getWidth());
@@ -186,7 +189,7 @@ class ChartWorkspaceTest {
         assertInstanceOf(Button.class, menuItems.getChildren().getLast()).fire();
         assertEquals(1, resources.get(1).marketData.closes);
         assertEquals(1, resources.get(1).logos.closes);
-        assertEquals(4, menuItems.getChildren().size());
+        assertEquals(5, menuItems.getChildren().size());
         assertFalse(menuIdentifier.isVisible());
       } finally {
         workspace.close();

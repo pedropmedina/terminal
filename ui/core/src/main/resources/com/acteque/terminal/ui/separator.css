@@ -1,4 +1,6 @@
 .core-separator {
+  -fx-background-color: -app-border;
+  -fx-background-insets: 0;
   -fx-padding: 0;
 }
 
@@ -15,7 +17,10 @@
 }
 
 .core-separator > .line {
-  -fx-background-color: -app-border;
+  -fx-background-color: transparent;
   -fx-background-insets: 0;
   -fx-border-color: transparent;
+  -fx-border-insets: 0;
+  -fx-border-width: 0;
+  -fx-padding: 0;
 }

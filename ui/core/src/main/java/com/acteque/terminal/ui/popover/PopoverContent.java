@@ -29,7 +29,16 @@ public final class PopoverContent extends VBox {
     INLINE_END,
   }
 
+  enum Phase {
+    OPENING,
+    OPEN,
+    CLOSING,
+    CLOSED,
+  }
+
+  private static final PseudoClass OPENING = PseudoClass.getPseudoClass("opening");
   private static final PseudoClass OPEN = PseudoClass.getPseudoClass("open");
+  private static final PseudoClass CLOSING = PseudoClass.getPseudoClass("closing");
   private static final PseudoClass CLOSED = PseudoClass.getPseudoClass("closed");
   private static final String SIDE_STYLE_PREFIX = "popover-side-";
 
@@ -46,7 +55,7 @@ public final class PopoverContent extends VBox {
     setFocusTraversable(true);
     getChildren().addAll(children);
     setResolvedSide(Side.BOTTOM);
-    setOpenState(false);
+    setPhase(Phase.CLOSED);
     align.addListener(ignored -> requestReposition());
     side.addListener(ignored -> requestReposition());
     alignOffset.addListener(ignored -> requestReposition());
@@ -105,9 +114,11 @@ public final class PopoverContent extends VBox {
     popover = value;
   }
 
-  void setOpenState(boolean open) {
-    pseudoClassStateChanged(OPEN, open);
-    pseudoClassStateChanged(CLOSED, !open);
+  void setPhase(Phase phase) {
+    pseudoClassStateChanged(OPENING, phase == Phase.OPENING);
+    pseudoClassStateChanged(OPEN, phase == Phase.OPEN);
+    pseudoClassStateChanged(CLOSING, phase == Phase.CLOSING);
+    pseudoClassStateChanged(CLOSED, phase == Phase.CLOSED);
   }
 
   void setResolvedSide(Side resolvedSide) {

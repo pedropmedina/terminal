@@ -23,6 +23,12 @@
   -fx-max-height: infinity;
 }
 
+.chart-workspace-menu-separator:vertical {
+  -fx-min-height: 20px;
+  -fx-pref-height: 20px;
+  -fx-max-height: 20px;
+}
+
 .chart-workspace-menu-chart-type.core-button.button-variant-ghost:drawer-open {
   -fx-background-color: -app-button-ghost-hover;
 }

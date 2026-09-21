@@ -1,11 +1,16 @@
 package com.acteque.terminal.ui.popover;
 
 import java.util.Objects;
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.css.TransitionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.geometry.NodeOrientation;
 import javafx.geometry.Rectangle2D;
@@ -13,6 +18,8 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.stage.Popup;
 import javafx.stage.Screen;
 import javafx.stage.Window;
@@ -21,6 +28,7 @@ import javafx.stage.Window;
 public final class Popover {
 
   private static final double SCREEN_PADDING = 8.0;
+  private static final String OPACITY_PROPERTY = "-fx-opacity";
 
   private final Popup popup = new Popup();
   private final BooleanProperty open = new SimpleBooleanProperty(this, "open", false);
@@ -30,9 +38,21 @@ public final class Popover {
       replaceContent(get());
     }
   };
+  private final ChangeListener<Boolean> focusListener = this::popupFocusChanged;
+  private final EventHandler<KeyEvent> keyPressedHandler = this::handleKeyPressed;
+  private final EventHandler<MouseEvent> ownerMousePressedHandler = this::handleOwnerMousePressed;
+  private final EventHandler<ScrollEvent> ownerScrollHandler = this::handleOwnerScroll;
+  private final EventHandler<TransitionEvent> transitionFinishedHandler = this::transitionFinished;
+  private final EventHandler<TransitionEvent> transitionStartedHandler = this::transitionStarted;
   private Node anchor;
-  private boolean synchronizingPopup;
+  private Window owner;
+  private AnimationTimer openingTimer;
+  private PopoverContent.Phase phase = PopoverContent.Phase.CLOSED;
+  private long lifecycleRevision;
+  private boolean closingOpacityTransition;
+  private boolean dismissalFiltersAttached;
   private boolean restoreFocusOnHide;
+  private boolean synchronizingPopup;
 
   public Popover() {
     this(null);
@@ -40,10 +60,9 @@ public final class Popover {
 
   public Popover(PopoverContent content) {
     popup.setAutoFix(false);
-    popup.setAutoHide(true);
-    popup.setHideOnEscape(true);
+    popup.setAutoHide(false);
+    popup.setHideOnEscape(false);
     popup.setConsumeAutoHidingEvents(false);
-    popup.setOnAutoHide(event -> restoreFocusOnHide = false);
     popup.setOnHidden(event -> popupWasHidden());
     open.addListener((ignored, wasOpen, isOpen) -> applyOpenState(isOpen));
     setContent(content);
@@ -110,24 +129,28 @@ public final class Popover {
     PopoverContent previousContent = popup.getContent().isEmpty()
       ? null
       : (PopoverContent) popup.getContent().getFirst();
+
     if (previousContent != null) {
+      detachContentFilters(previousContent);
       previousContent.setPopover(null);
+      previousContent.setPhase(PopoverContent.Phase.CLOSED);
     }
+
     popup.getContent().clear();
+
     if (nextContent != null) {
       nextContent.setPopover(this);
-      nextContent.addEventFilter(KeyEvent.KEY_PRESSED, this::handleKeyPressed);
+      nextContent.setPhase(PopoverContent.Phase.CLOSED);
       popup.getContent().add(nextContent);
+      if (dismissalFiltersAttached) {
+        attachContentFilters(nextContent);
+      }
     }
+
     if (isOpen()) {
       showPopup();
-    }
-  }
-
-  private void handleKeyPressed(KeyEvent event) {
-    if (event.getCode() == KeyCode.ESCAPE) {
-      close();
-      event.consume();
+    } else if (popup.isShowing()) {
+      beginClosing();
     }
   }
 
@@ -139,42 +162,239 @@ public final class Popover {
       restoreFocusOnHide = false;
       showPopup();
     } else if (popup.isShowing()) {
-      popup.hide();
+      beginClosing();
+    } else {
+      cancelOpeningTimer();
+      lifecycleRevision++;
+      setPhase(PopoverContent.Phase.CLOSED);
+      restoreFocusOnHide = false;
     }
   }
 
   private void showPopup() {
     PopoverContent popupContent = getContent();
     Scene anchorScene = anchor == null ? null : anchor.getScene();
-    Window owner = anchorScene == null ? null : anchorScene.getWindow();
-    if (popupContent == null || owner == null || !owner.isShowing()) {
+    Window nextOwner = anchorScene == null ? null : anchorScene.getWindow();
+    if (popupContent == null || nextOwner == null || !nextOwner.isShowing()) {
       return;
     }
 
     configureStyles(popupContent, anchorScene);
-    popupContent.setOpenState(false);
-    if (!popup.isShowing()) {
-      popup.show(anchor, 0.0, 0.0);
+    if (popup.isShowing()) {
+      lifecycleRevision++;
+      cancelOpeningTimer();
+      setPhase(PopoverContent.Phase.OPEN);
+      popupContent.applyCss();
+      popupContent.autosize();
+      positionPopup();
+      focusFirst(popupContent);
+      return;
     }
+
+    owner = nextOwner;
+    setPhase(PopoverContent.Phase.OPENING);
     popupContent.applyCss();
     popupContent.autosize();
-    positionPopup();
-    Platform.runLater(() -> {
-      if (!isOpen() || !popup.isShowing()) {
-        return;
+    PopupPosition position = popupPosition();
+    if (position == null) {
+      return;
+    }
+    popupContent.applyCss();
+
+    long revision = ++lifecycleRevision;
+    popup.show(owner, position.x(), position.y());
+    attachDismissalFilters();
+    startOpeningTimer(popupContent, revision);
+  }
+
+  private void startOpeningTimer(PopoverContent popupContent, long revision) {
+    cancelOpeningTimer();
+    openingTimer = new AnimationTimer() {
+      private boolean renderedOpeningFrame;
+
+      @Override
+      public void handle(long now) {
+        if (revision != lifecycleRevision || !isOpen() || !popup.isShowing() || getContent() != popupContent) {
+          stop();
+          if (openingTimer == this) {
+            openingTimer = null;
+          }
+          return;
+        }
+        if (!renderedOpeningFrame) {
+          renderedOpeningFrame = true;
+          return;
+        }
+
+        stop();
+        if (openingTimer == this) {
+          openingTimer = null;
+        }
+        setPhase(PopoverContent.Phase.OPEN);
+        popupContent.applyCss();
+        focusFirst(popupContent);
       }
-      popupContent.setOpenState(true);
-      focusFirst(popupContent);
-    });
+    };
+    openingTimer.start();
+  }
+
+  private void cancelOpeningTimer() {
+    if (openingTimer != null) {
+      openingTimer.stop();
+      openingTimer = null;
+    }
+  }
+
+  private void beginClosing() {
+    PopoverContent popupContent = getContent();
+    long revision = ++lifecycleRevision;
+    cancelOpeningTimer();
+    setPhase(PopoverContent.Phase.CLOSING);
+    if (popupContent == null || !popup.isShowing()) {
+      finishClosing(revision);
+      return;
+    }
+
+    closingOpacityTransition = false;
+    popupContent.applyCss();
+    if (!closingOpacityTransition) {
+      finishClosing(revision);
+    }
+  }
+
+  private void transitionStarted(TransitionEvent event) {
+    if (phase == PopoverContent.Phase.CLOSING && OPACITY_PROPERTY.equals(event.getPropertyName())) {
+      closingOpacityTransition = true;
+    }
+  }
+
+  private void transitionFinished(TransitionEvent event) {
+    if (phase == PopoverContent.Phase.CLOSING && OPACITY_PROPERTY.equals(event.getPropertyName())) {
+      finishClosing(lifecycleRevision);
+    }
+  }
+
+  private void finishClosing(long revision) {
+    if (revision != lifecycleRevision || phase != PopoverContent.Phase.CLOSING) {
+      return;
+    }
+    detachDismissalFilters();
+    setPhase(PopoverContent.Phase.CLOSED);
+    if (popup.isShowing()) {
+      popup.hide();
+    } else {
+      popupWasHidden();
+    }
+  }
+
+  private void attachDismissalFilters() {
+    if (dismissalFiltersAttached || owner == null) {
+      return;
+    }
+    dismissalFiltersAttached = true;
+    owner.addEventFilter(MouseEvent.MOUSE_PRESSED, ownerMousePressedHandler);
+    owner.addEventFilter(ScrollEvent.SCROLL, ownerScrollHandler);
+    owner.addEventFilter(KeyEvent.KEY_PRESSED, keyPressedHandler);
+    popup.focusedProperty().addListener(focusListener);
+    if (getContent() != null) {
+      attachContentFilters(getContent());
+    }
+  }
+
+  private void detachDismissalFilters() {
+    if (!dismissalFiltersAttached) {
+      return;
+    }
+    dismissalFiltersAttached = false;
+    if (owner != null) {
+      owner.removeEventFilter(MouseEvent.MOUSE_PRESSED, ownerMousePressedHandler);
+      owner.removeEventFilter(ScrollEvent.SCROLL, ownerScrollHandler);
+      owner.removeEventFilter(KeyEvent.KEY_PRESSED, keyPressedHandler);
+    }
+    popup.focusedProperty().removeListener(focusListener);
+    if (getContent() != null) {
+      detachContentFilters(getContent());
+    }
+  }
+
+  private void attachContentFilters(PopoverContent popupContent) {
+    popupContent.addEventFilter(KeyEvent.KEY_PRESSED, keyPressedHandler);
+    popupContent.addEventHandler(TransitionEvent.RUN, transitionStartedHandler);
+    popupContent.addEventHandler(TransitionEvent.END, transitionFinishedHandler);
+  }
+
+  private void detachContentFilters(PopoverContent popupContent) {
+    popupContent.removeEventFilter(KeyEvent.KEY_PRESSED, keyPressedHandler);
+    popupContent.removeEventHandler(TransitionEvent.RUN, transitionStartedHandler);
+    popupContent.removeEventHandler(TransitionEvent.END, transitionFinishedHandler);
+  }
+
+  private void handleOwnerMousePressed(MouseEvent event) {
+    if (!isInAnchor(event.getTarget())) {
+      requestDismissal(false);
+    }
+  }
+
+  private void handleOwnerScroll(ScrollEvent event) {
+    requestDismissal(false);
+  }
+
+  private void handleKeyPressed(KeyEvent event) {
+    if (event.getCode() == KeyCode.ESCAPE && isOpen()) {
+      requestDismissal(true);
+      event.consume();
+    }
+  }
+
+  private void popupFocusChanged(ObservableValue<? extends Boolean> ignored, Boolean wasFocused, Boolean isFocused) {
+    if (wasFocused && !isFocused && isOpen()) {
+      requestDismissal(false);
+    }
+  }
+
+  private void requestDismissal(boolean restoreFocus) {
+    if (!isOpen()) {
+      return;
+    }
+    restoreFocusOnHide = restoreFocus;
+    setOpen(false);
+  }
+
+  private boolean isInAnchor(Object eventTarget) {
+    if (!(eventTarget instanceof Node node) || anchor == null) {
+      return false;
+    }
+    for (Node current = node; current != null; current = current.getParent()) {
+      if (current == anchor) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void setPhase(PopoverContent.Phase nextPhase) {
+    phase = nextPhase;
+    if (getContent() != null) {
+      getContent().setPhase(nextPhase);
+    }
   }
 
   private void positionPopup() {
-    if (anchor == null || getContent() == null) {
+    PopupPosition position = popupPosition();
+    if (position == null) {
       return;
+    }
+    popup.setX(position.x());
+    popup.setY(position.y());
+  }
+
+  private PopupPosition popupPosition() {
+    if (anchor == null || getContent() == null) {
+      return null;
     }
     Bounds anchorBounds = anchor.localToScreen(anchor.getBoundsInLocal());
     if (anchorBounds == null) {
-      return;
+      return null;
     }
 
     PopoverContent popupContent = getContent();
@@ -208,8 +428,10 @@ public final class Popover {
     }
 
     popupContent.setResolvedSide(side);
-    popup.setX(clamp(x, screen.getMinX() + SCREEN_PADDING, screen.getMaxX() - width - SCREEN_PADDING));
-    popup.setY(clamp(y, screen.getMinY() + SCREEN_PADDING, screen.getMaxY() - height - SCREEN_PADDING));
+    return new PopupPosition(
+      clamp(x, screen.getMinX() + SCREEN_PADDING, screen.getMaxX() - width - SCREEN_PADDING),
+      clamp(y, screen.getMinY() + SCREEN_PADDING, screen.getMaxY() - height - SCREEN_PADDING)
+    );
   }
 
   private PopoverContent.Side physicalSide(PopoverContent.Side side) {
@@ -310,17 +532,26 @@ public final class Popover {
   }
 
   private void popupWasHidden() {
+    cancelOpeningTimer();
+    detachDismissalFilters();
+    long revision = ++lifecycleRevision;
     if (isOpen()) {
       synchronizingPopup = true;
       setOpen(false);
       synchronizingPopup = false;
     }
-    if (getContent() != null) {
-      getContent().setOpenState(false);
-    }
+    setPhase(PopoverContent.Phase.CLOSED);
     if (restoreFocusOnHide && anchor != null) {
-      Platform.runLater(anchor::requestFocus);
+      Node focusTarget = anchor;
+      Platform.runLater(() -> {
+        if (revision == lifecycleRevision && !isOpen()) {
+          focusTarget.requestFocus();
+        }
+      });
     }
     restoreFocusOnHide = false;
+    owner = null;
   }
+
+  private record PopupPosition(double x, double y) {}
 }

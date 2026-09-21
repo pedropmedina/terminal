@@ -24,26 +24,33 @@
     -fx-translate-x,
     -fx-translate-y;
   transition-duration: 100ms;
+  transition-timing-function: ease-out;
 }
 
-.core-popover-content:closed {
+.core-popover-content:opening,
+.core-popover-content:closed,
+.core-popover-content:closing {
   -fx-opacity: 0;
   -fx-scale-x: 0.95;
   -fx-scale-y: 0.95;
 }
 
+.core-popover-content:opening.popover-side-bottom,
 .core-popover-content:closed.popover-side-bottom {
   -fx-translate-y: -8px;
 }
 
+.core-popover-content:opening.popover-side-top,
 .core-popover-content:closed.popover-side-top {
   -fx-translate-y: 8px;
 }
 
+.core-popover-content:opening.popover-side-left,
 .core-popover-content:closed.popover-side-left {
   -fx-translate-x: 8px;
 }
 
+.core-popover-content:opening.popover-side-right,
 .core-popover-content:closed.popover-side-right {
   -fx-translate-x: -8px;
 }

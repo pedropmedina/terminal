@@ -15,6 +15,7 @@ import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.Button.Variant;
+import com.acteque.terminal.ui.Separator;
 import com.acteque.terminal.ui.icons.LucideIcon;
 import com.acteque.terminal.ui.icons.LucideIcons;
 import com.acteque.terminal.ui.kbd.Kbd;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -52,9 +54,14 @@ class ChartWorkspaceMenuTest {
         Region identifier = root.getIdentifier();
         StackPane sceneRoot = new StackPane(root);
         new AppThemeManager(new Scene(sceneRoot, 500.0, 100.0), AppTheme.LIGHT);
+        sceneRoot.applyCss();
+        sceneRoot.layout();
 
         assertEquals("IBM", assertInstanceOf(Button.class, buttons.getChildren().getFirst()).getText());
-        assertEquals(4, buttons.getChildren().size());
+        assertEquals(5, buttons.getChildren().size());
+        Separator separator = assertInstanceOf(Separator.class, buttons.getChildren().get(3));
+        assertEquals(Orientation.VERTICAL, separator.getOrientation());
+        assertEquals(12.0, separator.getHeight());
         assertFalse(identifier.isVisible());
 
         Color color = Color.hsb(210.0, 0.72, 0.85);
@@ -67,7 +74,7 @@ class ChartWorkspaceMenuTest {
         sceneRoot.layout();
 
         assertEquals("AAPL", assertInstanceOf(Button.class, buttons.getChildren().getFirst()).getText());
-        assertEquals(5, buttons.getChildren().size());
+        assertEquals(6, buttons.getChildren().size());
         assertTrue(identifier.isVisible());
         assertEquals(4.0, identifier.getWidth());
         assertEquals(color, identifier.getBackground().getFills().getFirst().getFill());
@@ -115,7 +122,9 @@ class ChartWorkspaceMenuTest {
         assertInstanceOf(Button.class, buttons.getChildren().get(0)).fire();
         assertInstanceOf(Button.class, buttons.getChildren().get(1)).fire();
         assertInstanceOf(Button.class, buttons.getChildren().get(2)).fire();
-        PopoverTrigger split = assertInstanceOf(PopoverTrigger.class, buttons.getChildren().get(3));
+        Separator separator = assertInstanceOf(Separator.class, buttons.getChildren().get(3));
+        assertEquals(Orientation.VERTICAL, separator.getOrientation());
+        PopoverTrigger split = assertInstanceOf(PopoverTrigger.class, buttons.getChildren().get(4));
         assertSame(
           LucideIcons.SQUARE_SPLIT_HORIZONTAL,
           assertInstanceOf(LucideIcon.class, split.getGraphic()).getGlyph()
@@ -131,7 +140,7 @@ class ChartWorkspaceMenuTest {
           splitButtons.stream().map(ChartWorkspaceMenuTest::shortcutKey).toList()
         );
         splitButtons.forEach(Button::fire);
-        Button close = assertInstanceOf(Button.class, buttons.getChildren().get(4));
+        Button close = assertInstanceOf(Button.class, buttons.getChildren().get(5));
         assertEquals(Variant.GHOST, close.getVariant());
         assertSame(LucideIcons.X, assertInstanceOf(LucideIcon.class, close.getGraphic()).getGlyph());
         close.fire();

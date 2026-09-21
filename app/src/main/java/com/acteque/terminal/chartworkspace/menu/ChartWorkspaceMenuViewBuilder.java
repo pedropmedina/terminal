@@ -10,6 +10,7 @@ import com.acteque.terminal.reload.ReloadTarget;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.Button.Size;
 import com.acteque.terminal.ui.Button.Variant;
+import com.acteque.terminal.ui.Separator;
 import com.acteque.terminal.ui.icons.LucideIcon;
 import com.acteque.terminal.ui.icons.LucideIcons;
 import com.acteque.terminal.ui.kbd.Kbd;
@@ -17,12 +18,16 @@ import com.acteque.terminal.ui.kbd.KbdGroup;
 import com.acteque.terminal.ui.popover.Popover;
 import com.acteque.terminal.ui.popover.PopoverContent;
 import com.acteque.terminal.ui.popover.PopoverTrigger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.scene.Node;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Background;
@@ -102,18 +107,22 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
 
   private void rebuildItems() {
     splitPopover.setOpen(false);
-    Button[] buttons = model
-      .getItems()
-      .stream()
-      .map(this::createItem)
-      .toArray(Button[]::new);
-    root.setButtons(buttons);
+    List<Node> items = new ArrayList<>();
+    for (Item item : model.getItems()) {
+      if (item == Item.SPLIT) {
+        Separator separator = new Separator(Orientation.VERTICAL);
+        separator.getStyleClass().add("chart-workspace-menu-separator");
+        items.add(separator);
+      }
+      items.add(createItem(item));
+    }
+    root.setItems(items.toArray(Node[]::new));
   }
 
   private Button createItem(Item item) {
     if (item == Item.SPLIT) {
       PopoverTrigger trigger = new PopoverTrigger(
-        "",
+        null,
         new LucideIcon(LucideIcons.SQUARE_SPLIT_HORIZONTAL),
         Variant.GHOST,
         Size.ICON,
@@ -126,7 +135,7 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
     }
 
     Button button = new Button(
-      "",
+      null,
       Variant.GHOST,
       item == Item.CHART_TYPE || item == Item.CLOSE ? Size.ICON : Size.DEFAULT
     );
@@ -194,7 +203,7 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
     HBox actionContent = new HBox(actionLabel, spacer, new KbdGroup(new Kbd("⌘"), new Kbd(key)));
     actionContent.getStyleClass().add("chart-workspace-split-action-content");
 
-    Button button = new Button("", actionContent, Variant.GHOST, Size.DEFAULT);
+    Button button = new Button(null, actionContent, Variant.GHOST, Size.DEFAULT);
     button.getStyleClass().add("chart-workspace-split-action");
     button.setAccessibleText(label);
     button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);

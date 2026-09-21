@@ -1,8 +1,8 @@
 package com.acteque.terminal.chartworkspace.menu;
 
-import com.acteque.terminal.ui.Button;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
@@ -52,7 +52,7 @@ final class ChartWorkspaceMenuItems extends StackPane {
     return identifier;
   }
 
-  void setButtons(Button... values) {
+  void setItems(Node... values) {
     buttons.getChildren().setAll(values);
   }
 
