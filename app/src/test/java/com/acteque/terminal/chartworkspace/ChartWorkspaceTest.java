@@ -761,7 +761,7 @@ class ChartWorkspaceTest {
   }
 
   private static Region identifier(Chart chart) {
-    return assertInstanceOf(Region.class, chart.getView().lookup(".chart-identifier"));
+    return assertInstanceOf(Region.class, chart.getView().lookup(".chart-status-line-identifier"));
   }
 
   private static Color identifierColor(Region identifier) {

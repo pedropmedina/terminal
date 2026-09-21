@@ -44,9 +44,9 @@ class ChartTest {
         chart.applyCss();
         chart.layout();
 
-        Region identifier = assertInstanceOf(Region.class, chart.lookup(".chart-identifier"));
+        Region identifier = assertInstanceOf(Region.class, chart.lookup(".chart-status-line-identifier"));
         FlowPane statusLine = assertInstanceOf(FlowPane.class, chart.lookup(".chart-status-line"));
-        HBox instrument = assertInstanceOf(HBox.class, statusLine.lookup(".chart-status-instrument"));
+        HBox instrument = assertInstanceOf(HBox.class, statusLine.lookup(".chart-status-line-selection-group"));
         Tooltip symbolTooltip = assertInstanceOf(Tooltip.class, instrument.getChildren().get(1));
         var identifierFill = identifier.getBackground().getFills().getFirst();
         assertEquals(color, identifierFill.getFill());
@@ -75,8 +75,8 @@ class ChartTest {
         chart.layout();
 
         FlowPane statusLine = assertInstanceOf(FlowPane.class, chart.lookup(".chart-status-line"));
-        HBox instrument = assertInstanceOf(HBox.class, statusLine.lookup(".chart-status-instrument"));
-        HBox metadata = assertInstanceOf(HBox.class, statusLine.lookup(".chart-status-metadata"));
+        HBox instrument = assertInstanceOf(HBox.class, statusLine.lookup(".chart-status-line-selection-group"));
+        HBox metadata = assertInstanceOf(HBox.class, statusLine.lookup(".chart-status-line-metadata-group"));
         Bounds metadataBounds = chart.sceneToLocal(metadata.localToScene(metadata.getBoundsInLocal()));
 
         assertEquals(chart.getWidth() - 24.0, statusLine.getWidth(), 0.01);
@@ -221,8 +221,8 @@ class ChartTest {
 
   private static Tooltip intervalTooltip(StackPane chart) {
     FlowPane statusLine = (FlowPane) chart.lookup(".chart-status-line");
-    HBox instrument = (HBox) statusLine.lookup(".chart-status-instrument");
-    return (Tooltip) instrument.getChildren().get(2);
+    HBox instrument = (HBox) statusLine.lookup(".chart-status-line-selection-group");
+    return (Tooltip) instrument.getChildren().get(3);
   }
 
   private static KeyEvent shortcutEvent(KeyCode keyCode) {

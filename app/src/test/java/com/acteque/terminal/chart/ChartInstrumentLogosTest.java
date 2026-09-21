@@ -29,7 +29,7 @@ class ChartInstrumentLogosTest {
         try (Chart chart = new Chart(List.of(), "IBM", ChartInterval.DAILY, marketData, logos, Runnable::run)) {
           var view = chart.getView();
           chart.loadInitialInstrument();
-          assertEquals("Provider Name", ((Button) view.lookup(".chart-symbol-button")).getText());
+          assertEquals("Provider Name", ((Button) view.lookup(".chart-instrument-button")).getText());
           assertEquals(new LogoRequest("Provider:Ab.C", Optional.of("Market")), logos.request);
           assertEquals(outcome.equals("pending") || outcome.equals("download-failed") ? 1 : 0, logos.loads);
           if (outcome.equals("pending")) {

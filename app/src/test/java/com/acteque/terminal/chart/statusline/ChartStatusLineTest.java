@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -16,10 +17,10 @@ import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.Button.Size;
 import com.acteque.terminal.ui.Button.Variant;
+import com.acteque.terminal.ui.icons.LucideIcons;
 import com.acteque.terminal.ui.tooltip.Tooltip;
 import java.net.URI;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Scene;
@@ -30,7 +31,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.shape.SVGPath;
 import org.junit.jupiter.api.Test;
 
 class ChartStatusLineTest {
@@ -51,7 +52,7 @@ class ChartStatusLineTest {
   );
 
   @Test
-  void displaysAFixedSizeFallbackWithoutAttributionUntilTheLogoArrives() {
+  void displaysAFixedSizeFallbackUntilTheLogoArrives() {
     FxTestSupport.runAndWait(() -> {
       ChartStatusLine feature = statusLine();
       FlowPane statusLine = view(feature);
@@ -60,25 +61,17 @@ class ChartStatusLineTest {
       AppThemeManager themes = new AppThemeManager(scene, AppTheme.LIGHT);
       root.applyCss();
       root.layout();
-      Button symbol = triggerTarget(symbolTooltip(statusLine));
-      StackPane slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
+      Button instrument = triggerTarget(instrumentTooltip(statusLine));
+      StackPane slot = assertInstanceOf(StackPane.class, instrument.getGraphic());
       assertEquals("A", assertInstanceOf(Label.class, slot.getChildren().getFirst()).getText());
       assertEquals(20, slot.getWidth());
       assertEquals(20, slot.getHeight());
-      Label attribution = logoAttribution(statusLine);
-      assertFalse(attribution.isVisible());
-      assertFalse(attribution.isManaged());
-
       feature.setInstrumentLogo(LOGO, new WritableImage(64, 64));
       root.applyCss();
       root.layout();
-      slot = assertInstanceOf(StackPane.class, symbol.getGraphic());
+      slot = assertInstanceOf(StackPane.class, instrument.getGraphic());
       assertEquals(20, slot.getWidth());
       assertEquals(20, slot.getHeight());
-      assertTrue(attribution.isVisible());
-      assertTrue(attribution.isManaged());
-      assertEquals("Logos by Example", attribution.getText());
-      assertSame(attribution, symbolTooltipContent(statusLine).getChildren().get(2));
       themes.setTheme(AppTheme.DARK);
       root.applyCss();
     });
@@ -100,21 +93,21 @@ class ChartStatusLineTest {
       WritableImage image = new WritableImage(64, 64);
       interactor.setInstrumentLogo(LOGO, image);
       interactor.setPricePoint(PRICE_POINT);
-      Button originalSymbol = triggerTarget(symbolTooltip(statusLine));
+      Button originalInstrument = triggerTarget(instrumentTooltip(statusLine));
+      SVGPath originalSeparator = selectionSeparator(statusLine);
 
       builder.refreshView();
 
-      Button refreshedSymbol = triggerTarget(symbolTooltip(statusLine));
-      assertNotSame(originalSymbol, refreshedSymbol);
-      StackPane slot = assertInstanceOf(StackPane.class, refreshedSymbol.getGraphic());
+      Button refreshedInstrument = triggerTarget(instrumentTooltip(statusLine));
+      assertNotSame(originalInstrument, refreshedInstrument);
+      assertSame(originalSeparator, selectionSeparator(statusLine));
+      StackPane slot = assertInstanceOf(StackPane.class, refreshedInstrument.getGraphic());
       assertSame(image, assertInstanceOf(ImageView.class, slot.getChildren().getFirst()).getImage());
-      assertEquals(LOGO.attributionText(), logoAttribution(statusLine).getText());
       assertEquals("O104.00  H108.25  L103.50  C107.75  Vol2.50 M", ohlcv(statusLine).getText());
 
       interactor.setInstrumentName("Widget Industries");
-      slot = assertInstanceOf(StackPane.class, refreshedSymbol.getGraphic());
+      slot = assertInstanceOf(StackPane.class, refreshedInstrument.getGraphic());
       assertEquals("W", assertInstanceOf(Label.class, slot.getChildren().getFirst()).getText());
-      assertFalse(logoAttribution(statusLine).isVisible());
     });
   }
 
@@ -126,42 +119,38 @@ class ChartStatusLineTest {
       feature.setPricePoint(PRICE_POINT);
 
       assertEquals(2, statusLine.getChildren().size());
-      assertTrue(instrument(statusLine).getStyleClass().contains("chart-status-instrument"));
-      assertTrue(metadata(statusLine).getStyleClass().contains("chart-status-metadata"));
+      assertTrue(instrument(statusLine).getStyleClass().contains("chart-status-line-selection-group"));
+      assertTrue(metadata(statusLine).getStyleClass().contains("chart-status-line-metadata-group"));
+      assertEquals(4, instrument(statusLine).getChildren().size());
       assertSame(identifier(statusLine), instrument(statusLine).getChildren().get(0));
-      Tooltip symbolTooltip = symbolTooltip(statusLine);
-      assertSame(symbolTooltip, instrument(statusLine).getChildren().get(1));
-      Button symbolButton = triggerTarget(symbolTooltip);
-      assertEquals("ACME", symbolButton.getText());
-      assertEquals(Variant.GHOST, symbolButton.getVariant());
-      assertEquals(Size.DEFAULT, symbolButton.getSize());
-      assertFalse(symbolButton.getProperties().containsValue(symbolTooltip));
-      VBox symbolTooltipContent = symbolTooltipContent(statusLine);
+      Tooltip instrumentTooltip = instrumentTooltip(statusLine);
+      assertSame(instrumentTooltip, instrument(statusLine).getChildren().get(1));
+      Button instrumentButton = triggerTarget(instrumentTooltip);
+      assertEquals("ACME", instrumentButton.getText());
+      assertEquals(Variant.GHOST, instrumentButton.getVariant());
+      assertEquals(Size.DEFAULT, instrumentButton.getSize());
+      assertFalse(instrumentButton.getProperties().containsValue(instrumentTooltip));
+      assertEquals(1, instrumentTooltip.getContentNodes().size());
       assertEquals(
-        "Click to select a different symbol",
-        assertInstanceOf(Label.class, symbolTooltipContent.getChildren().getFirst()).getText()
+        "Select a different instrument",
+        assertInstanceOf(Label.class, instrumentTooltip.getContentNodes().getFirst()).getText()
       );
-      assertEquals(
-        "Shortcut: ⌘F, ⌘/, or ⌘P",
-        assertInstanceOf(Label.class, symbolTooltipContent.getChildren().get(1)).getText()
-      );
-      assertSame(logoAttribution(statusLine), symbolTooltipContent.getChildren().get(2));
+
+      SVGPath separator = selectionSeparator(statusLine);
+      assertEquals(LucideIcons.DOT.pathData(), separator.getContent());
+      assertTrue(separator.isMouseTransparent());
 
       Tooltip intervalTooltip = intervalTooltip(statusLine);
-      assertSame(intervalTooltip, instrument(statusLine).getChildren().get(2));
+      assertSame(intervalTooltip, instrument(statusLine).getChildren().get(3));
       Button intervalButton = triggerTarget(intervalTooltip);
       assertEquals("Daily", intervalButton.getText());
       assertEquals("Select interval, currently Daily", intervalButton.getAccessibleText());
       assertEquals(Variant.GHOST, intervalButton.getVariant());
       assertFalse(intervalButton.getProperties().containsValue(intervalTooltip));
-      VBox intervalTooltipContent = assertInstanceOf(VBox.class, intervalTooltip.getContentNodes().getFirst());
+      assertEquals(1, intervalTooltip.getContentNodes().size());
       assertEquals(
-        "Click to select a different interval",
-        assertInstanceOf(Label.class, intervalTooltipContent.getChildren().getFirst()).getText()
-      );
-      assertEquals(
-        "Shortcut: ⌘I",
-        assertInstanceOf(Label.class, intervalTooltipContent.getChildren().get(1)).getText()
+        "Select a different interval",
+        assertInstanceOf(Label.class, intervalTooltip.getContentNodes().getFirst()).getText()
       );
       assertEquals("O104.00  H108.25  L103.50  C107.75  Vol2.50 M", ohlcv(statusLine).getText());
     });
@@ -197,23 +186,31 @@ class ChartStatusLineTest {
   }
 
   @Test
-  void usesCompactHorizontalPaddingForStatusButtons() {
+  void keepsTheSeparatorFlushWithTheSelectionButtons() {
     FxTestSupport.runAndWait(() -> {
       FlowPane statusLine = view(statusLine());
       StackPane root = new StackPane(statusLine);
       Scene scene = new Scene(root, 800, 200);
       new AppThemeManager(scene, AppTheme.LIGHT);
       root.applyCss();
+      root.layout();
 
-      for (Button button : List.of(
-        triggerTarget(symbolTooltip(statusLine)),
-        triggerTarget(intervalTooltip(statusLine))
-      )) {
-        assertEquals(0.0, button.getPadding().getTop());
-        assertEquals(2.0, button.getPadding().getRight());
-        assertEquals(0.0, button.getPadding().getBottom());
-        assertEquals(2.0, button.getPadding().getLeft());
-      }
+      HBox selectionGroup = instrument(statusLine);
+      Tooltip instrumentTooltip = instrumentTooltip(statusLine);
+      SVGPath separator = selectionSeparator(statusLine);
+      Tooltip intervalTooltip = intervalTooltip(statusLine);
+      Button instrumentButton = triggerTarget(instrumentTooltip);
+      Button intervalButton = triggerTarget(intervalTooltip);
+
+      assertEquals(0.0, selectionGroup.getSpacing());
+      assertNull(HBox.getMargin(separator));
+      assertTrue(separator.getLayoutBounds().getWidth() < 8.0);
+      assertEquals(3.0, instrumentButton.getPadding().getRight());
+      assertEquals(3.0, intervalButton.getPadding().getLeft());
+      assertEquals(3.0, instrumentButton.getPadding().getLeft());
+      assertEquals(3.0, intervalButton.getPadding().getRight());
+      assertEquals(instrumentTooltip.getBoundsInParent().getMaxX(), separator.getBoundsInParent().getMinX(), 0.01);
+      assertEquals(separator.getBoundsInParent().getMaxX(), intervalTooltip.getBoundsInParent().getMinX(), 0.01);
     });
   }
 
@@ -231,7 +228,7 @@ class ChartStatusLineTest {
       );
       FlowPane statusLine = view(feature);
 
-      triggerTarget(symbolTooltip(statusLine)).fire();
+      triggerTarget(instrumentTooltip(statusLine)).fire();
       triggerTarget(intervalTooltip(statusLine)).fire();
 
       assertTrue(instrumentClicked.get());
@@ -252,7 +249,7 @@ class ChartStatusLineTest {
       Button intervalButton = triggerTarget(intervalTooltip(statusLine));
       assertEquals("5 minutes", intervalButton.getText());
       assertEquals("Select interval, currently 5 minutes", intervalButton.getAccessibleText());
-      assertEquals("Widget Industries", triggerTarget(symbolTooltip(statusLine)).getText());
+      assertEquals("Widget Industries", triggerTarget(instrumentTooltip(statusLine)).getText());
       assertEquals("O104.00  H108.25  L103.50  C107.75  Vol2.50 M", ohlcv(statusLine).getText());
 
       feature.clearPricePoint();
@@ -282,20 +279,16 @@ class ChartStatusLineTest {
     return assertInstanceOf(Region.class, instrument(statusLine).getChildren().get(0));
   }
 
-  private static Tooltip symbolTooltip(FlowPane statusLine) {
+  private static Tooltip instrumentTooltip(FlowPane statusLine) {
     return assertInstanceOf(Tooltip.class, instrument(statusLine).getChildren().get(1));
   }
 
   private static Tooltip intervalTooltip(FlowPane statusLine) {
-    return assertInstanceOf(Tooltip.class, instrument(statusLine).getChildren().get(2));
+    return assertInstanceOf(Tooltip.class, instrument(statusLine).getChildren().get(3));
   }
 
-  private static VBox symbolTooltipContent(FlowPane statusLine) {
-    return assertInstanceOf(VBox.class, symbolTooltip(statusLine).getContentNodes().getFirst());
-  }
-
-  private static Label logoAttribution(FlowPane statusLine) {
-    return assertInstanceOf(Label.class, symbolTooltipContent(statusLine).getChildren().get(2));
+  private static SVGPath selectionSeparator(FlowPane statusLine) {
+    return assertInstanceOf(SVGPath.class, instrument(statusLine).getChildren().get(2));
   }
 
   private static Label ohlcv(FlowPane statusLine) {
