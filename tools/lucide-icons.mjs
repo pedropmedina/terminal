@@ -8,6 +8,7 @@ export {
   Check,
   ChevronDown,
   ChevronUp,
+  Dot,
   Plus,
   Search,
   Settings,

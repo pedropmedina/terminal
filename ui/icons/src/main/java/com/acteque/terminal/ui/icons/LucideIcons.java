@@ -34,6 +34,8 @@ public enum LucideIcons implements LucideGlyph {
 
   CHEVRON_UP("chevron-up", 24, 24, "M0 0m18 15-6-6-6 6"),
 
+  DOT("dot", 24, 24, "M11 12A1 1 0 1 0 13 12A1 1 0 1 0 11 12"),
+
   PLUS("plus", 24, 24, "M0 0M5 12h14 M0 0M12 5v14"),
 
   SEARCH("search", 24, 24, "M0 0m21 21-4.34-4.34 M3 11A8 8 0 1 0 19 11A8 8 0 1 0 3 11"),
