@@ -137,7 +137,7 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
   }
 
   private void positionInspectorBelowMenu() {
-    double menuBottom = Math.max(0.0, menuOverlay.getBoundsInParent().getMaxY());
+    double menuBottom = Math.max(0.0, menuOverlay.localToParent(menuOverlay.getLayoutBounds()).getMaxY());
     StackPane.setMargin(inspectorDrawer, new Insets(menuBottom, 0.0, 0.0, 0.0));
   }
 

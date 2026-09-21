@@ -1,5 +1,5 @@
 .chart-workspace {
-  -fx-background-color: -app-muted;
+  -fx-background-color: -app-workspace-background;
   -fx-padding: 2.5px;
   -fx-snap-to-pixel: false;
 }
