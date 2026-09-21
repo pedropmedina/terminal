@@ -1,0 +1,39 @@
+.core-kbd {
+  -fx-alignment: center;
+  -fx-background-color: -app-muted;
+  -fx-background-insets: 0;
+  -fx-background-radius: 4px;
+  -fx-content-display: left;
+  -fx-font-family: "System";
+  -fx-font-size: 12px;
+  -fx-font-weight: 500;
+  -fx-graphic-text-gap: 4px;
+  -fx-min-height: 20px;
+  -fx-pref-height: 20px;
+  -fx-max-height: 20px;
+  -fx-min-width: 20px;
+  -fx-padding: 0 4px;
+}
+
+:root .label.core-kbd {
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-kbd .lucide-icon {
+  -fx-min-height: 12px;
+  -fx-pref-height: 12px;
+  -fx-max-height: 12px;
+  -fx-min-width: 12px;
+  -fx-pref-width: 12px;
+  -fx-max-width: 12px;
+}
+
+.core-kbd-group {
+  -fx-alignment: center;
+  -fx-spacing: 4px;
+}
+
+.core-tooltip-popup .label.core-kbd {
+  -fx-background-color: -app-kbd-tooltip-background;
+  -fx-text-fill: -app-background;
+}
