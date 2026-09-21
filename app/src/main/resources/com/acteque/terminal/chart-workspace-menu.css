@@ -33,11 +33,17 @@
 }
 
 .chart-workspace-split-actions {
-  -fx-alignment: center;
-  -fx-hgap: 4px;
-  -fx-vgap: 4px;
+  -fx-spacing: 4px;
 }
 
 .chart-workspace-split-action.core-button {
-  -fx-min-width: 68px;
+  -fx-min-width: 208px;
+}
+
+.chart-workspace-split-action-content {
+  -fx-alignment: center-left;
+}
+
+.chart-workspace-split-action-label {
+  -fx-text-fill: -app-foreground;
 }

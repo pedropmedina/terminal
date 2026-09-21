@@ -44,6 +44,8 @@ import javafx.geometry.Orientation;
 import javafx.scene.AccessibleAction;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
@@ -97,7 +99,7 @@ class ChartWorkspaceTest {
           .lookupAll(".chart-workspace-split-action")
           .stream()
           .map(Button.class::cast)
-          .filter(button -> "Right".equals(button.getText()))
+          .filter(button -> "Split right".equals(button.getAccessibleText()))
           .findFirst()
           .orElseThrow()
           .fire();
@@ -227,6 +229,74 @@ class ChartWorkspaceTest {
   }
 
   @Test
+  void mapsPlatformShortcutsToSplitDirections() {
+    FxTestSupport.runAndWait(() -> {
+      assertEquals(ChartSplitDirection.RIGHT, ChartWorkspaceViewBuilder.splitDirection(shortcutEvent(KeyCode.L)));
+      assertEquals(ChartSplitDirection.BOTTOM, ChartWorkspaceViewBuilder.splitDirection(shortcutEvent(KeyCode.J)));
+      assertEquals(ChartSplitDirection.TOP, ChartWorkspaceViewBuilder.splitDirection(shortcutEvent(KeyCode.K)));
+      assertEquals(ChartSplitDirection.LEFT, ChartWorkspaceViewBuilder.splitDirection(shortcutEvent(KeyCode.H)));
+      assertNull(ChartWorkspaceViewBuilder.splitDirection(plainKeyEvent(KeyCode.L)));
+    });
+  }
+
+  @Test
+  void splitsTheActiveChartFromAPlatformShortcut() {
+    FxTestSupport.runAndWait(() -> {
+      Fixture fixture = new Fixture();
+      Chart source = fixture.initialize();
+      ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
+        fixture.model,
+        fixture.interactor::activate,
+        fixture.interactor::splitActive,
+        new Region(),
+        new Drawer(),
+        new Dialog(),
+        new Dialog()
+      );
+      KeyEvent event = shortcutEvent(KeyCode.L);
+      AtomicInteger propagatedEvents = new AtomicInteger();
+      viewBuilder.build().addEventHandler(KeyEvent.KEY_PRESSED, ignored -> propagatedEvents.incrementAndGet());
+
+      viewBuilder.build().fireEvent(event);
+
+      assertEquals(0, propagatedEvents.get());
+      ChartWorkspaceSplit split = assertInstanceOf(ChartWorkspaceSplit.class, fixture.model.getRoot());
+      assertSame(source, assertInstanceOf(ChartWorkspaceLeaf.class, split.first()).chart());
+      assertSame(fixture.charts.getLast(), assertInstanceOf(ChartWorkspaceLeaf.class, split.second()).chart());
+      assertSame(fixture.charts.getLast(), fixture.model.getActiveChart());
+      fixture.interactor.close();
+    });
+  }
+
+  @Test
+  void ignoresSplitShortcutsWhileAModalIsOpen() {
+    FxTestSupport.runAndWait(() -> {
+      Fixture fixture = new Fixture();
+      Chart source = fixture.initialize();
+      ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
+        fixture.model,
+        fixture.interactor::activate,
+        fixture.interactor::splitActive,
+        new Region(),
+        new Drawer(),
+        new Dialog(),
+        new Dialog()
+      );
+      source.showInstrumentSearch();
+      KeyEvent event = shortcutEvent(KeyCode.L);
+      AtomicInteger propagatedEvents = new AtomicInteger();
+      viewBuilder.build().addEventHandler(KeyEvent.KEY_PRESSED, ignored -> propagatedEvents.incrementAndGet());
+
+      viewBuilder.build().fireEvent(event);
+
+      assertEquals(1, propagatedEvents.get());
+      assertSame(source, assertInstanceOf(ChartWorkspaceLeaf.class, fixture.model.getRoot()).chart());
+      assertEquals(1, fixture.charts.size());
+      fixture.interactor.close();
+    });
+  }
+
+  @Test
   void hidesTheActiveRingUntilTheWorkspaceHasMultipleCharts() {
     FxTestSupport.runAndWait(() -> {
       Fixture fixture = new Fixture();
@@ -234,6 +304,7 @@ class ChartWorkspaceTest {
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
         fixture.interactor::activate,
+        fixture.interactor::splitActive,
         new Region(),
         new Drawer(),
         new Dialog(),
@@ -259,6 +330,7 @@ class ChartWorkspaceTest {
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
         fixture.interactor::activate,
+        fixture.interactor::splitActive,
         new Region(),
         new Drawer(),
         new Dialog(),
@@ -362,6 +434,7 @@ class ChartWorkspaceTest {
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
         fixture.interactor::activate,
+        fixture.interactor::splitActive,
         new Region(),
         new Drawer(),
         new Dialog(),
@@ -585,6 +658,15 @@ class ChartWorkspaceTest {
       true,
       null
     );
+  }
+
+  private static KeyEvent shortcutEvent(KeyCode keyCode) {
+    boolean macOs = System.getProperty("os.name", "").startsWith("Mac");
+    return new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode, false, !macOs, false, macOs);
+  }
+
+  private static KeyEvent plainKeyEvent(KeyCode keyCode) {
+    return new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode, false, false, false, false);
   }
 
   private static final class Fixture {

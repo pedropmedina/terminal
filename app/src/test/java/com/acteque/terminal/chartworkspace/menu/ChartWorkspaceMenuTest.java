@@ -17,6 +17,8 @@ import com.acteque.terminal.ui.Button;
 import com.acteque.terminal.ui.Button.Variant;
 import com.acteque.terminal.ui.icons.LucideIcon;
 import com.acteque.terminal.ui.icons.LucideIcons;
+import com.acteque.terminal.ui.kbd.Kbd;
+import com.acteque.terminal.ui.kbd.KbdGroup;
 import com.acteque.terminal.ui.popover.PopoverTrigger;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,10 +26,13 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.junit.jupiter.api.Test;
@@ -115,14 +120,17 @@ class ChartWorkspaceMenuTest {
           LucideIcons.SQUARE_SPLIT_HORIZONTAL,
           assertInstanceOf(LucideIcon.class, split.getGraphic()).getGlyph()
         );
-        split
-          .getPopover()
-          .getContent()
-          .lookupAll(".chart-workspace-split-action")
-          .stream()
-          .map(Button.class::cast)
-          .sorted((first, second) -> first.getText().compareTo(second.getText()))
-          .forEach(Button::fire);
+        VBox splitActions = assertInstanceOf(VBox.class, split.getPopover().getContent().getChildren().getFirst());
+        List<Button> splitButtons = splitActions.getChildren().stream().map(Button.class::cast).toList();
+        assertEquals(
+          List.of("Split right", "Split down", "Split up", "Split left"),
+          splitButtons.stream().map(ChartWorkspaceMenuTest::splitActionLabel).toList()
+        );
+        assertEquals(
+          List.of("L", "J", "K", "H"),
+          splitButtons.stream().map(ChartWorkspaceMenuTest::shortcutKey).toList()
+        );
+        splitButtons.forEach(Button::fire);
         Button close = assertInstanceOf(Button.class, buttons.getChildren().get(4));
         assertEquals(Variant.GHOST, close.getVariant());
         assertSame(LucideIcons.X, assertInstanceOf(LucideIcon.class, close.getGraphic()).getGlyph());
@@ -134,10 +142,10 @@ class ChartWorkspaceMenuTest {
         assertEquals(1, closes.get());
         assertEquals(
           List.of(
-            ChartSplitDirection.BOTTOM,
-            ChartSplitDirection.LEFT,
             ChartSplitDirection.RIGHT,
-            ChartSplitDirection.TOP
+            ChartSplitDirection.BOTTOM,
+            ChartSplitDirection.TOP,
+            ChartSplitDirection.LEFT
           ),
           splits
         );
@@ -148,5 +156,20 @@ class ChartWorkspaceMenuTest {
 
   private static Chart chart(String symbol) {
     return new Chart(List.of(), symbol, ChartInterval.DAILY);
+  }
+
+  private static String splitActionLabel(Button button) {
+    HBox content = assertInstanceOf(HBox.class, button.getGraphic());
+    assertEquals(3, content.getChildren().size());
+    assertSame(Priority.ALWAYS, HBox.getHgrow(content.getChildren().get(1)));
+    return assertInstanceOf(Label.class, content.getChildren().getFirst()).getText();
+  }
+
+  private static String shortcutKey(Button button) {
+    HBox content = assertInstanceOf(HBox.class, button.getGraphic());
+    KbdGroup group = assertInstanceOf(KbdGroup.class, content.getChildren().getLast());
+    assertEquals(2, group.getChildren().size());
+    assertEquals("⌘", assertInstanceOf(Kbd.class, group.getChildren().getFirst()).getText());
+    return assertInstanceOf(Kbd.class, group.getChildren().getLast()).getText();
   }
 }

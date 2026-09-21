@@ -122,6 +122,7 @@ public final class ChartWorkspace implements AutoCloseable {
     viewBuilder = new ChartWorkspaceViewBuilder(
       model,
       interactor::activate,
+      interactor::splitActive,
       menu.getView(),
       inspector.getView(),
       intervalSelection.getView(),

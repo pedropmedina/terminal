@@ -1,6 +1,7 @@
 package com.acteque.terminal.chartworkspace;
 
 import com.acteque.terminal.chart.Chart;
+import com.acteque.terminal.chart.ChartSplitDirection;
 import com.acteque.terminal.ui.dialog.Dialog;
 import com.acteque.terminal.ui.drawer.Drawer;
 import com.acteque.terminal.ui.resizable.ResizableHandle;
@@ -15,6 +16,10 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
@@ -24,9 +29,16 @@ import javafx.util.Builder;
 final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
 
   private static final PseudoClass ACTIVE_PSEUDO_CLASS = PseudoClass.getPseudoClass("workspace-active");
+  private static final List<SplitShortcut> SPLIT_SHORTCUTS = List.of(
+    new SplitShortcut(shortcut(KeyCode.L), ChartSplitDirection.RIGHT),
+    new SplitShortcut(shortcut(KeyCode.J), ChartSplitDirection.BOTTOM),
+    new SplitShortcut(shortcut(KeyCode.K), ChartSplitDirection.TOP),
+    new SplitShortcut(shortcut(KeyCode.H), ChartSplitDirection.LEFT)
+  );
 
   private final ChartWorkspaceModel model;
   private final Consumer<Chart> chartActivatedHandler;
+  private final Consumer<ChartSplitDirection> splitRequestedHandler;
   private final Map<Chart, ChartContainer> chartContainers = new IdentityHashMap<>();
   private final StackPane root = new StackPane();
   private final StackPane chartLayer = new StackPane();
@@ -36,6 +48,7 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
   ChartWorkspaceViewBuilder(
     ChartWorkspaceModel model,
     Consumer<Chart> chartActivatedHandler,
+    Consumer<ChartSplitDirection> splitRequestedHandler,
     Node menu,
     Drawer inspectorDrawer,
     Dialog intervalSelectionDialog,
@@ -43,6 +56,7 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
   ) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
     this.chartActivatedHandler = Objects.requireNonNull(chartActivatedHandler, "chartActivatedHandler cannot be null");
+    this.splitRequestedHandler = Objects.requireNonNull(splitRequestedHandler, "splitRequestedHandler cannot be null");
     this.inspectorDrawer = Objects.requireNonNull(inspectorDrawer, "inspectorDrawer cannot be null");
 
     menuOverlay = new StackPane(Objects.requireNonNull(menu, "menu cannot be null"));
@@ -52,6 +66,7 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
     StackPane.setAlignment(menuOverlay, Pos.TOP_CENTER);
     menuOverlay.boundsInParentProperty().addListener((ignored, previous, current) -> positionInspectorBelowMenu());
     root.getStyleClass().add("chart-workspace");
+    root.addEventFilter(KeyEvent.KEY_PRESSED, this::handleShortcut);
     root
       .getChildren()
       .setAll(chartLayer, menuOverlay, inspectorDrawer, intervalSelectionDialog, instrumentSearchDialog);
@@ -115,6 +130,30 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
     );
   }
 
+  private void handleShortcut(KeyEvent event) {
+    if (model.getActiveChart().modalOpenProperty().get()) {
+      return;
+    }
+    ChartSplitDirection direction = splitDirection(event);
+    if (direction != null) {
+      splitRequestedHandler.accept(direction);
+      event.consume();
+    }
+  }
+
+  static ChartSplitDirection splitDirection(KeyEvent event) {
+    Objects.requireNonNull(event, "event cannot be null");
+    return SPLIT_SHORTCUTS.stream()
+      .filter(shortcut -> shortcut.keyCombination().match(event))
+      .map(SplitShortcut::direction)
+      .findFirst()
+      .orElse(null);
+  }
+
+  private static KeyCombination shortcut(KeyCode keyCode) {
+    return new KeyCodeCombination(keyCode, KeyCombination.SHORTCUT_DOWN);
+  }
+
   private static void detach(Node node) {
     if (node instanceof ChartSlot slot) {
       List<Node> children = List.copyOf(slot.getChildren());
@@ -147,6 +186,8 @@ final class ChartWorkspaceViewBuilder implements Builder<StackPane> {
       getChildren().add(container);
     }
   }
+
+  private record SplitShortcut(KeyCombination keyCombination, ChartSplitDirection direction) {}
 
   private static final class ChartContainer extends StackPane {
 

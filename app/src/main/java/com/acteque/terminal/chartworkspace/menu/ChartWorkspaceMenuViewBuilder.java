@@ -12,6 +12,8 @@ import com.acteque.terminal.ui.Button.Size;
 import com.acteque.terminal.ui.Button.Variant;
 import com.acteque.terminal.ui.icons.LucideIcon;
 import com.acteque.terminal.ui.icons.LucideIcons;
+import com.acteque.terminal.ui.kbd.Kbd;
+import com.acteque.terminal.ui.kbd.KbdGroup;
 import com.acteque.terminal.ui.popover.Popover;
 import com.acteque.terminal.ui.popover.PopoverContent;
 import com.acteque.terminal.ui.popover.PopoverTrigger;
@@ -21,11 +23,15 @@ import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Label;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.util.Builder;
 
 /** Builds the reactive JavaFX view for the workspace menu. */
@@ -168,29 +174,46 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
   }
 
   private Popover createSplitPopover() {
-    GridPane actions = new GridPane();
+    VBox actions = new VBox();
     actions.getStyleClass().add("chart-workspace-split-actions");
-    addSplitAction(actions, "Top", ChartSplitDirection.TOP, 1, 0);
-    addSplitAction(actions, "Left", ChartSplitDirection.LEFT, 0, 1);
-    addSplitAction(actions, "Right", ChartSplitDirection.RIGHT, 2, 1);
-    addSplitAction(actions, "Bottom", ChartSplitDirection.BOTTOM, 1, 2);
+    addSplitAction(actions, "Split right", "L", ChartSplitDirection.RIGHT);
+    addSplitAction(actions, "Split down", "J", ChartSplitDirection.BOTTOM);
+    addSplitAction(actions, "Split up", "K", ChartSplitDirection.TOP);
+    addSplitAction(actions, "Split left", "H", ChartSplitDirection.LEFT);
 
     PopoverContent content = new PopoverContent(actions);
     content.getStyleClass().add("chart-workspace-split-popover");
     return new Popover(content);
   }
 
-  private void addSplitAction(GridPane actions, String label, ChartSplitDirection direction, int column, int row) {
-    Button button = new Button(label, Variant.GHOST, Size.DEFAULT);
+  private void addSplitAction(VBox actions, String label, String key, ChartSplitDirection direction) {
+    Label actionLabel = new Label(label);
+    actionLabel.getStyleClass().add("chart-workspace-split-action-label");
+    Region spacer = new Region();
+    HBox.setHgrow(spacer, Priority.ALWAYS);
+    HBox actionContent = new HBox(actionLabel, spacer, new KbdGroup(new Kbd("⌘"), new Kbd(key)));
+    actionContent.getStyleClass().add("chart-workspace-split-action-content");
+
+    Button button = new Button("", actionContent, Variant.GHOST, Size.DEFAULT);
     button.getStyleClass().add("chart-workspace-split-action");
-    button.setAccessibleText("Create chart to the " + label.toLowerCase());
+    button.setAccessibleText(label);
+    button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
     button.setFocusTraversable(true);
     button.setMaxWidth(Double.MAX_VALUE);
+    actionContent
+      .prefWidthProperty()
+      .bind(
+        Bindings.createDoubleBinding(
+          () -> Math.max(0.0, button.getWidth() - button.getInsets().getLeft() - button.getInsets().getRight()),
+          button.widthProperty(),
+          button.insetsProperty()
+        )
+      );
     button.setOnAction(ignored -> {
       splitPopover.setOpen(false);
       splitRequestedHandler.accept(direction);
     });
-    actions.add(button, column, row);
+    actions.getChildren().add(button);
   }
 
   private void updateChartTypeButton() {
