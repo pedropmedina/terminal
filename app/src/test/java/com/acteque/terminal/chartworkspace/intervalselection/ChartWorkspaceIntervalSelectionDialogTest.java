@@ -49,14 +49,14 @@ class ChartWorkspaceIntervalSelectionDialogTest {
       assertEquals("Add interval", addInterval.getText());
       assertSame(LucideIcons.PLUS, addIntervalIcon.getGlyph());
       assertEquals(27, dialog.lookupAll(".chart-workspace-interval-button").size());
-      ToggleGroupItem daily = button(dialog, "1D");
+      ToggleGroupItem daily = button(dialog, "D");
       Input input = (Input) dialog.lookup(".chart-workspace-interval-search-field");
       InputGroup searchGroup = assertInstanceOf(InputGroup.class, input.getParent());
       InputGroupAddon addIntervalAddon = assertInstanceOf(InputGroupAddon.class, addInterval.getParent());
       assertEquals(InputGroupAlignment.INLINE_END, addIntervalAddon.getAlignmentPosition());
       assertSame(searchGroup, addIntervalAddon.getParent());
       assertTrue(daily.isSelected());
-      assertFalse(button(dialog, "5M").isSelected());
+      assertFalse(button(dialog, "5m").isSelected());
       assertEquals(Toggle.Variant.OUTLINE, daily.getVariant());
       assertEquals("System", daily.getFont().getFamily());
       assertEquals(13.0, daily.getFont().getSize());
@@ -78,33 +78,33 @@ class ChartWorkspaceIntervalSelectionDialogTest {
       );
       assertEquals(
         Set.of(
-          "1S",
-          "5S",
-          "10S",
-          "15S",
-          "30S",
-          "45S",
-          "1T",
-          "10T",
-          "100T",
-          "1000T",
-          "1M",
-          "2M",
-          "5M",
-          "10M",
-          "15M",
-          "30M",
-          "45M",
-          "1H",
-          "2H",
-          "3H",
-          "4H",
-          "1D",
-          "1W",
-          "1Mo",
-          "3Mo",
-          "6Mo",
-          "12Mo"
+          "1s",
+          "5s",
+          "10s",
+          "15s",
+          "30s",
+          "45s",
+          "1t",
+          "10t",
+          "100t",
+          "1000t",
+          "1m",
+          "2m",
+          "5m",
+          "10m",
+          "15m",
+          "30m",
+          "45m",
+          "1h",
+          "2h",
+          "3h",
+          "4h",
+          "D",
+          "W",
+          "M",
+          "3mo",
+          "6mo",
+          "Y"
         ),
         dialog
           .lookupAll(".chart-workspace-interval-button")
@@ -151,7 +151,7 @@ class ChartWorkspaceIntervalSelectionDialogTest {
       field.setText("1m");
       assertEquals(1, dialog.lookupAll(".chart-workspace-interval-button").size());
       assertEquals(
-        "1M",
+        "1m",
         dialog
           .lookupAll(".chart-workspace-interval-button")
           .stream()
@@ -178,8 +178,8 @@ class ChartWorkspaceIntervalSelectionDialogTest {
       selection.onIntervalSelected(selected::set);
       selection.show();
 
-      ToggleGroupItem previous = button(dialog, "1D");
-      ToggleGroupItem latest = button(dialog, "4H");
+      ToggleGroupItem previous = button(dialog, "D");
+      ToggleGroupItem latest = button(dialog, "4h");
       pressEnter(latest);
 
       assertEquals(ChartInterval.FOUR_HOURS, selected.get());
@@ -230,17 +230,17 @@ class ChartWorkspaceIntervalSelectionDialogTest {
       FxTestSupport.runAndWait(() -> {
         Node addButton = dialogReference.get().lookup(".chart-workspace-interval-add-button");
         pressTab(addButton, false);
-        assertSame(button(dialogReference.get(), "1T"), addButton.getScene().getFocusOwner());
+        assertSame(button(dialogReference.get(), "1t"), addButton.getScene().getFocusOwner());
       });
       FxTestSupport.runAndWait(() -> {
-        ToggleGroupItem first = button(dialogReference.get(), "1T");
+        ToggleGroupItem first = button(dialogReference.get(), "1t");
         pressTab(first, false);
-        assertSame(button(dialogReference.get(), "10T"), first.getScene().getFocusOwner());
+        assertSame(button(dialogReference.get(), "10t"), first.getScene().getFocusOwner());
       });
       FxTestSupport.runAndWait(() -> {
-        ToggleGroupItem second = button(dialogReference.get(), "10T");
+        ToggleGroupItem second = button(dialogReference.get(), "10t");
         pressTab(second, true);
-        assertSame(button(dialogReference.get(), "1T"), second.getScene().getFocusOwner());
+        assertSame(button(dialogReference.get(), "1t"), second.getScene().getFocusOwner());
       });
       FxTestSupport.runAndWait(() -> {
         Input input = inputReference.get();
@@ -250,23 +250,23 @@ class ChartWorkspaceIntervalSelectionDialogTest {
         Node addButton = dialogReference.get().lookup(".chart-workspace-interval-add-button");
         assertSame(addButton, input.getScene().getFocusOwner());
         pressTab(addButton, false);
-        assertSame(button(dialogReference.get(), "1H"), input.getScene().getFocusOwner());
+        assertSame(button(dialogReference.get(), "1h"), input.getScene().getFocusOwner());
 
         input.requestFocus();
         pressTab(input, true);
-        assertSame(button(dialogReference.get(), "4H"), input.getScene().getFocusOwner());
+        assertSame(button(dialogReference.get(), "4h"), input.getScene().getFocusOwner());
 
-        ToggleGroupItem last = button(dialogReference.get(), "4H");
+        ToggleGroupItem last = button(dialogReference.get(), "4h");
         pressTab(last, false);
         assertSame(input, last.getScene().getFocusOwner());
       });
       FxTestSupport.runAndWait(() -> {
         Input input = inputReference.get();
-        input.setText("1d");
+        input.setText("D");
         input.requestFocus();
         pressTab(input, false);
         pressTab(dialogReference.get().lookup(".chart-workspace-interval-add-button"), false);
-        ToggleGroupItem selected = button(dialogReference.get(), "1D");
+        ToggleGroupItem selected = button(dialogReference.get(), "D");
 
         assertSame(selected, input.getScene().getFocusOwner());
       });
@@ -308,9 +308,9 @@ class ChartWorkspaceIntervalSelectionDialogTest {
       assertFalse(addDialog.isVisible());
       assertFalse(dialog.getContent().isDisabled());
       assertEquals(28, dialog.lookupAll(".chart-workspace-interval-button").size());
-      ToggleGroupItem custom = button(dialog, "7H");
+      ToggleGroupItem custom = button(dialog, "7h");
       custom.fire();
-      assertEquals("7H", selected.get().name());
+      assertEquals("7h", selected.get().name());
       assertEquals("Hours", ChartIntervalText.category(selected.get()));
     });
   }

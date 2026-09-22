@@ -164,7 +164,7 @@ class ChartWorkspaceTest {
         Input amount = assertInstanceOf(Input.class, intervalSelection.lookup(".chart-workspace-add-interval-amount"));
         amount.setText("7");
         assertInstanceOf(Button.class, intervalSelection.lookup(".chart-workspace-add-interval-submit")).fire();
-        intervalButton(intervalSelection, "4H").fire();
+        intervalButton(intervalSelection, "4h").fire();
         assertEquals(ChartInterval.DAILY, left.getInterval());
         assertEquals(ChartInterval.FOUR_HOURS, right.getInterval());
         assertFalse(intervalSelection.isOpen());
@@ -172,9 +172,9 @@ class ChartWorkspaceTest {
         left.getView().getParent().fireEvent(primaryMousePress());
         assertTrue(isActive(left));
         assertInstanceOf(Button.class, menuItems.getChildren().get(1)).fire();
-        ToggleGroupItem customInterval = intervalButton(intervalSelection, "7H");
+        ToggleGroupItem customInterval = intervalButton(intervalSelection, "7h");
         customInterval.fire();
-        assertEquals("7H", left.getInterval().name());
+        assertEquals("7h", left.getInterval().name());
         assertEquals(ChartInterval.FOUR_HOURS, right.getInterval());
 
         right.getView().getParent().fireEvent(primaryMousePress());

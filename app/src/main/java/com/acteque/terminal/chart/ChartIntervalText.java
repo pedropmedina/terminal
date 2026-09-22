@@ -29,8 +29,17 @@ public final class ChartIntervalText {
     };
   }
 
+  /**
+   * Returns a readable name for an interval, including yearly for twelve months.
+   *
+   * @param interval the chart interval to describe
+   * @return the interval's readable name
+   */
   public static String displayName(ChartInterval interval) {
     Objects.requireNonNull(interval, "interval cannot be null");
+    if (interval.equals(ChartInterval.TWELVE_MONTHS)) {
+      return "Yearly";
+    }
     if (interval.amount() == 1) {
       return switch (interval.classification()) {
         case DAYS -> "Daily";

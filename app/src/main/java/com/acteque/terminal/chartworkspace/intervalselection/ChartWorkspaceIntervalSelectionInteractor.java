@@ -43,20 +43,33 @@ final class ChartWorkspaceIntervalSelectionInteractor {
     model.setCurrentInterval(Objects.requireNonNull(interval, "interval cannot be null"));
   }
 
+  /**
+   * Filters intervals by short label first, then by descriptive text.
+   *
+   * @param query the entered search text, or null to show all intervals
+   */
   void setQuery(String query) {
     String normalizedQuery = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
     model.setQuery(normalizedQuery);
 
-    Map<String, List<ChartInterval>> matchingByCategory = new LinkedHashMap<>();
-    model
+    List<ChartInterval> exactMatches = model
       .intervalsProperty()
       .stream()
-      .filter(interval -> ChartIntervalText.matches(interval, normalizedQuery))
-      .forEach(interval ->
-        matchingByCategory
-          .computeIfAbsent(ChartIntervalText.category(interval), ignored -> new ArrayList<>())
-          .add(interval)
-      );
+      .filter(interval -> interval.name().toLowerCase(Locale.ROOT).equals(normalizedQuery))
+      .toList();
+    List<ChartInterval> matches = exactMatches.isEmpty()
+      ? model
+          .intervalsProperty()
+          .stream()
+          .filter(interval -> ChartIntervalText.matches(interval, normalizedQuery))
+          .toList()
+      : exactMatches;
+    Map<String, List<ChartInterval>> matchingByCategory = new LinkedHashMap<>();
+    matches.forEach(interval ->
+      matchingByCategory
+        .computeIfAbsent(ChartIntervalText.category(interval), ignored -> new ArrayList<>())
+        .add(interval)
+    );
     matchingByCategory.replaceAll((ignored, intervals) -> List.copyOf(intervals));
     model.setMatchingIntervals(Collections.unmodifiableMap(new LinkedHashMap<>(matchingByCategory)));
   }

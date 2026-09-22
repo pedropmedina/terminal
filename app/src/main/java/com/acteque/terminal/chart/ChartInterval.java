@@ -5,13 +5,13 @@ import java.util.Objects;
 /** Immutable interval value shared by chart MVCI models. */
 public record ChartInterval(int amount, Classification classification) {
   public enum Classification {
-    TICKS("T"),
-    SECONDS("S"),
-    MINUTES("M"),
-    HOURS("H"),
-    DAYS("D"),
-    WEEKS("W"),
-    MONTHS("Mo");
+    TICKS("t"),
+    SECONDS("s"),
+    MINUTES("m"),
+    HOURS("h"),
+    DAYS("d"),
+    WEEKS("w"),
+    MONTHS("mo");
 
     private final String suffix;
 
@@ -97,7 +97,23 @@ public record ChartInterval(int amount, Classification classification) {
     return new ChartInterval(amount, classification);
   }
 
+  /**
+   * Returns the short chart label, using single letters for standard calendar intervals.
+   *
+   * @return the interval's short display label
+   */
   public String name() {
+    if (amount == 1) {
+      return switch (classification) {
+        case DAYS -> "D";
+        case WEEKS -> "W";
+        case MONTHS -> "M";
+        default -> amount + classification.suffix;
+      };
+    }
+    if (amount == 12 && classification == Classification.MONTHS) {
+      return "Y";
+    }
     return amount + classification.suffix;
   }
 }
