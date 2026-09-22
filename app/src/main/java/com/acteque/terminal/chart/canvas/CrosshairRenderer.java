@@ -1,5 +1,6 @@
 package com.acteque.terminal.chart.canvas;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Objects;
@@ -10,7 +11,8 @@ import javafx.scene.text.TextAlignment;
 /** Renders the chart's crosshair and its price and date badges. */
 final class CrosshairRenderer {
 
-  private static final double DATE_BADGE_WIDTH = 120.0;
+  private static final double CALENDAR_BADGE_WIDTH = 120.0;
+  private static final double INTRADAY_BADGE_WIDTH = 180.0;
   private static final double PRICE_TEXT_OFFSET = 10.0;
   private static final double DATE_TEXT_OFFSET = 10.0;
 
@@ -26,11 +28,11 @@ final class CrosshairRenderer {
     double x,
     double y,
     double price,
-    LocalDate date,
+    String dateText,
     RenderStyle style
   ) {
     Objects.requireNonNull(graphics, "graphics cannot be null");
-    Objects.requireNonNull(date, "date cannot be null");
+    Objects.requireNonNull(dateText, "dateText cannot be null");
     Objects.requireNonNull(style, "style cannot be null");
 
     graphics.save();
@@ -50,13 +52,14 @@ final class CrosshairRenderer {
     graphics.setTextBaseline(VPos.CENTER);
     graphics.fillText(priceText(price), chartRight + PRICE_TEXT_OFFSET, y);
 
-    double dateBadgeLeft = Math.max(chartLeft, Math.min(chartRight - DATE_BADGE_WIDTH, x - DATE_BADGE_WIDTH / 2.0));
+    double dateBadgeWidth = dateText.contains(":") ? INTRADAY_BADGE_WIDTH : CALENDAR_BADGE_WIDTH;
+    double dateBadgeLeft = Math.max(chartLeft, Math.min(chartRight - dateBadgeWidth, x - dateBadgeWidth / 2.0));
     graphics.setFill(style.badgeBackground());
-    graphics.fillRect(dateBadgeLeft, chartBottom, DATE_BADGE_WIDTH, style.badgeHeight());
+    graphics.fillRect(dateBadgeLeft, chartBottom, dateBadgeWidth, style.badgeHeight());
     graphics.setFill(style.badgeForeground());
     graphics.setTextAlign(TextAlignment.CENTER);
     graphics.setTextBaseline(VPos.TOP);
-    graphics.fillText(dateText(date), dateBadgeLeft + DATE_BADGE_WIDTH / 2.0, chartBottom + DATE_TEXT_OFFSET);
+    graphics.fillText(dateText, dateBadgeLeft + dateBadgeWidth / 2.0, chartBottom + DATE_TEXT_OFFSET);
   }
 
   String priceText(double price) {
@@ -65,5 +68,9 @@ final class CrosshairRenderer {
 
   String dateText(LocalDate date) {
     return ChartDateFormatter.crosshair(Objects.requireNonNull(date, "date cannot be null"));
+  }
+
+  String dateText(Instant timestamp) {
+    return ChartDateFormatter.crosshair(Objects.requireNonNull(timestamp, "timestamp cannot be null"));
   }
 }

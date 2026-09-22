@@ -6,10 +6,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.chart.canvas.XAxisTickCalculator.XAxisTick;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class XAxisTickCalculatorTest {
+
+  @Test
+  void projectsFutureMonthlySlotsByCalendarMonths() {
+    List<XAxisTick> ticks = XAxisTickCalculator.calculate(
+      List.of(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 2, 1)),
+      0,
+      4,
+      660.0,
+      LABEL_SPACING,
+      Period.ofMonths(1)
+    );
+
+    assertEquals(List.of("2026", "Feb", "Mar", "Apr"), ticks.stream().map(XAxisTick::label).toList());
+  }
 
   private static final double LABEL_SPACING = 56.0;
   private static final List<LocalDate> TRADING_DATES = List.of(

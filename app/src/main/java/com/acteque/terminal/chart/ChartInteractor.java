@@ -1,6 +1,9 @@
 package com.acteque.terminal.chart;
 
 import com.acteque.terminal.marketdata.CalendarData;
+import com.acteque.terminal.marketdata.HistoricalInterval;
+import com.acteque.terminal.marketdata.HistoricalPage;
+import com.acteque.terminal.marketdata.InstrumentHistoryLoadResult;
 import com.acteque.terminal.marketdata.InstrumentLoadResult;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import java.util.List;
@@ -24,7 +27,12 @@ final class ChartInteractor implements AutoCloseable {
   private Consumer<List<CalendarData>> earlierHistoryLoadedHandler = ignored -> {};
   private BiConsumer<String, Throwable> instrumentLoadFailedHandler = (symbol, failure) -> {};
   private Consumer<Throwable> earlierHistoryLoadFailedHandler = ignored -> {};
+  private Consumer<InstrumentHistoryLoadResult> historyLoadedHandler = ignored -> {};
+  private Consumer<HistoricalPage> earlierSelectedHistoryLoadedHandler = ignored -> {};
   private long instrumentLoadGeneration;
+  private String requestedSymbol;
+  private ChartInterval requestedInterval;
+  private boolean historyLoadInProgress;
   private boolean closed;
 
   ChartInteractor(ChartModel model) {
@@ -39,6 +47,8 @@ final class ChartInteractor implements AutoCloseable {
 
   void initialize(ChartInterval interval) {
     model.setInterval(Objects.requireNonNull(interval, "interval cannot be null"));
+    requestedInterval = interval;
+    requestedSymbol = model.getSymbol();
   }
 
   void openInstrumentSearch() {
@@ -90,6 +100,111 @@ final class ChartInteractor implements AutoCloseable {
 
   void onEarlierHistoryLoadFailed(Consumer<Throwable> callback) {
     earlierHistoryLoadFailedHandler = Objects.requireNonNull(callback, "callback cannot be null");
+  }
+
+  void onHistoryLoaded(Consumer<InstrumentHistoryLoadResult> callback) {
+    historyLoadedHandler = Objects.requireNonNull(callback, "callback cannot be null");
+  }
+
+  void onEarlierSelectedHistoryLoaded(Consumer<HistoricalPage> callback) {
+    earlierSelectedHistoryLoadedHandler = Objects.requireNonNull(callback, "callback cannot be null");
+  }
+
+  boolean supports(ChartInterval interval) {
+    return ChartIntervalHistoryMapper.map(interval)
+      .filter(candidate -> marketData != null && marketData.supports(candidate))
+      .isPresent();
+  }
+
+  void loadInitialHistory(String symbol) {
+    requestedSymbol = Objects.requireNonNull(symbol, "symbol cannot be null");
+    HistoricalInterval interval = selectedHistoryInterval();
+    displayHistoryLoad(symbol, requestedInterval, requireMarketData().loadInitial(interval));
+  }
+
+  void selectInstrumentHistory(String symbol) {
+    requestedSymbol = Objects.requireNonNull(symbol, "symbol cannot be null");
+    HistoricalInterval interval = selectedHistoryInterval();
+    displayHistoryLoad(symbol, requestedInterval, requireMarketData().loadInstrumentHistory(symbol, interval));
+  }
+
+  void requestInterval(ChartInterval interval) {
+    ChartInterval requested = Objects.requireNonNull(interval, "interval cannot be null");
+    if (marketData == null) {
+      selectInterval(requested);
+      return;
+    }
+    HistoricalInterval historical = ChartIntervalHistoryMapper.map(requested)
+      .filter(marketData::supports)
+      .orElseThrow(() -> new IllegalArgumentException("Unsupported chart interval: " + requested));
+    closeIntervalSelection();
+    if (requested.equals(model.getInterval()) && !historyLoadInProgress) {
+      return;
+    }
+    requestedInterval = requested;
+    String symbol = Objects.requireNonNull(requestedSymbol, "requestedSymbol cannot be null");
+    displayHistoryLoad(symbol, requested, marketData.loadInstrumentHistory(symbol, historical));
+  }
+
+  void loadEarlierSelectedHistory() {
+    long generation = instrumentLoadGeneration;
+    requireMarketData()
+      .loadEarlierHistory()
+      .whenComplete((page, failure) ->
+        uiExecutor.execute(() -> {
+          if (closed || generation != instrumentLoadGeneration) {
+            return;
+          }
+          if (failure != null) {
+            earlierHistoryLoadFailedHandler.accept(unwrap(failure));
+          } else {
+            earlierSelectedHistoryLoadedHandler.accept(page);
+          }
+        })
+      );
+  }
+
+  private HistoricalInterval selectedHistoryInterval() {
+    return ChartIntervalHistoryMapper.map(requestedInterval)
+      .filter(candidate -> requireMarketData().supports(candidate))
+      .orElseThrow(() -> new IllegalArgumentException("Unsupported chart interval: " + requestedInterval));
+  }
+
+  private void displayHistoryLoad(
+    String symbol,
+    ChartInterval requestedInterval,
+    CompletionStage<InstrumentHistoryLoadResult> load
+  ) {
+    long generation = ++instrumentLoadGeneration;
+    historyLoadInProgress = true;
+    model.setLoadError(null);
+    instrumentLoadStartedHandler.run();
+    load.whenComplete((result, failure) ->
+      uiExecutor.execute(() -> {
+        if (closed || generation != instrumentLoadGeneration) {
+          return;
+        }
+        historyLoadInProgress = false;
+        if (failure != null) {
+          Throwable cause = unwrap(failure);
+          requestedSymbol = model.getSymbol();
+          this.requestedInterval = model.getInterval();
+          if (!(cause instanceof CancellationException)) {
+            model.setLoadError(
+              "Unable to load " + symbol + " at " + requestedInterval.name() + ": " + cause.getMessage()
+            );
+            instrumentLoadFailedHandler.accept(symbol, cause);
+          }
+          return;
+        }
+        requestedSymbol = result.symbol();
+        this.requestedInterval = requestedInterval;
+        model.setInterval(requestedInterval);
+        model.setLoadError(null);
+        intervalSelectedHandler.accept(requestedInterval);
+        historyLoadedHandler.accept(result);
+      })
+    );
   }
 
   void loadInitialInstrument(String symbol) {

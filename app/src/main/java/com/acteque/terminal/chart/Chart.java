@@ -3,6 +3,8 @@ package com.acteque.terminal.chart;
 import com.acteque.terminal.chart.canvas.ChartCanvas;
 import com.acteque.terminal.chart.statusline.ChartStatusLine;
 import com.acteque.terminal.marketdata.CalendarData;
+import com.acteque.terminal.marketdata.HistoricalPage;
+import com.acteque.terminal.marketdata.InstrumentHistoryLoadResult;
 import com.acteque.terminal.marketdata.InstrumentLoadResult;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import com.acteque.terminal.marketlogos.InstrumentLogo;
@@ -131,7 +133,9 @@ public final class Chart implements AutoCloseable {
       interactor.onEarlierHistoryLoaded(bars -> canvas.setPricePoints(toPricePoints(bars)));
       interactor.onInstrumentLoadFailed(Chart::reportInstrumentLoadFailure);
       interactor.onEarlierHistoryLoadFailed(Chart::reportEarlierHistoryLoadFailure);
-      canvas.setOnEarlierHistoryRequested(interactor::loadEarlierHistory);
+      interactor.onHistoryLoaded(this::applyLoadedHistory);
+      interactor.onEarlierSelectedHistoryLoaded(this::applyEarlierHistory);
+      canvas.setOnEarlierHistoryRequested(interactor::loadEarlierSelectedHistory);
     }
   }
 
@@ -217,7 +221,11 @@ public final class Chart implements AutoCloseable {
 
   public void selectInstrument(String symbol) {
     interactor.closeInstrumentSearch();
-    interactor.selectInstrument(Objects.requireNonNull(symbol, "symbol cannot be null"));
+    if (ownsMarketData) {
+      interactor.selectInstrumentHistory(Objects.requireNonNull(symbol, "symbol cannot be null"));
+    } else {
+      interactor.selectInstrument(Objects.requireNonNull(symbol, "symbol cannot be null"));
+    }
   }
 
   public void setInstrument(String symbol, String displayName, List<CalendarData> bars, Optional<InstrumentLogo> logo) {
@@ -241,7 +249,17 @@ public final class Chart implements AutoCloseable {
   }
 
   public void setInterval(ChartInterval interval) {
-    interactor.selectInterval(Objects.requireNonNull(interval, "interval cannot be null"));
+    interactor.requestInterval(Objects.requireNonNull(interval, "interval cannot be null"));
+  }
+
+  /**
+   * Reports whether this chart can request data for an interval.
+   *
+   * @param interval the proposed chart interval
+   * @return true when the chart's provider can fetch bars for the interval
+   */
+  public boolean supportsInterval(ChartInterval interval) {
+    return ownsMarketData ? interactor.supports(interval) : true;
   }
 
   public void drawChart() {
@@ -249,7 +267,11 @@ public final class Chart implements AutoCloseable {
   }
 
   public void loadInitialInstrument() {
-    interactor.loadInitialInstrument(initialSymbol);
+    if (ownsMarketData) {
+      interactor.loadInitialHistory(initialSymbol);
+    } else {
+      interactor.loadInitialInstrument(initialSymbol);
+    }
   }
 
   @Override
@@ -280,6 +302,32 @@ public final class Chart implements AutoCloseable {
       );
     }
     setInstrument(instrument.symbol(), instrument.displayName(), instrument.calendarData(), logo);
+  }
+
+  private void applyLoadedHistory(InstrumentHistoryLoadResult result) {
+    Optional<InstrumentLogo> logo = Optional.empty();
+    try {
+      logo = logoSource.findLogo(new LogoRequest(result.details().symbol(), result.details().exchange()));
+    } catch (LogoException failure) {
+      System.getLogger(Chart.class.getName()).log(
+        System.Logger.Level.WARNING,
+        "Could not resolve instrument logo",
+        failure
+      );
+    }
+    model.setSymbol(result.symbol());
+    statusLine.setInstrument(result.displayName(), logo);
+    canvas.setInstrumentPricePoints(toPricePoints(result.history()));
+  }
+
+  private void applyEarlierHistory(HistoricalPage page) {
+    canvas.setPricePoints(toPricePoints(page));
+  }
+
+  private static List<PricePoint> toPricePoints(HistoricalPage page) {
+    return page.interval() instanceof com.acteque.terminal.marketdata.HistoricalInterval.Calendar
+      ? page.calendarData().stream().map(PricePoint::from).toList()
+      : page.intradayData().stream().map(PricePoint::from).toList();
   }
 
   private static void reportEarlierHistoryLoadFailure(Throwable failure) {

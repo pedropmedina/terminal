@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.Label;
@@ -112,6 +113,11 @@ final class ChartWorkspaceIntervalSelectionViewBuilder implements Builder<Dialog
     return root;
   }
 
+  void setAvailability(Predicate<ChartInterval> availability) {
+    addIntervalDialog.setAvailability(availability);
+    rebuildCategories();
+  }
+
   @Override
   public void refreshView() {
     intervalField.setPromptText("Change interval e.g. 5m, 1h");
@@ -176,6 +182,10 @@ final class ChartWorkspaceIntervalSelectionViewBuilder implements Builder<Dialog
     item.setFocusTraversable(true);
     item.setAccessibleText(ChartIntervalText.description(interval));
     item.setSelected(interval.equals(model.getCurrentInterval()));
+    item.setDisable(!model.isAvailable(interval));
+    if (item.isDisabled()) {
+      item.setAccessibleText(ChartIntervalText.description(interval) + ", unavailable from this provider");
+    }
     intervalItems.put(interval, item);
 
     item.addEventFilter(KeyEvent.KEY_PRESSED, event -> {

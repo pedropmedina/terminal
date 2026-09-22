@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.acteque.terminal.AppTheme;
 import com.acteque.terminal.AppThemeManager;
 import com.acteque.terminal.chart.ChartInterval;
+import com.acteque.terminal.chart.ChartInterval.Classification;
+import com.acteque.terminal.chart.ChartIntervalHistoryMapper;
 import com.acteque.terminal.chart.ChartIntervalText;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Input;
@@ -37,6 +39,31 @@ import javafx.stage.Stage;
 import org.junit.jupiter.api.Test;
 
 class ChartWorkspaceIntervalSelectionDialogTest {
+
+  @Test
+  void disablesUnavailableIntervalsWithoutRemovingThem() {
+    FxTestSupport.runAndWait(() -> {
+      ChartWorkspaceIntervalSelection selection = new ChartWorkspaceIntervalSelection(ChartInterval.DAILY);
+      selection.setAvailability(interval -> ChartIntervalHistoryMapper.map(interval).isPresent());
+      Dialog dialog = selection.getView();
+      new Scene(new StackPane(dialog), 800.0, 600.0);
+      selection.show();
+
+      assertTrue(button(dialog, "1s").isDisabled());
+      assertTrue(button(dialog, "3mo").isDisabled());
+      assertFalse(button(dialog, "5m").isDisabled());
+      assertFalse(button(dialog, "Y").isDisabled());
+
+      ((Button) dialog.lookup(".chart-workspace-interval-add-button")).fire();
+      @SuppressWarnings("unchecked")
+      Select<Classification> classification = (Select<Classification>) dialog.lookup(
+        ".chart-workspace-add-interval-classification"
+      );
+      classification.setValue(Classification.DAYS);
+      ((Input) dialog.lookup(".chart-workspace-add-interval-amount")).setText("2");
+      assertTrue(((Button) dialog.lookup(".chart-workspace-add-interval-submit")).isDisabled());
+    });
+  }
 
   @Test
   void displaysCategorizedIntervalButtonsAndHighlightsTheCurrentInterval() {

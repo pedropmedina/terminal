@@ -17,6 +17,10 @@ import com.acteque.terminal.chart.ChartInterval.Classification;
 import com.acteque.terminal.chart.ChartSplitDirection;
 import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.marketdata.CalendarData;
+import com.acteque.terminal.marketdata.HistoricalInterval;
+import com.acteque.terminal.marketdata.HistoricalPage;
+import com.acteque.terminal.marketdata.Instrument;
+import com.acteque.terminal.marketdata.InstrumentHistoryLoadResult;
 import com.acteque.terminal.marketdata.InstrumentLoadResult;
 import com.acteque.terminal.marketdata.MarketDataSession;
 import com.acteque.terminal.marketlogos.InstrumentLogo;
@@ -867,6 +871,21 @@ class ChartWorkspaceTest {
   private static final class StubMarketData implements MarketDataSession {
 
     private int closes;
+
+    @Override
+    public boolean supports(HistoricalInterval interval) {
+      return true;
+    }
+
+    @Override
+    public CompletableFuture<InstrumentHistoryLoadResult> loadInstrumentHistory(
+      String symbol,
+      HistoricalInterval interval
+    ) {
+      HistoricalPage page = new HistoricalPage(interval, List.of(), List.of());
+      Instrument details = new Instrument(symbol, Optional.of(symbol), Optional.empty(), Optional.empty());
+      return CompletableFuture.completedFuture(new InstrumentHistoryLoadResult(symbol, symbol, details, page));
+    }
 
     @Override
     public CompletableFuture<InstrumentLoadResult> loadInitial() {

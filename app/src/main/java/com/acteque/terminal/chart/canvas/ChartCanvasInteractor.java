@@ -13,6 +13,7 @@ import java.util.Objects;
 final class ChartCanvasInteractor {
 
   static final int MIN_VISIBLE_POINTS = 8;
+  static final int INITIAL_INTRADAY_VISIBLE_BARS = 500;
   static final double MAX_Y_ZOOM_SCALE = 5.0;
   static final double X_ZOOM_PIXELS_PER_POINT = 8.0;
   static final double Y_ZOOM_PIXELS_PER_STEP = 96.0;
@@ -54,7 +55,9 @@ final class ChartCanvasInteractor {
 
   void setInstrumentPricePoints(List<PricePoint> updatedPoints) {
     model.pricePoints = List.copyOf(updatedPoints);
-    model.visiblePricePointCount = model.pricePoints.size();
+    model.visiblePricePointCount = model.pricePoints.stream().anyMatch(point -> point.timestamp().isPresent())
+      ? Math.min(INITIAL_INTRADAY_VISIBLE_BARS, model.pricePoints.size())
+      : model.pricePoints.size();
     model.visiblePricePointOffset = 0;
     model.yZoomScale = 1.0;
     model.lockedPriceRange = null;

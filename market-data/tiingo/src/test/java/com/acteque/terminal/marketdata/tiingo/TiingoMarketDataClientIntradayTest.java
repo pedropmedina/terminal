@@ -1,8 +1,11 @@
 package com.acteque.terminal.marketdata.tiingo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.acteque.terminal.marketdata.CalendarInterval;
 import com.acteque.terminal.marketdata.IntradayData;
 import com.acteque.terminal.marketdata.IntradayRequest;
 import com.acteque.terminal.marketdata.MarketDataException;
@@ -17,6 +20,30 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class TiingoMarketDataClientIntradayTest {
+
+  @Test
+  void advertisesCalendarAndWholeMinuteIntradayRequests() {
+    TiingoHttpTransport transport = (uri, headers) -> {
+      throw new AssertionError("Capability checks must not call a provider endpoint");
+    };
+    try (
+      TiingoMarketDataClient client = new TiingoMarketDataClient(
+        "test-token",
+        URI.create("https://example.test"),
+        transport
+      )
+    ) {
+      var historical = client.historical().orElseThrow();
+      for (CalendarInterval interval : CalendarInterval.values()) {
+        assertTrue(historical.supports(interval));
+      }
+      assertTrue(historical.supports(Duration.ofMinutes(1)));
+      assertTrue(historical.supports(Duration.ofMinutes(5)));
+      assertTrue(historical.supports(Duration.ofHours(23)));
+      assertFalse(historical.supports(Duration.ofSeconds(30)));
+      assertFalse(historical.supports(Duration.ofDays(1)));
+    }
+  }
 
   @Test
   void requestsAndMapsTimestampedIexBars() {

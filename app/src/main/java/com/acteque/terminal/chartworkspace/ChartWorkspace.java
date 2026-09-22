@@ -160,6 +160,7 @@ public final class ChartWorkspace implements AutoCloseable {
     instrumentSearch.setCurrentSymbol(observedChart.getSymbol());
     intervalSelection.close();
     intervalSelection.setCurrentInterval(observedChart.getInterval());
+    intervalSelection.setAvailability(observedChart::supportsInterval);
     observedChart.modalOpenProperty().addListener(modalOpenListener);
     observedChart.instrumentSearchOpenProperty().addListener(instrumentSearchOpenListener);
     observedChart.intervalSelectionOpenProperty().addListener(intervalSelectionOpenListener);

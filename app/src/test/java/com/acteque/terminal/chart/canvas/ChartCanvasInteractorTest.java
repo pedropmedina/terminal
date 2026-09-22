@@ -9,14 +9,42 @@ import com.acteque.terminal.chart.ChartType;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.chart.canvas.ChartCanvasModel.DragMode;
 import com.acteque.terminal.chart.canvas.ChartCanvasModel.PriceRange;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 
 class ChartCanvasInteractorTest {
+
+  @Test
+  void showsTheLatestFiveHundredIntradayBarsInitially() {
+    ChartCanvasModel model = new ChartCanvasModel();
+    ChartCanvasInteractor interactor = new ChartCanvasInteractor(model);
+    interactor.initialize(List.of(), ChartInterval.ONE_MINUTE);
+    List<PricePoint> bars = IntStream.range(0, 600)
+      .mapToObj(index ->
+        new PricePoint(
+          LocalDate.of(2026, 8, 20),
+          Optional.of(Instant.parse("2026-08-20T13:30:00Z").plusSeconds(index * 60L)),
+          1,
+          1,
+          1,
+          1,
+          1
+        )
+      )
+      .toList();
+
+    interactor.setInstrumentPricePoints(bars);
+
+    assertEquals(500, model.visiblePricePointCount);
+    assertEquals(0, model.visiblePricePointOffset);
+    assertEquals(600, model.pricePoints.size());
+  }
 
   @Test
   void publishesTheHoveredPointAndFallsBackToTheLatestVisiblePoint() {

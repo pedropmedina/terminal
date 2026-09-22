@@ -4,6 +4,7 @@ import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.ui.dialog.Dialog;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import javafx.beans.value.ObservableBooleanValue;
 
 /** Composes and exposes the chart interval-selection MVCI feature. */
@@ -36,6 +37,16 @@ public final class ChartWorkspaceIntervalSelection {
     interactor.setCurrentInterval(interval);
   }
 
+  /**
+   * Updates which visible intervals the active chart can request.
+   *
+   * @param availability the active chart's interval support check
+   */
+  public void setAvailability(Predicate<ChartInterval> availability) {
+    interactor.setAvailability(availability);
+    viewBuilder.setAvailability(availability);
+  }
+
   public ObservableBooleanValue openProperty() {
     return interactor.openProperty();
   }
@@ -57,6 +68,9 @@ public final class ChartWorkspaceIntervalSelection {
   }
 
   private void select(ChartInterval interval) {
+    if (!interactor.isAvailable(interval)) {
+      return;
+    }
     interactor.select(interval);
     interactor.close();
     intervalSelectedHandler.accept(interval);

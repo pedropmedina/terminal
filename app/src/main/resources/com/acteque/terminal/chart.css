@@ -8,6 +8,16 @@
   -fx-padding: 0 12px 38px 12px;
 }
 
+.chart-load-error {
+  -fx-background-color: -app-destructive;
+  -fx-text-fill: white;
+  -fx-padding: 8px 12px;
+  -fx-background-radius: 4px;
+  -fx-alignment: center;
+  -fx-max-width: 520px;
+  -fx-wrap-text: true;
+}
+
 .chart-canvas {
   -chart-background: -app-background;
   -chart-axis: -app-foreground;

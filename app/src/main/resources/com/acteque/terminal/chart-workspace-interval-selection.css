@@ -59,6 +59,10 @@
   -fx-padding: 0 6px;
 }
 
+.chart-workspace-interval-toggle-group > .chart-workspace-interval-button:disabled {
+  -fx-opacity: 0.45;
+}
+
 .chart-workspace-interval-toggle-group > .chart-workspace-interval-button:selected {
   -fx-background-color: -app-primary;
   -fx-border-color: -app-primary;

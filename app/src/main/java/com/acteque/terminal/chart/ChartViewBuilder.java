@@ -4,7 +4,9 @@ import com.acteque.terminal.reload.ReloadHooks;
 import com.acteque.terminal.reload.ReloadTarget;
 import java.util.List;
 import java.util.Objects;
+import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -72,7 +74,14 @@ final class ChartViewBuilder implements Builder<StackPane>, ReloadTarget {
     statusOverlay.getStyleClass().add("chart-status-overlay");
     statusOverlay.setPickOnBounds(false);
 
-    root.getChildren().setAll(canvas, statusOverlay);
+    Label loadError = new Label();
+    loadError.getStyleClass().add("chart-load-error");
+    loadError.textProperty().bind(model.loadErrorProperty());
+    loadError.visibleProperty().bind(model.loadErrorProperty().isNotNull());
+    loadError.managedProperty().bind(loadError.visibleProperty());
+    loadError.setMouseTransparent(true);
+    StackPane.setAlignment(loadError, Pos.TOP_CENTER);
+    root.getChildren().setAll(canvas, statusOverlay, loadError);
   }
 
   private void handleShortcut(KeyEvent event) {

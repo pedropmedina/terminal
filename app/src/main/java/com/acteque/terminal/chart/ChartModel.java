@@ -5,6 +5,8 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.paint.Color;
 
@@ -25,6 +27,7 @@ final class ChartModel {
   private final ReadOnlyObjectWrapper<ChartInterval> interval = new ReadOnlyObjectWrapper<>(this, "interval");
   private final ReadOnlyObjectWrapper<ChartType> chartType = new ReadOnlyObjectWrapper<>(this, "chartType");
   private final ReadOnlyObjectWrapper<String> symbol = new ReadOnlyObjectWrapper<>(this, "symbol");
+  private final ReadOnlyStringWrapper loadError = new ReadOnlyStringWrapper(this, "loadError");
   private final BooleanBinding modalOpen = instrumentSearchOpen.or(intervalSelectionOpen);
 
   boolean isInstrumentSearchOpen() {
@@ -109,5 +112,13 @@ final class ChartModel {
 
   void setSymbol(String value) {
     symbol.set(value);
+  }
+
+  ReadOnlyStringProperty loadErrorProperty() {
+    return loadError.getReadOnlyProperty();
+  }
+
+  void setLoadError(String value) {
+    loadError.set(value);
   }
 }

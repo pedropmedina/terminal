@@ -3,6 +3,7 @@ package com.acteque.terminal.chartworkspace.intervalselection;
 import com.acteque.terminal.chart.ChartInterval;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyListProperty;
@@ -14,6 +15,16 @@ import javafx.collections.FXCollections;
 
 /** Observable state shared by the interval-selection MVCI components. */
 final class ChartWorkspaceIntervalSelectionModel {
+
+  private Predicate<ChartInterval> availability = ignored -> true;
+
+  boolean isAvailable(ChartInterval interval) {
+    return availability.test(interval);
+  }
+
+  void setAvailability(Predicate<ChartInterval> value) {
+    availability = value;
+  }
 
   private final ReadOnlyObjectWrapper<ChartInterval> currentInterval = new ReadOnlyObjectWrapper<>(
     this,

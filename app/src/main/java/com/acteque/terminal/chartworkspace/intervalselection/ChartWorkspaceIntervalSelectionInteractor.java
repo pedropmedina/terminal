@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 import javafx.beans.value.ObservableBooleanValue;
 
 /** Applies interval-selection state transitions without depending on its layout. */
@@ -43,6 +44,14 @@ final class ChartWorkspaceIntervalSelectionInteractor {
     model.setCurrentInterval(Objects.requireNonNull(interval, "interval cannot be null"));
   }
 
+  void setAvailability(Predicate<ChartInterval> availability) {
+    model.setAvailability(Objects.requireNonNull(availability, "availability cannot be null"));
+  }
+
+  boolean isAvailable(ChartInterval interval) {
+    return model.isAvailable(interval);
+  }
+
   /**
    * Filters intervals by short label first, then by descriptive text.
    *
@@ -75,16 +84,29 @@ final class ChartWorkspaceIntervalSelectionInteractor {
   }
 
   void addInterval(ChartInterval interval) {
-    model.addInterval(Objects.requireNonNull(interval, "interval cannot be null"));
+    Objects.requireNonNull(interval, "interval cannot be null");
+    if (!model.isAvailable(interval)) {
+      return;
+    }
+    model.addInterval(interval);
     setQuery(model.getQuery());
   }
 
   void select(ChartInterval interval) {
+    if (!model.isAvailable(interval)) {
+      return;
+    }
     model.setCurrentInterval(Objects.requireNonNull(interval, "interval cannot be null"));
   }
 
   ChartInterval soleMatch() {
-    List<ChartInterval> matches = model.getMatchingIntervals().values().stream().flatMap(List::stream).toList();
+    List<ChartInterval> matches = model
+      .getMatchingIntervals()
+      .values()
+      .stream()
+      .flatMap(List::stream)
+      .filter(model::isAvailable)
+      .toList();
     return matches.size() == 1 ? matches.getFirst() : null;
   }
 }

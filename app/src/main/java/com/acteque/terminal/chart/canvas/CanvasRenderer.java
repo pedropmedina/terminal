@@ -1,10 +1,14 @@
 package com.acteque.terminal.chart.canvas;
 
+import com.acteque.terminal.chart.ChartIntervalHistoryMapper;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.chart.canvas.ChartCanvasModel.PriceRange;
 import com.acteque.terminal.chart.canvas.ChartCanvasModel.VisibleWindow;
 import com.acteque.terminal.chart.canvas.XAxisTickCalculator.XAxisTick;
+import com.acteque.terminal.marketdata.HistoricalInterval;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -213,7 +217,9 @@ final class CanvasRenderer {
     double y = model.crosshairY;
     double price = priceForY(y, bounds, priceRange);
     int slotIndex = slotIndexForX(x, bounds);
-    LocalDate date = dateForSlot(slotIndex, visibleWindow);
+    String dateText = !hasIntradayBars()
+      ? crosshair.dateText(dateForSlot(slotIndex, visibleWindow))
+      : timeForSlot(slotIndex, visibleWindow);
     crosshair.draw(
       graphics,
       bounds.left(),
@@ -224,7 +230,7 @@ final class CanvasRenderer {
       x,
       y,
       price,
-      date,
+      dateText,
       style
     );
   }
@@ -258,13 +264,56 @@ final class CanvasRenderer {
   }
 
   private List<XAxisTick> xAxisTicks(ChartBounds bounds, VisibleWindow visibleWindow, RenderStyle style) {
+    if (hasIntradayBars()) {
+      return IntradayXAxisTickCalculator.calculate(
+        model.pricePoints
+          .stream()
+          .map(point -> point.timestamp().orElseThrow())
+          .toList(),
+        visibleWindow.firstDataIndex(),
+        model.visiblePricePointCount,
+        bounds.width(),
+        style.axisLabelSpacing()
+      );
+    }
     return XAxisTickCalculator.calculate(
       model.pricePoints.stream().map(PricePoint::date).toList(),
       visibleWindow.firstDataIndex(),
       model.visiblePricePointCount,
       bounds.width(),
-      style.axisLabelSpacing()
+      style.axisLabelSpacing(),
+      calendarPeriod()
     );
+  }
+
+  private Period calendarPeriod() {
+    return switch (model.interval.classification()) {
+      case WEEKS -> Period.ofWeeks(model.interval.amount());
+      case MONTHS -> Period.ofMonths(model.interval.amount());
+      default -> Period.ofDays(model.interval.amount());
+    };
+  }
+
+  private Duration intradayInterval() {
+    return ChartIntervalHistoryMapper.map(model.interval)
+      .filter(interval -> interval instanceof HistoricalInterval.Intraday)
+      .map(interval -> ((HistoricalInterval.Intraday) interval).value())
+      .orElse(null);
+  }
+
+  private boolean hasIntradayBars() {
+    return (
+      intradayInterval() != null &&
+      !model.pricePoints.isEmpty() &&
+      model.pricePoints.stream().allMatch(point -> point.timestamp().isPresent())
+    );
+  }
+
+  private String timeForSlot(int slotIndex, VisibleWindow visibleWindow) {
+    int dataIndex = visibleWindow.firstDataIndex() + slotIndex;
+    return dataIndex < model.pricePoints.size()
+      ? crosshair.dateText(model.pricePoints.get(dataIndex).timestamp().orElseThrow())
+      : "No bar";
   }
 
   private void drawSeries(
@@ -485,7 +534,7 @@ final class CanvasRenderer {
       return model.pricePoints.get(dataIndex).date();
     }
     PricePoint newestPoint = model.pricePoints.get(model.pricePoints.size() - 1);
-    return newestPoint.date().plusDays(dataIndex - model.pricePoints.size() + 1L);
+    return newestPoint.date().plus(calendarPeriod().multipliedBy(dataIndex - model.pricePoints.size() + 1));
   }
 
   private ButtonBounds autoscaleButtonBounds(ChartBounds bounds) {

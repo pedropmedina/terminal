@@ -18,6 +18,7 @@ import com.acteque.terminal.ui.field.FieldLabel;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TextFormatter;
 import javafx.util.StringConverter;
@@ -31,6 +32,7 @@ final class ChartWorkspaceAddIntervalDialogView extends Dialog {
   private final Input amount = new Input();
   private final Button addButton = new Button("Add");
   private Consumer<ChartInterval> intervalAddedHandler = ignored -> {};
+  private Predicate<ChartInterval> availability = ignored -> true;
 
   ChartWorkspaceAddIntervalDialogView() {
     getStyleClass().add("chart-workspace-add-interval-dialog");
@@ -103,8 +105,16 @@ final class ChartWorkspaceAddIntervalDialogView extends Dialog {
     intervalAddedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
+  void setAvailability(Predicate<ChartInterval> value) {
+    availability = Objects.requireNonNull(value, "availability cannot be null");
+    refreshAddButton();
+  }
+
   private void refreshAddButton() {
-    addButton.setDisable(classification.getValue() == null || parseAmount() <= 0);
+    Classification type = classification.getValue();
+    int value = parseAmount();
+    boolean available = type != null && value > 0 && availability.test(ChartInterval.of(value, type));
+    addButton.setDisable(!available);
   }
 
   private int parseAmount() {
@@ -122,7 +132,11 @@ final class ChartWorkspaceAddIntervalDialogView extends Dialog {
   private void addInterval() {
     int intervalAmount = parseAmount();
     Classification selectedClassification = classification.getValue();
-    if (intervalAmount <= 0 || selectedClassification == null) {
+    if (
+      intervalAmount <= 0 ||
+      selectedClassification == null ||
+      !availability.test(ChartInterval.of(intervalAmount, selectedClassification))
+    ) {
       return;
     }
     intervalAddedHandler.accept(ChartInterval.of(intervalAmount, selectedClassification));
