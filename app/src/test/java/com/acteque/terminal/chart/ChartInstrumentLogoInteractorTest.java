@@ -32,19 +32,21 @@ class ChartInstrumentLogoInteractorTest {
     FxTestSupport.runAndWait(() -> {
       ChartModel model = new ChartModel();
       List<Runnable> uiQueue = new ArrayList<>();
-      ChartInteractor interactor = new ChartInteractor(
-        model,
-        reference -> CompletableFuture.completedFuture(Optional.of(PNG)),
-        uiQueue::add
-      );
+      try (
+        ChartInteractor interactor = new ChartInteractor(
+          model,
+          reference -> CompletableFuture.completedFuture(Optional.of(PNG)),
+          uiQueue::add
+        );
+      ) {
+        interactor.setInstrumentLogo(Optional.of(FIRST));
+        assertNull(model.getInstrumentLogoImage());
+        uiQueue.removeFirst().run();
 
-      interactor.setInstrumentLogo(Optional.of(FIRST));
-      assertNull(model.getInstrumentLogoImage());
-      uiQueue.removeFirst().run();
-
-      assertNotNull(model.getInstrumentLogoImage());
-      assertFalse(model.getInstrumentLogoImage().isError());
-      assertTrue(model.getInstrumentLogoImage().getWidth() > 0);
+        assertNotNull(model.getInstrumentLogoImage());
+        assertFalse(model.getInstrumentLogoImage().isError());
+        assertTrue(model.getInstrumentLogoImage().getWidth() > 0);
+      }
     });
   }
 
@@ -54,30 +56,32 @@ class ChartInstrumentLogoInteractorTest {
       ChartModel model = new ChartModel();
       List<CompletableFuture<Optional<byte[]>>> requests = new ArrayList<>();
       List<Runnable> uiQueue = new ArrayList<>();
-      ChartInteractor interactor = new ChartInteractor(
-        model,
-        reference -> {
-          var request = new CompletableFuture<Optional<byte[]>>();
-          requests.add(request);
-          return request;
-        },
-        uiQueue::add
-      );
+      try (
+        ChartInteractor interactor = new ChartInteractor(
+          model,
+          reference -> {
+            var request = new CompletableFuture<Optional<byte[]>>();
+            requests.add(request);
+            return request;
+          },
+          uiQueue::add
+        );
+      ) {
+        interactor.setInstrumentLogo(Optional.of(FIRST));
+        interactor.setInstrumentLogo(Optional.of(SECOND));
+        requests.get(1).complete(Optional.of(PNG));
+        interactor.setInstrumentLogo(Optional.of(FIRST));
+        uiQueue.removeFirst().run();
+        assertNull(model.getInstrumentLogoImage());
 
-      interactor.setInstrumentLogo(Optional.of(FIRST));
-      interactor.setInstrumentLogo(Optional.of(SECOND));
-      requests.get(1).complete(Optional.of(PNG));
-      interactor.setInstrumentLogo(Optional.of(FIRST));
-      uiQueue.removeFirst().run();
-      assertNull(model.getInstrumentLogoImage());
+        requests.get(0).complete(Optional.of(PNG));
+        uiQueue.removeFirst().run();
+        assertNull(model.getInstrumentLogoImage());
 
-      requests.get(0).complete(Optional.of(PNG));
-      uiQueue.removeFirst().run();
-      assertNull(model.getInstrumentLogoImage());
-
-      requests.get(2).complete(Optional.of(PNG));
-      uiQueue.removeFirst().run();
-      assertNotNull(model.getInstrumentLogoImage());
+        requests.get(2).complete(Optional.of(PNG));
+        uiQueue.removeFirst().run();
+        assertNotNull(model.getInstrumentLogoImage());
+      }
     });
   }
 
@@ -87,30 +91,32 @@ class ChartInstrumentLogoInteractorTest {
       ChartModel model = new ChartModel();
       var pending = new CompletableFuture<Optional<byte[]>>();
       AtomicInteger cancellations = new AtomicInteger();
-      ChartInteractor interactor = new ChartInteractor(
-        model,
-        new LogoSession() {
-          @Override
-          public CompletableFuture<Optional<byte[]>> load(InstrumentLogo logo) {
-            return pending;
-          }
+      try (
+        ChartInteractor interactor = new ChartInteractor(
+          model,
+          new LogoSession() {
+            @Override
+            public CompletableFuture<Optional<byte[]>> load(InstrumentLogo logo) {
+              return pending;
+            }
 
-          @Override
-          public void cancel() {
-            cancellations.incrementAndGet();
-          }
-        },
-        Runnable::run
-      );
+            @Override
+            public void cancel() {
+              cancellations.incrementAndGet();
+            }
+          },
+          Runnable::run
+        );
+      ) {
+        interactor.setInstrumentLogo(Optional.of(FIRST));
+        interactor.cancelInstrumentLogoLoad();
+        pending.complete(Optional.of(PNG));
+        assertNull(model.getInstrumentLogoImage());
+        assertTrue(cancellations.get() >= 2);
 
-      interactor.setInstrumentLogo(Optional.of(FIRST));
-      interactor.cancelInstrumentLogoLoad();
-      pending.complete(Optional.of(PNG));
-      assertNull(model.getInstrumentLogoImage());
-      assertTrue(cancellations.get() >= 2);
-
-      interactor.setInstrumentLogo(Optional.empty());
-      assertNull(model.getInstrumentLogoImage());
+        interactor.setInstrumentLogo(Optional.empty());
+        assertNull(model.getInstrumentLogoImage());
+      }
     });
   }
 
@@ -125,9 +131,10 @@ class ChartInstrumentLogoInteractorTest {
       );
       for (var result : results) {
         ChartModel model = new ChartModel();
-        ChartInteractor interactor = new ChartInteractor(model, ignored -> result, Runnable::run);
-        interactor.setInstrumentLogo(Optional.of(FIRST));
-        assertNull(model.getInstrumentLogoImage());
+        try (ChartInteractor interactor = new ChartInteractor(model, ignored -> result, Runnable::run)) {
+          interactor.setInstrumentLogo(Optional.of(FIRST));
+          assertNull(model.getInstrumentLogoImage());
+        }
       }
     });
   }
@@ -136,16 +143,18 @@ class ChartInstrumentLogoInteractorTest {
   void synchronousRateLimitFailuresLeaveTheSymbolFallbackWithoutEscaping() {
     FxTestSupport.runAndWait(() -> {
       ChartModel model = new ChartModel();
-      ChartInteractor interactor = new ChartInteractor(
-        model,
-        ignored -> {
-          throw new LogoException(LogoException.Code.RATE_LIMITED, "HTTP 429");
-        },
-        Runnable::run
-      );
-
-      assertDoesNotThrow(() -> interactor.setInstrumentLogo(Optional.of(FIRST)));
-      assertNull(model.getInstrumentLogoImage());
+      try (
+        ChartInteractor interactor = new ChartInteractor(
+          model,
+          ignored -> {
+            throw new LogoException(LogoException.Code.RATE_LIMITED, "HTTP 429");
+          },
+          Runnable::run
+        );
+      ) {
+        assertDoesNotThrow(() -> interactor.setInstrumentLogo(Optional.of(FIRST)));
+        assertNull(model.getInstrumentLogoImage());
+      }
     });
   }
 
