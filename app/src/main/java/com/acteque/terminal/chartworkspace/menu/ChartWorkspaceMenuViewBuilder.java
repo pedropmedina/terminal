@@ -20,23 +20,29 @@ import com.acteque.terminal.ui.popover.PopoverContent;
 import com.acteque.terminal.ui.popover.PopoverTrigger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
-import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
+import javafx.scene.image.Image;
 import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.util.Builder;
 
 /** Builds the reactive JavaFX view for the workspace menu. */
@@ -63,21 +69,9 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
       "actionRequestedHandler cannot be null"
     );
     this.splitRequestedHandler = Objects.requireNonNull(splitRequestedHandler, "splitRequestedHandler cannot be null");
+
     splitPopover = createSplitPopover();
-
     root.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-    root
-      .getIdentifier()
-      .backgroundProperty()
-      .bind(
-        Bindings.createObjectBinding(
-          () ->
-            new Background(new BackgroundFill(model.identifierColorProperty().get(), CornerRadii.EMPTY, Insets.EMPTY)),
-          model.identifierColorProperty()
-        )
-      );
-    root.getIdentifier().visibleProperty().bind(model.identifierVisibleProperty());
-
     model.itemsProperty().addListener((ListChangeListener<Item>) ignored -> rebuildItems());
     model.chartTypeProperty().addListener((ignored, previous, current) -> updateChartTypeButton());
     refreshView();
@@ -144,7 +138,34 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
     button.setOnAction(ignored -> actionRequestedHandler.accept(item));
     switch (item) {
       case INSTRUMENT -> {
-        button.textProperty().bind(model.instrumentSymbolProperty());
+        button.getStyleClass().add("chart-workspace-menu-instrument");
+        button.setSize(Size.ICON);
+        button.setTextOverrun(OverrunStyle.ELLIPSIS);
+        button
+          .textProperty()
+          .bind(
+            Bindings.createStringBinding(
+              () -> model.getInstrumentLogoImage() == null ? model.getInstrumentSymbol() : "",
+              model.instrumentLogoImageProperty(),
+              model.instrumentSymbolProperty()
+            )
+          );
+        button
+          .graphicProperty()
+          .bind(
+            Bindings.createObjectBinding(
+              () -> createInstrumentLogo(model.getInstrumentLogoImage()),
+              model.instrumentLogoImageProperty()
+            )
+          );
+        button
+          .styleProperty()
+          .bind(
+            Bindings.createStringBinding(
+              () -> "-chart-workspace-menu-instrument-ring: " + cssColor(model.identifierColorProperty().get()) + ";",
+              model.identifierColorProperty()
+            )
+          );
         button
           .accessibleTextProperty()
           .bind(
@@ -180,6 +201,42 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
       case SPLIT -> throw new IllegalStateException("Split item must use its popover trigger");
     }
     return button;
+  }
+
+  private static Node createInstrumentLogo(Image image) {
+    if (image == null) {
+      return null;
+    }
+    Region logo = new Region();
+    logo.getStyleClass().add("chart-workspace-menu-instrument-logo");
+    logo.setBackground(
+      new Background(
+        new BackgroundImage(
+          image,
+          BackgroundRepeat.NO_REPEAT,
+          BackgroundRepeat.NO_REPEAT,
+          BackgroundPosition.CENTER,
+          new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, false, true)
+        )
+      )
+    );
+    Circle clip = new Circle();
+    clip.centerXProperty().bind(logo.widthProperty().divide(2.0));
+    clip.centerYProperty().bind(logo.heightProperty().divide(2.0));
+    clip.radiusProperty().bind(Bindings.min(logo.widthProperty(), logo.heightProperty()).divide(2.0));
+    logo.setClip(clip);
+    return logo;
+  }
+
+  private static String cssColor(Color color) {
+    return String.format(
+      Locale.ROOT,
+      "rgba(%.10f%%, %.10f%%, %.10f%%, %.10f)",
+      color.getRed() * 100.0,
+      color.getGreen() * 100.0,
+      color.getBlue() * 100.0,
+      color.getOpacity()
+    );
   }
 
   private Popover createSplitPopover() {

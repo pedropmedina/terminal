@@ -47,7 +47,7 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     configure(chart);
     model.setRoot(new ChartWorkspaceLeaf(chart));
     model.setActiveChart(chart);
-    updateMultiChartAvailability();
+    updateMultipleChartState();
   }
 
   void start() {
@@ -94,7 +94,7 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
 
     model.setRoot(replace(model.getRoot(), source, replacement));
     model.setActiveChart(created);
-    updateMultiChartAvailability();
+    updateMultipleChartState();
     if (started) {
       startChart(created);
     }
@@ -186,7 +186,7 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
       model.setActiveChart(Objects.requireNonNull(removal.fallback(), "removed chart must have a fallback"));
     }
     identifierColors.remove(chart);
-    updateMultiChartAvailability();
+    updateMultipleChartState();
     try {
       chart.close();
     } catch (RuntimeException failure) {
@@ -222,12 +222,11 @@ final class ChartWorkspaceInteractor implements AutoCloseable {
     Color identifierColor = identifierColorGenerator.next(identifierColors.values());
     identifierColors.put(chart, identifierColor);
     chart.setIdentifierColor(identifierColor);
+    chart.setIdentifierVisible(true);
   }
 
-  private void updateMultiChartAvailability() {
-    boolean available = count(model.getRoot()) > 1;
-    model.setMultipleCharts(available);
-    charts(model.getRoot()).forEach(chart -> chart.setIdentifierVisible(available));
+  private void updateMultipleChartState() {
+    model.setMultipleCharts(count(model.getRoot()) > 1);
   }
 
   private void startChart(Chart chart) {

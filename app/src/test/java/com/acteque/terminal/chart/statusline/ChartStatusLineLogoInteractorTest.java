@@ -1,11 +1,14 @@
 package com.acteque.terminal.chart.statusline;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.marketlogos.InstrumentLogo;
+import com.acteque.terminal.marketlogos.LogoException;
 import com.acteque.terminal.marketlogos.LogoSession;
 import com.acteque.terminal.test.FxTestSupport;
 import java.net.URI;
@@ -113,6 +116,7 @@ class ChartStatusLineLogoInteractorTest {
       List<CompletableFuture<Optional<byte[]>>> results = List.of(
         CompletableFuture.completedFuture(Optional.empty()),
         CompletableFuture.completedFuture(Optional.of(new byte[] { 1, 2, 3 })),
+        CompletableFuture.failedFuture(new LogoException(LogoException.Code.RATE_LIMITED, "HTTP 429")),
         CompletableFuture.failedFuture(new IllegalStateException("Test download failure"))
       );
       for (var result : results) {
@@ -121,6 +125,24 @@ class ChartStatusLineLogoInteractorTest {
         interactor.setInstrument("First", Optional.of(FIRST));
         assertNull(model.getLogoState());
       }
+    });
+  }
+
+  @Test
+  void synchronousRateLimitFailuresLeaveTheSymbolFallbackWithoutEscaping() {
+    FxTestSupport.runAndWait(() -> {
+      ChartStatusLineModel model = new ChartStatusLineModel();
+      ChartStatusLineInteractor interactor = new ChartStatusLineInteractor(
+        model,
+        ignored -> {
+          throw new LogoException(LogoException.Code.RATE_LIMITED, "HTTP 429");
+        },
+        Runnable::run
+      );
+
+      assertDoesNotThrow(() -> interactor.setInstrument("First", Optional.of(FIRST)));
+      assertNull(model.getLogoState());
+      assertEquals("First", model.getInstrumentName());
     });
   }
 

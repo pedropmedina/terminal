@@ -1,11 +1,11 @@
 .chart-workspace {
   -fx-background-color: -app-workspace-background;
-  -fx-padding: 2.5px;
+  -fx-padding: 3px;
   -fx-snap-to-pixel: false;
 }
 
 .chart-workspace-chart-slot {
-  -fx-padding: 1.5px;
+  -fx-padding: 2px;
   -fx-snap-to-pixel: false;
 }
 

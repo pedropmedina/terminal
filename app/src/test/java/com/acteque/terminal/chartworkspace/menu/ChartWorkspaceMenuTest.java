@@ -1,8 +1,8 @@
 package com.acteque.terminal.chartworkspace.menu;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -12,8 +12,11 @@ import com.acteque.terminal.chart.Chart;
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.ChartSplitDirection;
 import com.acteque.terminal.chart.ChartType;
+import com.acteque.terminal.marketlogos.InstrumentLogo;
+import com.acteque.terminal.marketlogos.LogoSession;
 import com.acteque.terminal.test.FxTestSupport;
 import com.acteque.terminal.ui.Button;
+import com.acteque.terminal.ui.Button.Size;
 import com.acteque.terminal.ui.Button.Variant;
 import com.acteque.terminal.ui.Separator;
 import com.acteque.terminal.ui.icons.LucideIcon;
@@ -21,28 +24,42 @@ import com.acteque.terminal.ui.icons.LucideIcons;
 import com.acteque.terminal.ui.kbd.Kbd;
 import com.acteque.terminal.ui.kbd.KbdGroup;
 import com.acteque.terminal.ui.popover.PopoverTrigger;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.layout.CornerRadii;
+import javafx.scene.control.OverrunStyle;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Circle;
 import org.junit.jupiter.api.Test;
 
 class ChartWorkspaceMenuTest {
 
+  private static final InstrumentLogo LOGO = new InstrumentLogo(
+    URI.create("https://images.example.com/IBM.png"),
+    "Logos by Example",
+    URI.create("https://example.com")
+  );
+  private static final byte[] PNG = Base64.getDecoder().decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=="
+  );
+
   @Test
-  void followsTheSelectedChartAndShowsMultiChartActionsAndIdentifier() {
+  void followsTheSelectedChartAndShowsMultiChartActions() {
     FxTestSupport.runAndWait(() -> {
       try (
         Chart first = chart("IBM");
@@ -51,7 +68,6 @@ class ChartWorkspaceMenuTest {
       ) {
         ChartWorkspaceMenuItems root = assertInstanceOf(ChartWorkspaceMenuItems.class, menu.getView());
         HBox buttons = root.getButtons();
-        Region identifier = root.getIdentifier();
         StackPane sceneRoot = new StackPane(root);
         new AppThemeManager(new Scene(sceneRoot, 500.0, 100.0), AppTheme.LIGHT);
         sceneRoot.applyCss();
@@ -61,8 +77,7 @@ class ChartWorkspaceMenuTest {
         assertEquals(5, buttons.getChildren().size());
         Separator separator = assertInstanceOf(Separator.class, buttons.getChildren().get(3));
         assertEquals(Orientation.VERTICAL, separator.getOrientation());
-        assertEquals(12.0, separator.getHeight());
-        assertFalse(identifier.isVisible());
+        assertEquals(20.0, separator.getHeight());
 
         Color color = Color.hsb(210.0, 0.72, 0.85);
         second.setIdentifierColor(color);
@@ -75,28 +90,91 @@ class ChartWorkspaceMenuTest {
 
         assertEquals("AAPL", assertInstanceOf(Button.class, buttons.getChildren().getFirst()).getText());
         assertEquals(6, buttons.getChildren().size());
-        assertTrue(identifier.isVisible());
-        assertEquals(4.0, identifier.getWidth());
-        assertEquals(color, identifier.getBackground().getFills().getFirst().getFill());
-        CornerRadii menuRadii = root.getBackground().getFills().getFirst().getRadii();
-        CornerRadii identifierRadii = identifier.getBackground().getFills().getFirst().getRadii();
-        assertEquals(0.0, identifierRadii.getTopLeftHorizontalRadius());
-        assertEquals(0.0, identifierRadii.getBottomLeftHorizontalRadius());
-        assertEquals(0.0, identifierRadii.getTopRightHorizontalRadius());
-        assertEquals(0.0, identifierRadii.getBottomRightHorizontalRadius());
-        assertFalse(identifier.isManaged());
-        assertEquals(Pos.TOP_LEFT, StackPane.getAlignment(identifier));
-        assertEquals(0.0, identifier.getLayoutX());
-        assertEquals(0.0, identifier.getLayoutY());
-        assertEquals(root.getHeight(), identifier.getHeight());
-        Rectangle clip = assertInstanceOf(Rectangle.class, root.getClip());
-        assertEquals(root.getWidth(), clip.getWidth());
-        assertEquals(root.getHeight(), clip.getHeight());
-        assertEquals(menuRadii.getTopLeftHorizontalRadius() * 2.0, clip.getArcWidth());
-        assertEquals(menuRadii.getTopLeftVerticalRadius() * 2.0, clip.getArcHeight());
+        assertNull(root.getClip());
 
         first.setInstrument("IGNORED", "Ignored", List.of(), Optional.empty());
         assertEquals("AAPL", assertInstanceOf(Button.class, buttons.getChildren().getFirst()).getText());
+      }
+    });
+  }
+
+  @Test
+  void showsTheActiveChartLogoInAnIdentifierColoredButtonAndFallsBackToTheSymbol() {
+    FxTestSupport.runAndWait(() -> {
+      CompletableFuture<Optional<byte[]>> pendingLogo = new CompletableFuture<>();
+      LogoSession logos = ignored -> pendingLogo;
+      try (
+        Chart first = new Chart(List.of(), "IBM", ChartInterval.DAILY, logos, Runnable::run);
+        Chart second = chart("MSFT");
+        ChartWorkspaceMenu menu = new ChartWorkspaceMenu(first)
+      ) {
+        Color firstColor = Color.hsb(24.0, 0.72, 0.85);
+        Color secondColor = Color.hsb(210.0, 0.72, 0.85);
+        first.setIdentifierColor(firstColor);
+        second.setIdentifierColor(secondColor);
+        first.setInstrument("IBM", "International Business Machines", List.of(), Optional.of(LOGO));
+
+        ChartWorkspaceMenuItems root = assertInstanceOf(ChartWorkspaceMenuItems.class, menu.getView());
+        Button instrument = assertInstanceOf(Button.class, root.getButtons().getChildren().getFirst());
+        StackPane sceneRoot = new StackPane(root);
+        new AppThemeManager(new Scene(sceneRoot, 500.0, 100.0), AppTheme.LIGHT);
+        sceneRoot.applyCss();
+        sceneRoot.layout();
+
+        assertEquals("IBM", instrument.getText());
+        assertEquals(Size.ICON, instrument.getSize());
+        assertEquals(OverrunStyle.ELLIPSIS, instrument.getTextOverrun());
+        assertEquals(30.0, instrument.getWidth());
+        assertEquals(30.0, instrument.getHeight());
+        assertEquals(Color.web("#0a0a0a"), instrument.getBackground().getFills().getFirst().getFill());
+        assertEquals(Color.WHITE, instrument.getTextFill());
+        assertColorEquals(
+          firstColor,
+          assertInstanceOf(Color.class, instrument.getBorder().getStrokes().getFirst().getTopStroke())
+        );
+        assertEquals(2.5, instrument.getBorder().getStrokes().getFirst().getWidths().getTop());
+        assertTrue(
+          instrument.getBorder().getStrokes().getFirst().getRadii().getTopLeftHorizontalRadius() >=
+            instrument.getHeight() / 2.0
+        );
+
+        menu.setActiveChart(second);
+        pendingLogo.complete(Optional.of(PNG));
+        sceneRoot.applyCss();
+        sceneRoot.layout();
+
+        assertEquals("MSFT", instrument.getText());
+        assertEquals(Size.ICON, instrument.getSize());
+        assertEquals(30.0, instrument.getWidth());
+        assertEquals(30.0, instrument.getHeight());
+        assertColorEquals(
+          secondColor,
+          assertInstanceOf(Color.class, instrument.getBorder().getStrokes().getFirst().getTopStroke())
+        );
+
+        menu.setActiveChart(first);
+        sceneRoot.applyCss();
+        sceneRoot.layout();
+
+        assertEquals("", instrument.getText());
+        assertEquals(Size.ICON, instrument.getSize());
+        Region logo = assertInstanceOf(Region.class, instrument.getGraphic());
+        BackgroundImage logoBackground = logo.getBackground().getImages().getFirst();
+        assertSame(first.instrumentLogoImageProperty().getValue(), logoBackground.getImage());
+        assertEquals(BackgroundRepeat.NO_REPEAT, logoBackground.getRepeatX());
+        assertEquals(BackgroundRepeat.NO_REPEAT, logoBackground.getRepeatY());
+        assertEquals(BackgroundPosition.CENTER, logoBackground.getPosition());
+        assertTrue(logoBackground.getSize().isCover());
+        assertEquals(25.0, logo.getWidth());
+        assertEquals(25.0, logo.getHeight());
+        assertInstanceOf(Circle.class, logo.getClip());
+        assertEquals(30.0, instrument.getWidth());
+        assertEquals(30.0, instrument.getHeight());
+        assertColorEquals(
+          firstColor,
+          assertInstanceOf(Color.class, instrument.getBorder().getStrokes().getFirst().getTopStroke())
+        );
+        assertEquals("Select symbol or instrument, currently IBM", instrument.getAccessibleText());
       }
     });
   }
@@ -180,5 +258,12 @@ class ChartWorkspaceMenuTest {
     assertEquals(2, group.getChildren().size());
     assertEquals("⌘", assertInstanceOf(Kbd.class, group.getChildren().getFirst()).getText());
     return assertInstanceOf(Kbd.class, group.getChildren().getLast()).getText();
+  }
+
+  private static void assertColorEquals(Color expected, Color actual) {
+    assertEquals(expected.getRed(), actual.getRed(), 0.000001);
+    assertEquals(expected.getGreen(), actual.getGreen(), 0.000001);
+    assertEquals(expected.getBlue(), actual.getBlue(), 0.000001);
+    assertEquals(expected.getOpacity(), actual.getOpacity(), 0.000001);
   }
 }

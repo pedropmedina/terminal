@@ -20,6 +20,7 @@ public final class ChartStatusLine {
 
   private final ChartStatusLineInteractor interactor;
   private final ChartStatusLineViewBuilder viewBuilder;
+  private final ObservableValue<Image> instrumentLogoImage;
   private final Runnable instrumentSelectionAction;
   private final Runnable intervalSelectionAction;
 
@@ -83,6 +84,7 @@ public final class ChartStatusLine {
       "intervalSelectionAction cannot be null"
     );
     ChartStatusLineModel model = new ChartStatusLineModel();
+    instrumentLogoImage = model.logoStateProperty().map(state -> state == null ? null : state.image());
     interactor = new ChartStatusLineInteractor(model, logoSource, uiExecutor);
     interactor.initialize(instrumentName, interval);
     viewBuilder = new ChartStatusLineViewBuilder(
@@ -97,6 +99,15 @@ public final class ChartStatusLine {
 
   public Region getView() {
     return viewBuilder.build();
+  }
+
+  /**
+   * Returns the currently loaded instrument logo image.
+   *
+   * @return the observable {@link Image}, or {@code null} while no logo is available
+   */
+  public ObservableValue<Image> instrumentLogoImageProperty() {
+    return instrumentLogoImage;
   }
 
   public void setPricePoint(PricePoint point) {

@@ -17,17 +17,47 @@
   -fx-padding: 4px;
 }
 
-.chart-workspace-menu-identifier {
-  -fx-min-width: 4px;
-  -fx-pref-width: 4px;
-  -fx-max-width: 4px;
-  -fx-max-height: infinity;
-}
-
 .chart-workspace-menu-separator:vertical {
   -fx-min-height: 20px;
   -fx-pref-height: 20px;
   -fx-max-height: 20px;
+}
+
+.chart-workspace-menu-instrument.core-button.button-variant-ghost {
+  -fx-min-height: 30px;
+  -fx-pref-height: 30px;
+  -fx-max-height: 30px;
+  -fx-background-radius: 999px;
+  -fx-border-color: -chart-workspace-menu-instrument-ring;
+  -fx-border-radius: 999px;
+  -fx-border-width: 2.5px;
+  -fx-font-size: 10px;
+}
+
+.chart-workspace-menu-instrument.core-button.button-size-icon {
+  -fx-min-width: 30px;
+  -fx-pref-width: 30px;
+  -fx-max-width: 30px;
+}
+
+.chart-workspace-menu-instrument.core-button.button-variant-ghost:focus-visible {
+  -fx-border-color:
+    -chart-workspace-menu-instrument-ring,
+    -app-input-focus-ring;
+  -fx-border-insets:
+    0,
+    -3px;
+  -fx-border-radius: 999px, 999px;
+  -fx-border-width: 2.5px, 3px;
+}
+
+.chart-workspace-menu-instrument-logo {
+  -fx-min-width: 25px;
+  -fx-pref-width: 25px;
+  -fx-max-width: 25px;
+  -fx-min-height: 25px;
+  -fx-pref-height: 25px;
+  -fx-max-height: 25px;
 }
 
 .chart-workspace-menu-chart-type.core-button.button-variant-ghost:drawer-open {

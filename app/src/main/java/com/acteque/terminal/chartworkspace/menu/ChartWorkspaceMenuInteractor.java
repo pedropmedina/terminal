@@ -31,7 +31,6 @@ final class ChartWorkspaceMenuInteractor {
         ? List.of(Item.INSTRUMENT, Item.INTERVAL, Item.CHART_TYPE, Item.SPLIT, Item.CLOSE)
         : List.of(Item.INSTRUMENT, Item.INTERVAL, Item.CHART_TYPE, Item.SPLIT)
     );
-    model.setIdentifierVisible(value);
   }
 
   void onActionRequested(Consumer<Item> callback) {

@@ -697,15 +697,15 @@ class ChartWorkspaceTest {
   }
 
   @Test
-  void showsStableDistinctIdentifiersOnlyWhileTheWorkspaceHasMultipleCharts() {
+  void showsStableDistinctIdentifiersForEveryChartInTheWorkspace() {
     FxTestSupport.runAndWait(() -> {
       Fixture fixture = new Fixture();
       Chart source = fixture.initialize();
       Region sourceIdentifier = identifier(source);
       Color sourceColor = identifierColor(sourceIdentifier);
 
-      assertFalse(sourceIdentifier.isVisible());
-      assertFalse(sourceIdentifier.isManaged());
+      assertTrue(sourceIdentifier.isVisible());
+      assertTrue(sourceIdentifier.isManaged());
       assertEquals(0.72, sourceColor.getSaturation(), 0.001);
       assertEquals(0.85, sourceColor.getBrightness(), 0.001);
 
@@ -723,8 +723,8 @@ class ChartWorkspaceTest {
 
       fixture.interactor.remove(created);
 
-      assertFalse(sourceIdentifier.isVisible());
-      assertFalse(sourceIdentifier.isManaged());
+      assertTrue(sourceIdentifier.isVisible());
+      assertTrue(sourceIdentifier.isManaged());
       assertEquals(sourceColor, identifierColor(sourceIdentifier));
       fixture.interactor.close();
     });

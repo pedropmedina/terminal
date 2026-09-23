@@ -3,10 +3,12 @@ package com.acteque.terminal.chart.statusline;
 import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.PricePoint;
 import com.acteque.terminal.marketlogos.InstrumentLogo;
+import com.acteque.terminal.marketlogos.LogoException;
 import com.acteque.terminal.marketlogos.LogoSession;
 import java.io.ByteArrayInputStream;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import javafx.scene.image.Image;
 
@@ -60,23 +62,52 @@ final class ChartStatusLineInteractor {
 
   private void loadInstrumentLogo(Optional<InstrumentLogo> logo) {
     long requestedGeneration = ++logoGeneration;
-    logo.ifPresent(reference ->
-      logoSource
-        .load(reference)
-        .thenApply(bytes -> bytes.map(ChartStatusLineInteractor::decodeLogo))
-        .whenComplete((image, failure) ->
-          uiExecutor.execute(() -> {
-            if (requestedGeneration != logoGeneration) {
-              return;
-            }
-            if (failure != null) {
-              LOGGER.log(System.Logger.Level.WARNING, "Could not load instrument logo; keeping fallback icon", failure);
-            } else {
-              image.ifPresent(value -> setInstrumentLogo(reference, value));
-            }
-          })
-        )
-    );
+    logo.ifPresent(reference -> startInstrumentLogoLoad(reference, requestedGeneration));
+  }
+
+  private void startInstrumentLogoLoad(InstrumentLogo reference, long requestedGeneration) {
+    CompletionStage<Optional<byte[]>> request;
+    try {
+      request = Objects.requireNonNull(logoSource.load(reference), "logo load cannot be null");
+    } catch (RuntimeException failure) {
+      reportLogoFailure(failure);
+      return;
+    }
+    request
+      .thenApply(bytes -> bytes.map(ChartStatusLineInteractor::decodeLogo))
+      .whenComplete((image, failure) -> {
+        try {
+          uiExecutor.execute(() -> completeInstrumentLogoLoad(reference, requestedGeneration, image, failure));
+        } catch (RuntimeException schedulingFailure) {
+          reportLogoFailure(schedulingFailure);
+        }
+      });
+  }
+
+  private void completeInstrumentLogoLoad(
+    InstrumentLogo reference,
+    long requestedGeneration,
+    Optional<Image> image,
+    Throwable failure
+  ) {
+    if (requestedGeneration != logoGeneration) {
+      return;
+    }
+    if (failure != null) {
+      reportLogoFailure(failure);
+      return;
+    }
+    image.ifPresent(value -> setInstrumentLogo(reference, value));
+  }
+
+  private static void reportLogoFailure(Throwable failure) {
+    for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+      if (cause instanceof LogoException logoFailure && logoFailure.code() == LogoException.Code.RATE_LIMITED) {
+        LOGGER.log(System.Logger.Level.INFO, "Instrument logo provider rate limited; keeping symbol fallback");
+        return;
+      }
+    }
+    LOGGER.log(System.Logger.Level.WARNING, "Could not load instrument logo; keeping symbol fallback", failure);
   }
 
   private static Image decodeLogo(byte[] data) {

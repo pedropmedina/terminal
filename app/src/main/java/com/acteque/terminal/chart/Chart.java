@@ -18,7 +18,9 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 
@@ -177,6 +179,15 @@ public final class Chart implements AutoCloseable {
 
   public ReadOnlyObjectProperty<Color> identifierColorProperty() {
     return model.identifierColorProperty();
+  }
+
+  /**
+   * Returns the currently loaded instrument logo image.
+   *
+   * @return the observable {@link Image}, or {@code null} while no logo is available
+   */
+  public ObservableValue<Image> instrumentLogoImageProperty() {
+    return statusLine.instrumentLogoImageProperty();
   }
 
   public ObservableBooleanValue modalOpenProperty() {
