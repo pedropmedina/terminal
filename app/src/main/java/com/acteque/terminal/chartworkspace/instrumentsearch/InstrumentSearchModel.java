@@ -15,10 +15,15 @@ import javafx.collections.FXCollections;
 /** Observable state shared by the instrument-search MVCI components. */
 final class InstrumentSearchModel {
 
+  /** Describes the current instrument-catalog loading state. */
   enum LoadState {
+    /** The catalog has not been requested. */
     NOT_LOADED,
+    /** The catalog request is in progress. */
     LOADING,
+    /** The catalog loaded successfully. */
     LOADED,
+    /** The catalog request failed. */
     FAILED,
   }
 
@@ -41,58 +46,137 @@ final class InstrumentSearchModel {
     LoadState.NOT_LOADED
   );
 
+  /**
+   * Returns the symbol displayed as current.
+   *
+   * @return the current symbol
+   */
   String getCurrentSymbol() {
     return currentSymbol.get();
   }
 
+  /**
+   * Returns the observable current symbol.
+   *
+   * @return the read-only current-symbol property
+   */
   ReadOnlyStringProperty currentSymbolProperty() {
     return currentSymbol.getReadOnlyProperty();
   }
 
+  /**
+   * Updates the symbol displayed as current.
+   *
+   * @param value the current symbol
+   */
   void setCurrentSymbol(String value) {
     currentSymbol.set(value);
   }
 
+  /**
+   * Reports whether the search dialog is open.
+   *
+   * @return true when the search dialog is open
+   */
+  boolean isOpen() {
+    return open.get();
+  }
+
+  /**
+   * Returns the observable dialog state.
+   *
+   * @return the read-only open property
+   */
   ReadOnlyBooleanProperty openProperty() {
     return open.getReadOnlyProperty();
   }
 
+  /**
+   * Updates the dialog state.
+   *
+   * @param value true to open the search dialog
+   */
   void setOpen(boolean value) {
     open.set(value);
   }
 
+  /**
+   * Returns the normalized search query.
+   *
+   * @return the normalized query
+   */
   String getQuery() {
     return query.get();
   }
 
+  /**
+   * Updates the normalized search query.
+   *
+   * @param value the normalized query
+   */
   void setQuery(String value) {
     query.set(value);
   }
 
+  /**
+   * Returns the loaded instrument catalog.
+   *
+   * @return the read-only instrument-list property
+   */
   ReadOnlyListProperty<Instrument> instrumentsProperty() {
     return instruments.getReadOnlyProperty();
   }
 
+  /**
+   * Replaces the loaded instrument catalog.
+   *
+   * @param values the loaded instruments
+   */
   void setInstruments(List<Instrument> values) {
     instruments.setAll(values);
   }
 
+  /**
+   * Returns the instruments matching the current query.
+   *
+   * @return the read-only matching-instrument property
+   */
   ReadOnlyListProperty<Instrument> matchingInstrumentsProperty() {
     return matchingInstruments.getReadOnlyProperty();
   }
 
+  /**
+   * Replaces the instruments matching the current query.
+   *
+   * @param values the matching instruments
+   */
   void setMatchingInstruments(List<Instrument> values) {
     matchingInstruments.setAll(values);
   }
 
+  /**
+   * Returns the current catalog loading state.
+   *
+   * @return the catalog loading state
+   */
   LoadState getLoadState() {
     return loadState.get();
   }
 
+  /**
+   * Returns the observable catalog loading state.
+   *
+   * @return the read-only load-state property
+   */
   ReadOnlyObjectProperty<LoadState> loadStateProperty() {
     return loadState.getReadOnlyProperty();
   }
 
+  /**
+   * Updates the catalog loading state.
+   *
+   * @param value the catalog loading state
+   */
   void setLoadState(LoadState value) {
     loadState.set(value);
   }

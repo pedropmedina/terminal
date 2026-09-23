@@ -7,7 +7,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import javafx.beans.value.ObservableBooleanValue;
+import java.util.function.Consumer;
 
 /** Applies instrument-search state transitions without depending on its layout. */
 final class InstrumentSearchInteractor {
@@ -16,7 +16,17 @@ final class InstrumentSearchInteractor {
   private final InstrumentCatalog catalog;
   private final Executor backgroundExecutor;
   private final Executor uiExecutor;
+  private Consumer<String> instrumentSelectedHandler = ignored -> {};
+  private Runnable closeRequestHandler = () -> {};
 
+  /**
+   * Creates an interactor backed by the supplied state and catalog service.
+   *
+   * @param model the observable instrument-search state
+   * @param catalog the source of searchable instruments
+   * @param backgroundExecutor the executor used to load the catalog
+   * @param uiExecutor the executor used to publish catalog results to JavaFX state
+   */
   InstrumentSearchInteractor(
     InstrumentSearchModel model,
     InstrumentCatalog catalog,
@@ -29,31 +39,46 @@ final class InstrumentSearchInteractor {
     this.uiExecutor = Objects.requireNonNull(uiExecutor, "uiExecutor cannot be null");
   }
 
+  /**
+   * Initializes the current symbol and closes the search dialog.
+   *
+   * @param currentSymbol the initial chart symbol
+   */
   void initialize(String currentSymbol) {
     setCurrentSymbol(currentSymbol);
     model.setOpen(false);
   }
 
-  ObservableBooleanValue openProperty() {
-    return model.openProperty();
-  }
-
+  /** Opens the instrument-search dialog. */
   void show() {
     model.setOpen(true);
   }
 
+  /** Closes the instrument-search dialog. */
   void close() {
     model.setOpen(false);
   }
 
+  /**
+   * Updates the current symbol and uses it as the search query.
+   *
+   * @param symbol the active chart symbol
+   */
   void setCurrentSymbol(String symbol) {
     String value = Objects.requireNonNull(symbol, "symbol cannot be null");
+
     model.setCurrentSymbol(value);
     setQuery(value);
   }
 
+  /**
+   * Normalizes and applies a query against instrument symbols and exchanges.
+   *
+   * @param query the entered search text, or null to show all instruments
+   */
   void setQuery(String query) {
     String normalizedQuery = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
+
     model.setQuery(normalizedQuery);
     model.setMatchingInstruments(
       model
@@ -64,6 +89,7 @@ final class InstrumentSearchInteractor {
     );
   }
 
+  /** Loads the instrument catalog once and publishes its result on the UI executor. */
   void loadCatalog() {
     if (model.getLoadState() != InstrumentSearchModel.LoadState.NOT_LOADED) {
       return;
@@ -83,10 +109,50 @@ final class InstrumentSearchInteractor {
     );
   }
 
-  void select(Instrument instrument) {
-    setCurrentSymbol(Objects.requireNonNull(instrument, "instrument cannot be null").symbol());
+  /**
+   * Registers the action invoked after an instrument is selected.
+   *
+   * @param callback the selected-symbol callback
+   */
+  void onInstrumentSelected(Consumer<String> callback) {
+    instrumentSelectedHandler = Objects.requireNonNull(callback, "callback cannot be null");
   }
 
+  /**
+   * Registers the action invoked when the search dialog requests external closure.
+   *
+   * @param callback the close-request callback
+   */
+  void onRequestClose(Runnable callback) {
+    closeRequestHandler = Objects.requireNonNull(callback, "callback cannot be null");
+  }
+
+  /**
+   * Applies a user-selected instrument, closes the dialog, and notifies its listener.
+   *
+   * @param instrument the selected instrument
+   */
+  void selectInstrument(Instrument instrument) {
+    String symbol = Objects.requireNonNull(instrument, "instrument cannot be null").symbol();
+
+    setCurrentSymbol(symbol);
+    close();
+    instrumentSelectedHandler.accept(symbol);
+  }
+
+  /** Closes the dialog and notifies the external close-request listener. */
+  void requestClose() {
+    close();
+    closeRequestHandler.run();
+  }
+
+  /**
+   * Reports whether an instrument matches the normalized search query.
+   *
+   * @param instrument the candidate instrument
+   * @param normalizedQuery the stripped, lower-case query
+   * @return true when the symbol or exchange contains the query
+   */
   private static boolean matches(Instrument instrument, String normalizedQuery) {
     return (
       normalizedQuery.isEmpty() ||

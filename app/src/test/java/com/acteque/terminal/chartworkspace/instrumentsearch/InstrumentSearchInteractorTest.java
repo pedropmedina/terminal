@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class InstrumentSearchInteractorTest {
@@ -24,13 +25,13 @@ class InstrumentSearchInteractorTest {
     InstrumentSearchInteractor interactor = interactor(model, List.of());
 
     interactor.initialize("IBM");
-    assertFalse(model.openProperty().get());
+    assertFalse(model.isOpen());
 
     interactor.show();
-    assertTrue(model.openProperty().get());
+    assertTrue(model.isOpen());
 
     interactor.close();
-    assertFalse(model.openProperty().get());
+    assertFalse(model.isOpen());
   }
 
   @Test
@@ -109,14 +110,33 @@ class InstrumentSearchInteractorTest {
   }
 
   @Test
-  void selectionUpdatesTheCurrentSymbolAndQuery() {
+  void selectionUpdatesStateClosesAndRoutesTheSelectedSymbol() {
     InstrumentSearchModel model = new InstrumentSearchModel();
     InstrumentSearchInteractor interactor = interactor(model, List.of());
+    AtomicReference<String> selected = new AtomicReference<>();
+    interactor.onInstrumentSelected(selected::set);
+    interactor.show();
 
-    interactor.select(APPLE);
+    interactor.selectInstrument(APPLE);
 
     assertEquals("AAPL", model.getCurrentSymbol());
     assertEquals("aapl", model.getQuery());
+    assertFalse(model.isOpen());
+    assertEquals("AAPL", selected.get());
+  }
+
+  @Test
+  void closeRequestsUpdateStateAndNotifyTheListener() {
+    InstrumentSearchModel model = new InstrumentSearchModel();
+    InstrumentSearchInteractor interactor = interactor(model, List.of());
+    AtomicInteger requests = new AtomicInteger();
+    interactor.onRequestClose(requests::incrementAndGet);
+    interactor.show();
+
+    interactor.requestClose();
+
+    assertFalse(model.isOpen());
+    assertEquals(1, requests.get());
   }
 
   private static InstrumentSearchInteractor interactor(InstrumentSearchModel model, List<Instrument> instruments) {

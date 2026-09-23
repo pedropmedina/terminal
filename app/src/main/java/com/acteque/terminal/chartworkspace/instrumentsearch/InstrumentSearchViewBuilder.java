@@ -11,7 +11,6 @@ import com.acteque.terminal.ui.dialog.DialogTitle;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.application.Platform;
-import javafx.beans.value.ObservableBooleanValue;
 import javafx.css.PseudoClass;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -33,9 +32,17 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
   private final Input symbolField = new Input();
   private final ListView<Instrument> instruments = new ListView<>();
 
+  /**
+   * Creates and connects the instrument-search JavaFX composition.
+   *
+   * @param model the observable instrument-search state
+   * @param queryChangedHandler the search-query callback
+   * @param catalogRequestedHandler the catalog-load callback
+   * @param instrumentSelectedHandler the instrument-selection callback
+   * @param closeRequestHandler the dialog-close callback
+   */
   InstrumentSearchViewBuilder(
     InstrumentSearchModel model,
-    ObservableBooleanValue open,
     Consumer<String> queryChangedHandler,
     Runnable catalogRequestedHandler,
     Consumer<Instrument> instrumentSelectedHandler,
@@ -46,53 +53,41 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
       instrumentSelectedHandler,
       "instrumentSelectedHandler cannot be null"
     );
-    Objects.requireNonNull(open, "open cannot be null");
-    Objects.requireNonNull(queryChangedHandler, "queryChangedHandler cannot be null");
-    Objects.requireNonNull(catalogRequestedHandler, "catalogRequestedHandler cannot be null");
-    Objects.requireNonNull(closeRequestHandler, "closeRequestHandler cannot be null");
+    Consumer<String> validatedQueryChangedHandler = Objects.requireNonNull(
+      queryChangedHandler,
+      "queryChangedHandler cannot be null"
+    );
+    Runnable validatedCatalogRequestedHandler = Objects.requireNonNull(
+      catalogRequestedHandler,
+      "catalogRequestedHandler cannot be null"
+    );
+    Runnable validatedCloseRequestHandler = Objects.requireNonNull(
+      closeRequestHandler,
+      "closeRequestHandler cannot be null"
+    );
 
-    root.getStyleClass().add("instrument-search-dialog");
-    instruments.getStyleClass().add("instrument-list");
-    instruments.setItems(model.matchingInstrumentsProperty());
-    instruments.setCellFactory(ignored -> new InstrumentCell());
-    instruments
-      .glidingProperty()
-      .addListener((ignored, wasGliding, isGliding) ->
-        instruments.pseudoClassStateChanged(GLIDING_PSEUDO_CLASS, isGliding)
-      );
-
-    symbolField.setText(model.getCurrentSymbol());
-    symbolField.textProperty().addListener((ignored, oldValue, newValue) -> queryChangedHandler.accept(newValue));
-    model.currentSymbolProperty().addListener((ignored, oldValue, newValue) -> {
-      if (!Objects.equals(symbolField.getText(), newValue)) {
-        symbolField.setText(newValue);
-      }
-    });
-    model.loadStateProperty().addListener(ignored -> updatePlaceholder());
-
-    open.addListener((ignored, wasOpen, isOpen) -> {
-      root.setOpen(isOpen);
-      if (isOpen) {
-        showSearch(catalogRequestedHandler);
-      }
-    });
-    root.openProperty().addListener((ignored, wasOpen, isOpen) -> {
-      if (!isOpen && open.get()) {
-        closeRequestHandler.run();
-      }
-    });
-    root.setOpen(open.get());
+    configureDialog();
+    configureSymbolField();
+    configureInstrumentList();
+    connectComponents(validatedQueryChangedHandler, validatedCatalogRequestedHandler, validatedCloseRequestHandler);
 
     refreshView();
+    displayOpenState(model.isOpen(), validatedCatalogRequestedHandler);
     updatePlaceholder();
     ReloadHooks.register(this);
   }
 
+  /**
+   * Returns the assembled instrument-search dialog.
+   *
+   * @return the instrument-search dialog
+   */
   @Override
   public Dialog build() {
     return root;
   }
 
+  /** Rebuilds reloadable dialog content while retaining model listeners and controls. */
   @Override
   public void refreshView() {
     DialogTitle title = new DialogTitle("Instrument search");
@@ -109,12 +104,72 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
     root.setContent(card);
   }
 
-  private void showSearch(Runnable catalogRequestedHandler) {
-    symbolField.selectAll();
-    Platform.runLater(symbolField::requestFocus);
-    catalogRequestedHandler.run();
+  /** Configures the dialog's stable structural styling. */
+  private void configureDialog() {
+    root.getStyleClass().add("instrument-search-dialog");
   }
 
+  /** Initializes the search field from the current model state. */
+  private void configureSymbolField() {
+    symbolField.setText(model.getCurrentSymbol());
+  }
+
+  /** Configures the searchable instrument list and its gliding presentation state. */
+  private void configureInstrumentList() {
+    instruments.getStyleClass().add("instrument-list");
+    instruments.setItems(model.matchingInstrumentsProperty());
+    instruments.setCellFactory(ignored -> new InstrumentCell());
+    instruments
+      .glidingProperty()
+      .addListener((ignored, wasGliding, isGliding) ->
+        instruments.pseudoClassStateChanged(GLIDING_PSEUDO_CLASS, isGliding)
+      );
+  }
+
+  /**
+   * Connects model observations and forwards control intents to the interactor.
+   *
+   * @param queryChangedHandler the validated search-query callback
+   * @param catalogRequestedHandler the validated catalog-load callback
+   * @param closeRequestHandler the validated dialog-close callback
+   */
+  private void connectComponents(
+    Consumer<String> queryChangedHandler,
+    Runnable catalogRequestedHandler,
+    Runnable closeRequestHandler
+  ) {
+    symbolField.textProperty().addListener((ignored, oldValue, newValue) -> queryChangedHandler.accept(newValue));
+    model.currentSymbolProperty().addListener((ignored, oldValue, newValue) -> {
+      if (!Objects.equals(symbolField.getText(), newValue)) {
+        symbolField.setText(newValue);
+      }
+    });
+    model.loadStateProperty().addListener(ignored -> updatePlaceholder());
+
+    model.openProperty().addListener((ignored, wasOpen, isOpen) -> displayOpenState(isOpen, catalogRequestedHandler));
+    root.openProperty().addListener((ignored, wasOpen, isOpen) -> {
+      if (!isOpen && model.isOpen()) {
+        closeRequestHandler.run();
+      }
+    });
+  }
+
+  /**
+   * Mirrors model visibility into the dialog and prepares the search field when opened.
+   *
+   * @param open true to open the dialog
+   * @param catalogRequestedHandler the catalog-load callback
+   */
+  private void displayOpenState(boolean open, Runnable catalogRequestedHandler) {
+    root.setOpen(open);
+    if (open) {
+      symbolField.selectAll();
+      Platform.runLater(symbolField::requestFocus);
+      catalogRequestedHandler.run();
+    }
+  }
+
+  /** Displays placeholder text appropriate to the current catalog loading state. */
   private void updatePlaceholder() {
     instruments.setPlaceholder(
       new Label(
@@ -127,6 +182,7 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
     );
   }
 
+  /** Renders an instrument result and forwards valid primary-button selections. */
   private final class InstrumentCell extends ListCell<Instrument> {
 
     private final Label symbol = new Label();
@@ -134,6 +190,7 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
     private final Label exchange = new Label();
     private final HBox row = new HBox(symbol, description, exchange);
 
+    /** Creates and styles a reusable instrument-result cell. */
     private InstrumentCell() {
       getStyleClass().add("instrument-cell");
       row.getStyleClass().add("instrument-row");
@@ -151,6 +208,12 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
       });
     }
 
+    /**
+     * Updates the cell's labels and graphic for its current instrument.
+     *
+     * @param instrument the instrument to display
+     * @param empty true when the cell has no item
+     */
     @Override
     protected void updateItem(Instrument instrument, boolean empty) {
       super.updateItem(instrument, empty);
