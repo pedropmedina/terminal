@@ -9,7 +9,9 @@ import java.time.ZoneId;
 import java.util.Objects;
 import java.util.Optional;
 
-/** Drawing-friendly projection of a provider-neutral market-data bar.
+/**
+ * Drawing-friendly projection of a provider-neutral market-data bar.
+ *
  * @param date the calendar label or New York date of a timestamped bar
  * @param timestamp the original instant for an intraday bar, or empty for a calendar bar
  * @param open the opening price for drawing
@@ -48,6 +50,12 @@ public record PricePoint(
     Objects.requireNonNull(timestamp, "timestamp cannot be null");
   }
 
+  /**
+   * Converts a provider-neutral calendar bar into a drawing point.
+   *
+   * @param bar the normalized calendar bar
+   * @return its drawing point without an intraday timestamp
+   */
   public static PricePoint from(CalendarData bar) {
     Objects.requireNonNull(bar, "bar cannot be null");
     Ohlcv prices = bar.prices();
@@ -82,6 +90,11 @@ public record PricePoint(
     );
   }
 
+  /**
+   * Returns the representative price used by line-based renderers.
+   *
+   * @return the closing price
+   */
   public double price() {
     return close;
   }

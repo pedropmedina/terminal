@@ -8,6 +8,28 @@
   -fx-padding: 0 12px 38px 12px;
 }
 
+.chart-status-content {
+  -fx-alignment: center-left;
+  -fx-spacing: 6px;
+}
+
+.chart-identifier {
+  -fx-min-width: 6px;
+  -fx-pref-width: 6px;
+  -fx-max-width: 6px;
+  -fx-max-height: infinity;
+  -fx-scale-y: 0.8;
+}
+
+.chart-status-line {
+  -fx-alignment: center-left;
+}
+
+.chart-status-line-label {
+  -fx-text-fill: -app-foreground;
+  -fx-font-size: 14px;
+}
+
 .chart-load-error {
   -fx-background-color: -app-destructive;
   -fx-text-fill: white;
@@ -47,4 +69,18 @@
   -chart-badge-height: 24px;
   -chart-control-radius: 4px;
   -chart-axis-label-spacing: 56px;
+  -chart-left-margin: 0px;
+  -chart-right-margin: 64px;
+  -chart-top-margin: 0px;
+  -chart-bottom-margin: 32px;
+  -chart-current-price-text-offset: 10px;
+  -chart-autoscale-button-size: 24px;
+  -chart-autoscale-button-x-offset: 8px;
+  -chart-autoscale-button-y-offset: 0px;
+  -chart-axis-tick-length: 5px;
+  -chart-axis-text-offset: 10px;
+  -chart-calendar-badge-width: 120px;
+  -chart-intraday-badge-width: 180px;
+  -chart-badge-text-offset: 10px;
+  -chart-crosshair-dash-length: 4px;
 }

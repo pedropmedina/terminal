@@ -1,148 +1,41 @@
 package com.acteque.terminal.chart.statusline;
 
-import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.PricePoint;
-import com.acteque.terminal.marketlogos.InstrumentLogo;
-import com.acteque.terminal.marketlogos.LogoSession;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.Executor;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableBooleanValue;
-import javafx.beans.value.ObservableValue;
-import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
-import javafx.scene.paint.Color;
 
 /** Composes and exposes the chart status line's MVCI feature. */
 public final class ChartStatusLine {
 
   private final ChartStatusLineInteractor interactor;
   private final ChartStatusLineViewBuilder viewBuilder;
-  private final ObservableValue<Image> instrumentLogoImage;
-  private final Runnable instrumentSelectionAction;
-  private final Runnable intervalSelectionAction;
 
-  public ChartStatusLine(
-    String instrumentName,
-    ChartInterval interval,
-    ObservableBooleanValue tooltipsSuppressed,
-    Runnable instrumentSelectionAction,
-    Runnable intervalSelectionAction
-  ) {
-    this(
-      instrumentName,
-      interval,
-      tooltipsSuppressed,
-      instrumentSelectionAction,
-      intervalSelectionAction,
-      LogoSession.NONE,
-      Runnable::run
-    );
-  }
-
-  public ChartStatusLine(
-    String instrumentName,
-    ChartInterval interval,
-    ObservableBooleanValue tooltipsSuppressed,
-    Runnable instrumentSelectionAction,
-    Runnable intervalSelectionAction,
-    LogoSession logoSource,
-    Executor uiExecutor
-  ) {
-    this(
-      instrumentName,
-      interval,
-      new SimpleObjectProperty<>(Color.TRANSPARENT),
-      new SimpleBooleanProperty(false),
-      tooltipsSuppressed,
-      instrumentSelectionAction,
-      intervalSelectionAction,
-      logoSource,
-      uiExecutor
-    );
-  }
-
-  public ChartStatusLine(
-    String instrumentName,
-    ChartInterval interval,
-    ObservableValue<Color> identifierColor,
-    ObservableBooleanValue identifierVisible,
-    ObservableBooleanValue tooltipsSuppressed,
-    Runnable instrumentSelectionAction,
-    Runnable intervalSelectionAction,
-    LogoSession logoSource,
-    Executor uiExecutor
-  ) {
-    this.instrumentSelectionAction = Objects.requireNonNull(
-      instrumentSelectionAction,
-      "instrumentSelectionAction cannot be null"
-    );
-    this.intervalSelectionAction = Objects.requireNonNull(
-      intervalSelectionAction,
-      "intervalSelectionAction cannot be null"
-    );
+  /** Creates a passive chart status line for OHLCV metadata. */
+  public ChartStatusLine() {
     ChartStatusLineModel model = new ChartStatusLineModel();
-    instrumentLogoImage = model.logoStateProperty().map(state -> state == null ? null : state.image());
-    interactor = new ChartStatusLineInteractor(model, logoSource, uiExecutor);
-    interactor.initialize(instrumentName, interval);
-    viewBuilder = new ChartStatusLineViewBuilder(
-      model,
-      Objects.requireNonNull(identifierColor, "identifierColor cannot be null"),
-      Objects.requireNonNull(identifierVisible, "identifierVisible cannot be null"),
-      Objects.requireNonNull(tooltipsSuppressed, "tooltipsSuppressed cannot be null"),
-      this::selectInstrument,
-      this::selectInterval
-    );
+    interactor = new ChartStatusLineInteractor(model);
+    viewBuilder = new ChartStatusLineViewBuilder(model);
   }
 
+  /**
+   * Returns the status-line view.
+   *
+   * @return the reusable {@link Region} containing OHLCV metadata
+   */
   public Region getView() {
     return viewBuilder.build();
   }
 
   /**
-   * Returns the currently loaded instrument logo image.
+   * Displays the supplied price point.
    *
-   * @return the observable {@link Image}, or {@code null} while no logo is available
+   * @param point the non-null {@link PricePoint} to display
    */
-  public ObservableValue<Image> instrumentLogoImageProperty() {
-    return instrumentLogoImage;
-  }
-
   public void setPricePoint(PricePoint point) {
     interactor.setPricePoint(point);
   }
 
+  /** Clears the displayed price point. */
   public void clearPricePoint() {
     interactor.clearPricePoint();
-  }
-
-  public void setInstrumentName(String instrumentName) {
-    interactor.setInstrumentName(instrumentName);
-  }
-
-  public void setInstrument(String instrumentName, Optional<InstrumentLogo> logo) {
-    interactor.setInstrument(instrumentName, logo);
-  }
-
-  public void cancelLogoLoad() {
-    interactor.cancelLogoLoad();
-  }
-
-  public void setInstrumentLogo(InstrumentLogo logo, Image image) {
-    interactor.setInstrumentLogo(logo, image);
-  }
-
-  public void setInterval(ChartInterval interval) {
-    interactor.setInterval(interval);
-  }
-
-  private void selectInstrument() {
-    instrumentSelectionAction.run();
-  }
-
-  private void selectInterval() {
-    intervalSelectionAction.run();
   }
 }

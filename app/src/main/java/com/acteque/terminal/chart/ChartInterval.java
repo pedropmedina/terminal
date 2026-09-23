@@ -2,8 +2,14 @@ package com.acteque.terminal.chart;
 
 import java.util.Objects;
 
-/** Immutable interval value shared by chart MVCI models. */
+/**
+ * Immutable interval value shared by chart MVCI models.
+ *
+ * @param amount the positive count of classified time or tick units
+ * @param classification the interval's unit classification
+ */
 public record ChartInterval(int amount, Classification classification) {
+  /** Units supported by chart interval selection and presentation. */
   public enum Classification {
     TICKS("t"),
     SECONDS("s"),
@@ -15,6 +21,11 @@ public record ChartInterval(int amount, Classification classification) {
 
     private final String suffix;
 
+    /**
+     * Creates a classified unit with its compact label suffix.
+     *
+     * @param suffix the suffix appended to non-calendar interval amounts
+     */
     Classification(String suffix) {
       this.suffix = suffix;
     }
@@ -78,6 +89,12 @@ public record ChartInterval(int amount, Classification classification) {
     TWELVE_MONTHS,
   };
 
+  /**
+   * Validates a newly created interval.
+   *
+   * @param amount the positive unit count
+   * @param classification the non-null interval classification
+   */
   public ChartInterval {
     if (amount <= 0) {
       throw new IllegalArgumentException("amount must be greater than zero");
@@ -85,14 +102,33 @@ public record ChartInterval(int amount, Classification classification) {
     Objects.requireNonNull(classification, "classification cannot be null");
   }
 
+  /**
+   * Creates an interval from a positive amount and classification.
+   *
+   * @param amount the positive unit count
+   * @param classification the interval classification
+   * @return the validated interval
+   */
   public static ChartInterval of(int amount, Classification classification) {
     return new ChartInterval(amount, classification);
   }
 
+  /**
+   * Returns the standard selectable intervals.
+   *
+   * @return a defensive copy in display order
+   */
   public static ChartInterval[] values() {
     return STANDARD_VALUES.clone();
   }
 
+  /**
+   * Creates a predefined interval constant.
+   *
+   * @param amount the positive unit count
+   * @param classification the interval classification
+   * @return the predefined interval value
+   */
   private static ChartInterval standard(int amount, Classification classification) {
     return new ChartInterval(amount, classification);
   }

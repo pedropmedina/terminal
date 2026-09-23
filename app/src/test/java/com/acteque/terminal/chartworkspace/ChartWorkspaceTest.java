@@ -101,9 +101,7 @@ class ChartWorkspaceTest {
         assertEquals(0.0, menuShadow.getOffsetX());
         assertEquals(2.0, menuShadow.getOffsetY());
         HBox menuItems = assertInstanceOf(HBox.class, view.lookup(".chart-workspace-menu-items"));
-        Region menuIdentifier = assertInstanceOf(Region.class, view.lookup(".chart-workspace-menu-identifier"));
         assertEquals(5, menuItems.getChildren().size());
-        assertFalse(menuIdentifier.isVisible());
 
         Separator separator = assertInstanceOf(Separator.class, menuItems.getChildren().get(3));
         assertEquals(Orientation.VERTICAL, separator.getOrientation());
@@ -121,18 +119,12 @@ class ChartWorkspaceTest {
         layout(view);
 
         Chart right = charts.get(1);
-        right.setInstrument("AAPL", "Apple", List.of(), Optional.empty());
+        right.setInstrument("AAPL", List.of(), Optional.empty());
         layout(view);
         assertTrue(isActive(right));
         assertFalse(isActive(left));
         assertEquals(6, menuItems.getChildren().size());
         assertEquals("AAPL", assertInstanceOf(Button.class, menuItems.getChildren().getFirst()).getText());
-        assertTrue(menuIdentifier.isVisible());
-        assertEquals(4.0, menuIdentifier.getWidth());
-        assertEquals(
-          right.identifierColorProperty().get(),
-          menuIdentifier.getBackground().getFills().getFirst().getFill()
-        );
 
         Button chartType = assertInstanceOf(Button.class, menuItems.getChildren().get(2));
         chartType.fire();
@@ -202,7 +194,6 @@ class ChartWorkspaceTest {
         assertEquals(1, resources.get(1).marketData.closes);
         assertEquals(1, resources.get(1).logos.closes);
         assertEquals(5, menuItems.getChildren().size());
-        assertFalse(menuIdentifier.isVisible());
       } finally {
         workspace.close();
       }
@@ -505,8 +496,8 @@ class ChartWorkspaceTest {
       assertSame(created, fixture.model.getActiveChart());
       assertFalse(isActive(source));
       assertTrue(isActive(created));
-      assertEquals(Color.web("#f5f5f5"), view.getBackground().getFills().getFirst().getFill());
-      assertEquals(2.5, view.getPadding().getTop());
+      assertEquals(Color.web("#e3e3e3"), view.getBackground().getFills().getFirst().getFill());
+      assertEquals(3.0, view.getPadding().getTop());
       assertEquals(Color.WHITE, sourceContainer.getBackground().getFills().getFirst().getFill());
       assertEquals(Color.web("#a1a1a1"), createdContainer.getBackground().getFills().getFirst().getFill());
       assertEquals(Color.WHITE, createdContainer.getBackground().getFills().get(1).getFill());
@@ -514,16 +505,16 @@ class ChartWorkspaceTest {
       assertNull(createdContainer.getEffect());
       Region createdSlot = assertInstanceOf(Region.class, createdContainer.getParent());
       assertTrue(createdSlot.getStyleClass().contains("chart-workspace-chart-slot"));
-      assertEquals(1.5, createdSlot.getPadding().getTop());
+      assertEquals(2.0, createdSlot.getPadding().getTop());
       assertEquals(2.0, created.getView().getLayoutX());
       assertEquals(2.0, created.getView().getLayoutY());
 
       Bounds sourceBounds = sourceContainer.localToScene(sourceContainer.getBoundsInLocal());
       Bounds createdBounds = createdContainer.localToScene(createdContainer.getBoundsInLocal());
-      assertEquals(4.0, sourceBounds.getMinX(), 0.75);
-      assertEquals(4.0, sourceBounds.getMinY(), 0.75);
+      assertEquals(5.0, sourceBounds.getMinX(), 0.75);
+      assertEquals(5.0, sourceBounds.getMinY(), 0.75);
       assertEquals(4.0, view.getWidth() - createdBounds.getMaxX(), 0.75);
-      assertEquals(4.0, view.getHeight() - createdBounds.getMaxY(), 0.75);
+      assertEquals(5.0, view.getHeight() - createdBounds.getMaxY(), 0.75);
       assertEquals(4.0, createdBounds.getMinX() - sourceBounds.getMaxX(), 0.75);
 
       assertNull(createdContainer.getClip());
@@ -565,7 +556,7 @@ class ChartWorkspaceTest {
     FxTestSupport.runAndWait(() -> {
       Fixture fixture = new Fixture();
       Chart source = fixture.initialize();
-      source.setInstrument("AAPL", "Apple", List.of(), Optional.empty());
+      source.setInstrument("AAPL", List.of(), Optional.empty());
       source.setChartType(ChartType.BAR);
 
       fixture.interactor.split(source, ChartSplitDirection.RIGHT);
@@ -573,7 +564,7 @@ class ChartWorkspaceTest {
       assertEquals(new ChartWorkspaceSettings("AAPL", ChartInterval.DAILY, ChartType.BAR), fixture.settings.get(1));
       ChartWorkspaceSplit split = (ChartWorkspaceSplit) fixture.model.getRoot();
       Chart created = ((ChartWorkspaceLeaf) split.second()).chart();
-      created.setInstrument("MSFT", "Microsoft", List.of(), Optional.empty());
+      created.setInstrument("MSFT", List.of(), Optional.empty());
       created.setChartType(ChartType.AREA);
       assertEquals("AAPL", source.getSymbol());
       assertEquals(ChartType.BAR, source.getChartType());
@@ -636,12 +627,12 @@ class ChartWorkspaceTest {
       Bounds sourceBounds = containerBounds(source);
       Bounds rightBounds = containerBounds(right);
       Bounds bottomBounds = containerBounds(bottom);
-      assertEquals(4.0, sourceBounds.getMinX(), 0.75);
-      assertEquals(4.0, sourceBounds.getMinY(), 0.75);
+      assertEquals(5.0, sourceBounds.getMinX(), 0.75);
+      assertEquals(5.0, sourceBounds.getMinY(), 0.75);
       assertEquals(4.0, rightBounds.getMinX() - sourceBounds.getMaxX(), 0.75);
       assertEquals(4.0, bottomBounds.getMinY() - rightBounds.getMaxY(), 0.75);
-      assertEquals(4.0, view.getWidth() - bottomBounds.getMaxX(), 0.75);
-      assertEquals(4.0, view.getHeight() - bottomBounds.getMaxY(), 0.75);
+      assertEquals(5.0, view.getWidth() - bottomBounds.getMaxX(), 0.75);
+      assertEquals(5.0, view.getHeight() - bottomBounds.getMaxY(), 0.75);
       fixture.interactor.close();
     });
   }
@@ -753,7 +744,7 @@ class ChartWorkspaceTest {
   }
 
   private static Chart chart(ChartWorkspaceSettings settings, StubMarketData marketData, StubLogos logos) {
-    Chart chart = new Chart(List.of(), settings.symbol(), settings.interval(), marketData, logos, Runnable::run);
+    Chart chart = new Chart(settings.symbol(), settings.interval(), List.of(), logos, marketData, Runnable::run);
     chart.setChartType(settings.chartType());
     return chart;
   }
@@ -765,7 +756,7 @@ class ChartWorkspaceTest {
   }
 
   private static Region identifier(Chart chart) {
-    return assertInstanceOf(Region.class, chart.getView().lookup(".chart-status-line-identifier"));
+    return assertInstanceOf(Region.class, chart.getView().lookup(".chart-identifier"));
   }
 
   private static Color identifierColor(Region identifier) {

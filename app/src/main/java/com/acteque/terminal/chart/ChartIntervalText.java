@@ -6,8 +6,15 @@ import java.util.Objects;
 /** Presentation text and search terms for chart intervals. */
 public final class ChartIntervalText {
 
+  /** Prevents utility-class instantiation. */
   private ChartIntervalText() {}
 
+  /**
+   * Returns the plural display name for an interval classification.
+   *
+   * @param classification the classification to describe
+   * @return its title-cased plural name
+   */
   public static String classificationName(ChartInterval.Classification classification) {
     Objects.requireNonNull(classification, "classification cannot be null");
     return switch (classification) {
@@ -21,6 +28,12 @@ public final class ChartIntervalText {
     };
   }
 
+  /**
+   * Returns the interval-selection category containing an interval.
+   *
+   * @param interval the interval to categorize
+   * @return the category display name
+   */
   public static String category(ChartInterval interval) {
     Objects.requireNonNull(interval, "interval cannot be null");
     return switch (interval.classification()) {
@@ -51,10 +64,23 @@ public final class ChartIntervalText {
     return interval.amount() + " " + unit(interval.classification()) + "s";
   }
 
+  /**
+   * Returns a short explanatory label for an interval.
+   *
+   * @param interval the interval to describe
+   * @return the display name followed by {@code interval}
+   */
   public static String description(ChartInterval interval) {
     return displayName(interval) + " interval";
   }
 
+  /**
+   * Reports whether an interval matches normalized interval-search text.
+   *
+   * @param interval the candidate interval
+   * @param normalizedQuery the lower-cased query without surrounding whitespace
+   * @return true when the query matches the interval's label, category, or description
+   */
   public static boolean matches(ChartInterval interval, String normalizedQuery) {
     Objects.requireNonNull(interval, "interval cannot be null");
     Objects.requireNonNull(normalizedQuery, "normalizedQuery cannot be null");
@@ -66,6 +92,12 @@ public final class ChartIntervalText {
     );
   }
 
+  /**
+   * Returns the singular lower-case unit for a classification.
+   *
+   * @param classification the classification to name
+   * @return its singular unit name
+   */
   private static String unit(ChartInterval.Classification classification) {
     return switch (classification) {
       case TICKS -> "tick";

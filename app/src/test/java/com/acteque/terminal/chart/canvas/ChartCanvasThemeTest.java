@@ -49,6 +49,12 @@ class ChartCanvasThemeTest {
       assertEquals(Color.web("#ffffff"), builder.renderStyle().candleDown());
       assertEquals(Color.web("#0a0a0a"), builder.renderStyle().candleBorder());
       assertEquals(24.0, builder.renderStyle().badgeHeight());
+      assertEquals(64.0, builder.renderStyle().rightMargin());
+      assertEquals(32.0, builder.renderStyle().bottomMargin());
+      assertEquals(24.0, builder.renderStyle().autoscaleButtonSize());
+      assertEquals(120.0, builder.renderStyle().calendarBadgeWidth());
+      assertEquals(180.0, builder.renderStyle().intradayBadgeWidth());
+      assertEquals(4.0, builder.renderStyle().crosshairDashLength());
       interactor.setChartType(ChartType.AREA);
       builder.drawChart();
       assertAreaFillMatchesTheme(builder, canvas);

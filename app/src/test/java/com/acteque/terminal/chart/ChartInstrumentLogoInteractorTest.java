@@ -1,10 +1,9 @@
-package com.acteque.terminal.chart.statusline;
+package com.acteque.terminal.chart;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.marketlogos.InstrumentLogo;
@@ -20,7 +19,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
-class ChartStatusLineLogoInteractorTest {
+class ChartInstrumentLogoInteractorTest {
 
   private static final InstrumentLogo FIRST = logo("FIRST");
   private static final InstrumentLogo SECOND = logo("SECOND");
@@ -29,33 +28,33 @@ class ChartStatusLineLogoInteractorTest {
   );
 
   @Test
-  void decodesLogoAndPublishesItThroughTheModelOnTheUiExecutor() {
+  void decodesLogoAndPublishesItThroughTheChartModelOnTheUiExecutor() {
     FxTestSupport.runAndWait(() -> {
-      ChartStatusLineModel model = new ChartStatusLineModel();
+      ChartModel model = new ChartModel();
       List<Runnable> uiQueue = new ArrayList<>();
-      ChartStatusLineInteractor interactor = new ChartStatusLineInteractor(
+      ChartInteractor interactor = new ChartInteractor(
         model,
         reference -> CompletableFuture.completedFuture(Optional.of(PNG)),
         uiQueue::add
       );
 
-      interactor.setInstrument("First", Optional.of(FIRST));
-      assertNull(model.getLogoState());
+      interactor.setInstrumentLogo(Optional.of(FIRST));
+      assertNull(model.getInstrumentLogoImage());
       uiQueue.removeFirst().run();
 
-      assertSame(FIRST, model.getLogoState().logo());
-      assertFalse(model.getLogoState().image().isError());
-      assertTrue(model.getLogoState().image().getWidth() > 0);
+      assertNotNull(model.getInstrumentLogoImage());
+      assertFalse(model.getInstrumentLogoImage().isError());
+      assertTrue(model.getInstrumentLogoImage().getWidth() > 0);
     });
   }
 
   @Test
   void ignoresOlderRequestsAndQueuedCompletions() {
     FxTestSupport.runAndWait(() -> {
-      ChartStatusLineModel model = new ChartStatusLineModel();
+      ChartModel model = new ChartModel();
       List<CompletableFuture<Optional<byte[]>>> requests = new ArrayList<>();
       List<Runnable> uiQueue = new ArrayList<>();
-      ChartStatusLineInteractor interactor = new ChartStatusLineInteractor(
+      ChartInteractor interactor = new ChartInteractor(
         model,
         reference -> {
           var request = new CompletableFuture<Optional<byte[]>>();
@@ -65,25 +64,30 @@ class ChartStatusLineLogoInteractorTest {
         uiQueue::add
       );
 
-      interactor.setInstrument("First", Optional.of(FIRST));
-      interactor.setInstrument("Second", Optional.of(SECOND));
+      interactor.setInstrumentLogo(Optional.of(FIRST));
+      interactor.setInstrumentLogo(Optional.of(SECOND));
       requests.get(1).complete(Optional.of(PNG));
-      interactor.setInstrument("First again", Optional.of(FIRST));
-      requests.get(0).complete(Optional.of(PNG));
-      requests.get(2).complete(Optional.of(PNG));
-      uiQueue.forEach(Runnable::run);
+      interactor.setInstrumentLogo(Optional.of(FIRST));
+      uiQueue.removeFirst().run();
+      assertNull(model.getInstrumentLogoImage());
 
-      assertSame(FIRST, model.getLogoState().logo());
+      requests.get(0).complete(Optional.of(PNG));
+      uiQueue.removeFirst().run();
+      assertNull(model.getInstrumentLogoImage());
+
+      requests.get(2).complete(Optional.of(PNG));
+      uiQueue.removeFirst().run();
+      assertNotNull(model.getInstrumentLogoImage());
     });
   }
 
   @Test
-  void cancellationAndMissingMetadataLeaveTheFallbackState() {
+  void cancellationAndMissingMetadataLeaveTheSymbolFallbackState() {
     FxTestSupport.runAndWait(() -> {
-      ChartStatusLineModel model = new ChartStatusLineModel();
+      ChartModel model = new ChartModel();
       var pending = new CompletableFuture<Optional<byte[]>>();
       AtomicInteger cancellations = new AtomicInteger();
-      ChartStatusLineInteractor interactor = new ChartStatusLineInteractor(
+      ChartInteractor interactor = new ChartInteractor(
         model,
         new LogoSession() {
           @Override
@@ -99,19 +103,19 @@ class ChartStatusLineLogoInteractorTest {
         Runnable::run
       );
 
-      interactor.setInstrument("First", Optional.of(FIRST));
-      interactor.cancelLogoLoad();
+      interactor.setInstrumentLogo(Optional.of(FIRST));
+      interactor.cancelInstrumentLogoLoad();
       pending.complete(Optional.of(PNG));
-      assertNull(model.getLogoState());
+      assertNull(model.getInstrumentLogoImage());
       assertTrue(cancellations.get() >= 2);
 
-      interactor.setInstrument("No logo", Optional.empty());
-      assertNull(model.getLogoState());
+      interactor.setInstrumentLogo(Optional.empty());
+      assertNull(model.getInstrumentLogoImage());
     });
   }
 
   @Test
-  void missingInvalidAndFailedDownloadsLeaveTheFallbackState() {
+  void missingInvalidAndFailedDownloadsLeaveTheSymbolFallbackState() {
     FxTestSupport.runAndWait(() -> {
       List<CompletableFuture<Optional<byte[]>>> results = List.of(
         CompletableFuture.completedFuture(Optional.empty()),
@@ -120,10 +124,10 @@ class ChartStatusLineLogoInteractorTest {
         CompletableFuture.failedFuture(new IllegalStateException("Test download failure"))
       );
       for (var result : results) {
-        ChartStatusLineModel model = new ChartStatusLineModel();
-        ChartStatusLineInteractor interactor = new ChartStatusLineInteractor(model, ignored -> result, Runnable::run);
-        interactor.setInstrument("First", Optional.of(FIRST));
-        assertNull(model.getLogoState());
+        ChartModel model = new ChartModel();
+        ChartInteractor interactor = new ChartInteractor(model, ignored -> result, Runnable::run);
+        interactor.setInstrumentLogo(Optional.of(FIRST));
+        assertNull(model.getInstrumentLogoImage());
       }
     });
   }
@@ -131,8 +135,8 @@ class ChartStatusLineLogoInteractorTest {
   @Test
   void synchronousRateLimitFailuresLeaveTheSymbolFallbackWithoutEscaping() {
     FxTestSupport.runAndWait(() -> {
-      ChartStatusLineModel model = new ChartStatusLineModel();
-      ChartStatusLineInteractor interactor = new ChartStatusLineInteractor(
+      ChartModel model = new ChartModel();
+      ChartInteractor interactor = new ChartInteractor(
         model,
         ignored -> {
           throw new LogoException(LogoException.Code.RATE_LIMITED, "HTTP 429");
@@ -140,9 +144,8 @@ class ChartStatusLineLogoInteractorTest {
         Runnable::run
       );
 
-      assertDoesNotThrow(() -> interactor.setInstrument("First", Optional.of(FIRST)));
-      assertNull(model.getLogoState());
-      assertEquals("First", model.getInstrumentName());
+      assertDoesNotThrow(() -> interactor.setInstrumentLogo(Optional.of(FIRST)));
+      assertNull(model.getInstrumentLogoImage());
     });
   }
 

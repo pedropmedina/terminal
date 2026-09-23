@@ -11,13 +11,24 @@ import javafx.scene.text.TextAlignment;
 /** Renders the chart's crosshair and its price and date badges. */
 final class CrosshairRenderer {
 
-  private static final double CALENDAR_BADGE_WIDTH = 120.0;
-  private static final double INTRADAY_BADGE_WIDTH = 180.0;
-  private static final double PRICE_TEXT_OFFSET = 10.0;
-  private static final double DATE_TEXT_OFFSET = 10.0;
-
+  /** Creates a stateless crosshair renderer. */
   CrosshairRenderer() {}
 
+  /**
+   * Draws crosshair lines and axis badges.
+   *
+   * @param graphics the target graphics context
+   * @param chartLeft the chart area's left edge
+   * @param chartTop the chart area's top edge
+   * @param chartRight the chart area's right edge
+   * @param chartBottom the chart area's bottom edge
+   * @param canvasWidth the complete canvas width
+   * @param x the crosshair x coordinate
+   * @param y the crosshair y coordinate
+   * @param price the price represented by {@code y}
+   * @param dateText the date or time label
+   * @param style the CSS-resolved drawing style
+   */
   void draw(
     GraphicsContext graphics,
     double chartLeft,
@@ -38,7 +49,7 @@ final class CrosshairRenderer {
     graphics.save();
     graphics.setStroke(style.crosshair());
     graphics.setLineWidth(style.gridLineWidth());
-    graphics.setLineDashes(4.0, 4.0);
+    graphics.setLineDashes(style.crosshairDashLength(), style.crosshairDashLength());
     graphics.strokeLine(x, chartTop, x, chartBottom);
     graphics.strokeLine(chartLeft, y, chartRight, y);
     graphics.restore();
@@ -50,26 +61,38 @@ final class CrosshairRenderer {
     graphics.setFont(style.badgeFont());
     graphics.setTextAlign(TextAlignment.LEFT);
     graphics.setTextBaseline(VPos.CENTER);
-    graphics.fillText(priceText(price), chartRight + PRICE_TEXT_OFFSET, y);
+    graphics.fillText(priceText(price), chartRight + style.badgeTextOffset(), y);
 
-    double dateBadgeWidth = dateText.contains(":") ? INTRADAY_BADGE_WIDTH : CALENDAR_BADGE_WIDTH;
+    double dateBadgeWidth = dateText.contains(":") ? style.intradayBadgeWidth() : style.calendarBadgeWidth();
     double dateBadgeLeft = Math.max(chartLeft, Math.min(chartRight - dateBadgeWidth, x - dateBadgeWidth / 2.0));
     graphics.setFill(style.badgeBackground());
     graphics.fillRect(dateBadgeLeft, chartBottom, dateBadgeWidth, style.badgeHeight());
     graphics.setFill(style.badgeForeground());
     graphics.setTextAlign(TextAlignment.CENTER);
     graphics.setTextBaseline(VPos.TOP);
-    graphics.fillText(dateText, dateBadgeLeft + dateBadgeWidth / 2.0, chartBottom + DATE_TEXT_OFFSET);
+    graphics.fillText(dateText, dateBadgeLeft + dateBadgeWidth / 2.0, chartBottom + style.badgeTextOffset());
   }
 
+  /**
+   * @param price the price to format
+   * @return a two-decimal price label
+   */
   String priceText(double price) {
     return String.format(Locale.US, "%.2f", price);
   }
 
+  /**
+   * @param date the date to format
+   * @return a calendar crosshair label
+   */
   String dateText(LocalDate date) {
     return ChartDateFormatter.crosshair(Objects.requireNonNull(date, "date cannot be null"));
   }
 
+  /**
+   * @param timestamp the instant to format
+   * @return a New York intraday crosshair label
+   */
   String dateText(Instant timestamp) {
     return ChartDateFormatter.crosshair(Objects.requireNonNull(timestamp, "timestamp cannot be null"));
   }

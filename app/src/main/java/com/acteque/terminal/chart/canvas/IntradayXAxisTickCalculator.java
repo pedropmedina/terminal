@@ -15,8 +15,19 @@ final class IntradayXAxisTickCalculator {
   private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("h:mm a", Locale.US);
   private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("MMM d", Locale.US);
 
+  /** Prevents utility-class instantiation. */
   private IntradayXAxisTickCalculator() {}
 
+  /**
+   * Calculates visible intraday labels without collisions.
+   *
+   * @param times complete ordered bar timestamps
+   * @param firstVisibleDataIndex source index of the first visible bar
+   * @param visibleSlotCount number of visible and projected slots
+   * @param chartWidth drawable chart width
+   * @param minimumLabelSpacing minimum desired label spacing
+   * @return immutable axis ticks
+   */
   static List<XAxisTickCalculator.XAxisTick> calculate(
     List<Instant> times,
     int firstVisibleDataIndex,
@@ -55,6 +66,7 @@ final class IntradayXAxisTickCalculator {
     return List.copyOf(result);
   }
 
+  /** @return true when the indexed timestamp starts a new New York trading date */
   private static boolean startsDay(List<Instant> times, int index) {
     return !times
       .get(index)
@@ -68,6 +80,7 @@ final class IntradayXAxisTickCalculator {
       );
   }
 
+  /** @return true when a candidate is sufficiently far from selected indices */
   private static boolean farEnough(int candidate, TreeSet<Integer> selected, int minimumSpacing) {
     Integer lower = selected.floor(candidate);
     Integer higher = selected.ceiling(candidate);

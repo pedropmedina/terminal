@@ -1,75 +1,26 @@
 package com.acteque.terminal.chart.statusline;
 
-import com.acteque.terminal.chart.ChartInterval;
 import com.acteque.terminal.chart.PricePoint;
-import com.acteque.terminal.marketlogos.InstrumentLogo;
-import java.util.Objects;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.scene.image.Image;
 
 /** Observable state shared by the chart status line's MVCI components. */
 final class ChartStatusLineModel {
 
-  record LogoState(InstrumentLogo logo, Image image) {
-    LogoState {
-      Objects.requireNonNull(logo, "logo cannot be null");
-      Objects.requireNonNull(image, "image cannot be null");
-    }
-  }
-
-  private final ReadOnlyStringWrapper instrumentName = new ReadOnlyStringWrapper(this, "instrumentName", "");
-  private final ReadOnlyObjectWrapper<ChartInterval> interval = new ReadOnlyObjectWrapper<>(this, "interval");
   private final ReadOnlyObjectWrapper<PricePoint> pricePoint = new ReadOnlyObjectWrapper<>(this, "pricePoint");
-  private final ReadOnlyObjectWrapper<LogoState> logoState = new ReadOnlyObjectWrapper<>(this, "logoState");
 
-  String getInstrumentName() {
-    return instrumentName.get();
-  }
-
-  ReadOnlyStringProperty instrumentNameProperty() {
-    return instrumentName.getReadOnlyProperty();
-  }
-
-  void setInstrumentName(String value) {
-    instrumentName.set(value);
-  }
-
-  ChartInterval getInterval() {
-    return interval.get();
-  }
-
-  ReadOnlyObjectProperty<ChartInterval> intervalProperty() {
-    return interval.getReadOnlyProperty();
-  }
-
-  void setInterval(ChartInterval value) {
-    interval.set(value);
-  }
-
+  /** @return the currently displayed price point, or {@code null} */
   PricePoint getPricePoint() {
     return pricePoint.get();
   }
 
+  /** @return the read-only displayed price-point property */
   ReadOnlyObjectProperty<PricePoint> pricePointProperty() {
     return pricePoint.getReadOnlyProperty();
   }
 
+  /** @param value the point to display, or {@code null} to clear it */
   void setPricePoint(PricePoint value) {
     pricePoint.set(value);
-  }
-
-  LogoState getLogoState() {
-    return logoState.get();
-  }
-
-  ReadOnlyObjectProperty<LogoState> logoStateProperty() {
-    return logoState.getReadOnlyProperty();
-  }
-
-  void setLogoState(LogoState value) {
-    logoState.set(value);
   }
 }

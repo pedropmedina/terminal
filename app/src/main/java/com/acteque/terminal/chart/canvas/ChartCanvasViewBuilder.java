@@ -15,6 +15,7 @@ import javafx.css.StyleableProperty;
 import javafx.css.StyleablePropertyFactory;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
@@ -198,9 +199,99 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     56.0,
     canvas -> canvas.chartAxisLabelSpacing
   );
+  private final StyleableProperty<Number> chartLeftMargin = numberProperty(
+    "chartLeftMargin",
+    "-chart-left-margin",
+    0.0,
+    canvas -> canvas.chartLeftMargin
+  );
+  private final StyleableProperty<Number> chartRightMargin = numberProperty(
+    "chartRightMargin",
+    "-chart-right-margin",
+    64.0,
+    canvas -> canvas.chartRightMargin
+  );
+  private final StyleableProperty<Number> chartTopMargin = numberProperty(
+    "chartTopMargin",
+    "-chart-top-margin",
+    0.0,
+    canvas -> canvas.chartTopMargin
+  );
+  private final StyleableProperty<Number> chartBottomMargin = numberProperty(
+    "chartBottomMargin",
+    "-chart-bottom-margin",
+    32.0,
+    canvas -> canvas.chartBottomMargin
+  );
+  private final StyleableProperty<Number> chartCurrentPriceTextOffset = numberProperty(
+    "chartCurrentPriceTextOffset",
+    "-chart-current-price-text-offset",
+    10.0,
+    canvas -> canvas.chartCurrentPriceTextOffset
+  );
+  private final StyleableProperty<Number> chartAutoscaleButtonSize = numberProperty(
+    "chartAutoscaleButtonSize",
+    "-chart-autoscale-button-size",
+    24.0,
+    canvas -> canvas.chartAutoscaleButtonSize
+  );
+  private final StyleableProperty<Number> chartAutoscaleButtonXOffset = numberProperty(
+    "chartAutoscaleButtonXOffset",
+    "-chart-autoscale-button-x-offset",
+    8.0,
+    canvas -> canvas.chartAutoscaleButtonXOffset
+  );
+  private final StyleableProperty<Number> chartAutoscaleButtonYOffset = numberProperty(
+    "chartAutoscaleButtonYOffset",
+    "-chart-autoscale-button-y-offset",
+    0.0,
+    canvas -> canvas.chartAutoscaleButtonYOffset
+  );
+  private final StyleableProperty<Number> chartAxisTickLength = numberProperty(
+    "chartAxisTickLength",
+    "-chart-axis-tick-length",
+    5.0,
+    canvas -> canvas.chartAxisTickLength
+  );
+  private final StyleableProperty<Number> chartAxisTextOffset = numberProperty(
+    "chartAxisTextOffset",
+    "-chart-axis-text-offset",
+    10.0,
+    canvas -> canvas.chartAxisTextOffset
+  );
+  private final StyleableProperty<Number> chartCalendarBadgeWidth = numberProperty(
+    "chartCalendarBadgeWidth",
+    "-chart-calendar-badge-width",
+    120.0,
+    canvas -> canvas.chartCalendarBadgeWidth
+  );
+  private final StyleableProperty<Number> chartIntradayBadgeWidth = numberProperty(
+    "chartIntradayBadgeWidth",
+    "-chart-intraday-badge-width",
+    180.0,
+    canvas -> canvas.chartIntradayBadgeWidth
+  );
+  private final StyleableProperty<Number> chartBadgeTextOffset = numberProperty(
+    "chartBadgeTextOffset",
+    "-chart-badge-text-offset",
+    10.0,
+    canvas -> canvas.chartBadgeTextOffset
+  );
+  private final StyleableProperty<Number> chartCrosshairDashLength = numberProperty(
+    "chartCrosshairDashLength",
+    "-chart-crosshair-dash-length",
+    4.0,
+    canvas -> canvas.chartCrosshairDashLength
+  );
 
   private boolean redrawScheduled;
 
+  /**
+   * Creates a canvas view connected to its model and interactor.
+   *
+   * @param model the observable canvas state
+   * @param interactor the canvas workflow and transition owner
+   */
   ChartCanvasViewBuilder(ChartCanvasModel model, ChartCanvasInteractor interactor) {
     this.model = Objects.requireNonNull(model, "model cannot be null");
     this.interactor = Objects.requireNonNull(interactor, "interactor cannot be null");
@@ -212,32 +303,38 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     widthProperty().addListener((ignored, oldWidth, newWidth) -> drawChart());
     heightProperty().addListener((ignored, oldHeight, newHeight) -> drawChart());
     model.revisionProperty().addListener(ignored -> drawChart());
-    setEventsListeners();
+    connectEventHandlers();
   }
 
+  /** @return this canvas view */
   @Override
   public Canvas build() {
     return this;
   }
 
+  /** Draws all canvas layers synchronously from current model and CSS state. */
   void drawChart() {
+    RenderStyle style = renderStyle();
     renderer.draw(
-      renderStyle(),
+      style,
       interactor.visibleWindow(),
-      model.pricePoints.isEmpty() ? null : interactor.displayedPriceRange(renderer.chartBounds().height())
+      model.pricePoints.isEmpty() ? null : interactor.displayedPriceRange(renderer.chartBounds(style).height())
     );
   }
 
+  /** Redraws the canvas after development-time class redefinition. */
   @Override
   public void refreshView() {
     drawChart();
   }
 
+  /** @return CSS metadata for the canvas's custom drawing properties */
   @Override
   public List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
     return STYLEABLES.getCssMetaData();
   }
 
+  /** @return an immutable snapshot of CSS-resolved drawing values */
   RenderStyle renderStyle() {
     return new RenderStyle(
       chartBackground.getValue(),
@@ -267,10 +364,33 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
       chartCandleStrokeWidth.getValue().doubleValue(),
       chartBadgeHeight.getValue().doubleValue(),
       chartControlRadius.getValue().doubleValue(),
-      chartAxisLabelSpacing.getValue().doubleValue()
+      chartAxisLabelSpacing.getValue().doubleValue(),
+      chartLeftMargin.getValue().doubleValue(),
+      chartRightMargin.getValue().doubleValue(),
+      chartTopMargin.getValue().doubleValue(),
+      chartBottomMargin.getValue().doubleValue(),
+      chartCurrentPriceTextOffset.getValue().doubleValue(),
+      chartAutoscaleButtonSize.getValue().doubleValue(),
+      chartAutoscaleButtonXOffset.getValue().doubleValue(),
+      chartAutoscaleButtonYOffset.getValue().doubleValue(),
+      chartAxisTickLength.getValue().doubleValue(),
+      chartAxisTextOffset.getValue().doubleValue(),
+      chartCalendarBadgeWidth.getValue().doubleValue(),
+      chartIntradayBadgeWidth.getValue().doubleValue(),
+      chartBadgeTextOffset.getValue().doubleValue(),
+      chartCrosshairDashLength.getValue().doubleValue()
     );
   }
 
+  /**
+   * Creates a paint-valued CSS property that schedules redraws when changed.
+   *
+   * @param name the JavaFX property name
+   * @param cssProperty the CSS property name
+   * @param initialValue the fallback paint
+   * @param accessor the metadata accessor
+   * @return the created styleable property
+   */
   private StyleableProperty<Paint> paintProperty(
     String name,
     String cssProperty,
@@ -288,6 +408,15 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     return property;
   }
 
+  /**
+   * Creates a font-valued CSS property that schedules redraws when changed.
+   *
+   * @param name the JavaFX property name
+   * @param cssProperty the CSS property name
+   * @param initialValue the fallback font
+   * @param accessor the metadata accessor
+   * @return the created styleable property
+   */
   private StyleableProperty<Font> fontProperty(
     String name,
     String cssProperty,
@@ -305,6 +434,15 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     return property;
   }
 
+  /**
+   * Creates a numeric CSS property that schedules redraws when changed.
+   *
+   * @param name the JavaFX property name
+   * @param cssProperty the CSS property name
+   * @param initialValue the fallback number
+   * @param accessor the metadata accessor
+   * @return the created styleable property
+   */
   private StyleableProperty<Number> numberProperty(
     String name,
     String cssProperty,
@@ -322,6 +460,7 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     return property;
   }
 
+  /** Coalesces CSS-triggered redraws onto the JavaFX application thread. */
   private void requestRedraw() {
     if (redrawScheduled) {
       return;
@@ -333,81 +472,122 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     });
   }
 
-  private void setEventsListeners() {
-    setOnMouseMoved(event -> {
-      updateStatusLinePoint(event.getX(), event.getY());
-      updateCursor(event.getX(), event.getY());
-    });
-
-    setOnMouseExited(event -> {
-      interactor.exitPointer();
-      if (model.dragMode == DragMode.NONE) {
-        setCursor(Cursor.DEFAULT);
-      }
-    });
-
-    setOnMousePressed(event -> {
-      if (model.pricePoints.isEmpty()) {
-        interactor.beginEmptyPress();
-        return;
-      }
-
-      ChartBounds bounds = renderer.chartBounds();
-      if (renderer.isOverAutoscaleButton(event.getX(), event.getY(), bounds)) {
-        interactor.beginAutoscalePress();
-        setCursor(Cursor.HAND);
-      } else if (renderer.isOverPriceAxisArea(event.getX(), event.getY(), bounds)) {
-        interactor.beginYAxisZoom(event.getY(), displayedPriceRange());
-        setCursor(Cursor.V_RESIZE);
-      } else if (renderer.isOverDateAxisArea(event.getY(), bounds)) {
-        interactor.beginXAxisZoom(event.getX());
-        setCursor(Cursor.H_RESIZE);
-      } else if (renderer.isOverChartArea(event.getX(), event.getY(), bounds)) {
-        interactor.beginPan(event.getX(), event.getY());
-        setCursor(Cursor.CLOSED_HAND);
-      }
-    });
-
-    setOnMouseDragged(event -> {
-      if (model.pricePoints.isEmpty()) {
-        return;
-      }
-
-      if (model.dragMode == DragMode.ZOOM_DATE) {
-        interactor.handleXAxisZoom(event.getX());
-      } else if (model.dragMode == DragMode.ZOOM_PRICE) {
-        interactor.handleYAxisZoom(event.getY(), renderer.chartBounds().height());
-      } else if (model.dragMode == DragMode.PAN) {
-        ChartBounds bounds = renderer.chartBounds();
-        interactor.handlePan(event.getX(), event.getY(), bounds.width(), bounds.height());
-        updateStatusLinePoint(event.getX(), event.getY());
-      }
-    });
-
-    setOnMouseReleased(event -> {
-      ChartBounds bounds = renderer.chartBounds();
-      boolean toggleAutoscale =
-        model.autoscaleButtonPressed && renderer.isOverAutoscaleButton(event.getX(), event.getY(), bounds);
-      interactor.endPress(toggleAutoscale, displayedPriceRange());
-      updateStatusLinePoint(event.getX(), event.getY());
-      updateCursor(event.getX(), event.getY());
-    });
-
+  /** Connects JavaFX pointer events to intent handlers. */
+  private void connectEventHandlers() {
+    setOnMouseMoved(this::handlePointerMoved);
+    setOnMouseExited(this::handlePointerExited);
+    setOnMousePressed(this::handlePointerPressed);
+    setOnMouseDragged(this::handlePointerDragged);
+    setOnMouseReleased(this::handlePointerReleased);
     // Keep this no-op handler for hot-reload compatibility. A live canvas may still reference the
     // generated lambda method from an earlier class definition. Press/release performs activation,
     // so handling the subsequent clicked event would toggle the state a second time.
     setOnMouseClicked(event -> keepHotReloadClickHandler());
   }
 
-  private void keepHotReloadClickHandler() {}
-
-  private ChartCanvasModel.PriceRange displayedPriceRange() {
-    return interactor.displayedPriceRange(renderer.chartBounds().height());
+  /**
+   * Updates hover state and cursor feedback for pointer movement.
+   *
+   * @param event the pointer movement event
+   */
+  private void handlePointerMoved(MouseEvent event) {
+    updateStatusLinePoint(event.getX(), event.getY());
+    updateCursor(event.getX(), event.getY());
   }
 
+  /**
+   * Clears hover state after the pointer leaves the canvas.
+   *
+   * @param event the pointer exit event
+   */
+  private void handlePointerExited(MouseEvent event) {
+    interactor.exitPointer();
+    if (model.dragMode == DragMode.NONE) {
+      setCursor(Cursor.DEFAULT);
+    }
+  }
+
+  /**
+   * Selects the interaction mode for a pointer press.
+   *
+   * @param event the pointer press event
+   */
+  private void handlePointerPressed(MouseEvent event) {
+    if (model.pricePoints.isEmpty()) {
+      interactor.beginEmptyPress();
+      return;
+    }
+
+    RenderStyle style = renderStyle();
+    ChartBounds bounds = renderer.chartBounds(style);
+    if (renderer.isOverAutoscaleButton(event.getX(), event.getY(), bounds, style)) {
+      interactor.beginAutoscalePress();
+      setCursor(Cursor.HAND);
+    } else if (renderer.isOverPriceAxisArea(event.getX(), event.getY(), bounds)) {
+      interactor.beginYAxisZoom(event.getY(), displayedPriceRange());
+      setCursor(Cursor.V_RESIZE);
+    } else if (renderer.isOverDateAxisArea(event.getY(), bounds)) {
+      interactor.beginXAxisZoom(event.getX());
+      setCursor(Cursor.H_RESIZE);
+    } else if (renderer.isOverChartArea(event.getX(), event.getY(), bounds)) {
+      interactor.beginPan(event.getX(), event.getY());
+      setCursor(Cursor.CLOSED_HAND);
+    }
+  }
+
+  /**
+   * Applies zooming or panning while a pointer drag is active.
+   *
+   * @param event the pointer drag event
+   */
+  private void handlePointerDragged(MouseEvent event) {
+    if (model.pricePoints.isEmpty()) {
+      return;
+    }
+
+    ChartBounds bounds = renderer.chartBounds(renderStyle());
+    if (model.dragMode == DragMode.ZOOM_DATE) {
+      interactor.handleXAxisZoom(event.getX());
+    } else if (model.dragMode == DragMode.ZOOM_PRICE) {
+      interactor.handleYAxisZoom(event.getY(), bounds.height());
+    } else if (model.dragMode == DragMode.PAN) {
+      interactor.handlePan(event.getX(), event.getY(), bounds.width(), bounds.height());
+      updateStatusLinePoint(event.getX(), event.getY());
+    }
+  }
+
+  /**
+   * Completes the active interaction and refreshes hover feedback.
+   *
+   * @param event the pointer release event
+   */
+  private void handlePointerReleased(MouseEvent event) {
+    RenderStyle style = renderStyle();
+    ChartBounds bounds = renderer.chartBounds(style);
+    boolean toggleAutoscale =
+      model.autoscaleButtonPressed && renderer.isOverAutoscaleButton(event.getX(), event.getY(), bounds, style);
+    interactor.endPress(toggleAutoscale, displayedPriceRange());
+    updateStatusLinePoint(event.getX(), event.getY());
+    updateCursor(event.getX(), event.getY());
+  }
+
+  /** Preserves the lambda target used by canvases that survived hot reload. */
+  private void keepHotReloadClickHandler() {}
+
+  /** @return the currently displayed vertical price range */
+  private ChartCanvasModel.PriceRange displayedPriceRange() {
+    return interactor.displayedPriceRange(renderer.chartBounds(renderStyle()).height());
+  }
+
+  /**
+   * Updates the pointer cursor for the canvas region under the coordinates.
+   *
+   * @param x the canvas x coordinate
+   * @param y the canvas y coordinate
+   */
   private void updateCursor(double x, double y) {
-    ChartBounds bounds = renderer.chartBounds();
-    if (renderer.isOverAutoscaleButton(x, y, bounds)) {
+    ChartBounds bounds = renderer.chartBounds(renderStyle());
+    if (renderer.isOverAutoscaleButton(x, y, bounds, renderStyle())) {
       setCursor(Cursor.HAND);
     } else if (renderer.isOverPriceAxisArea(x, y, bounds)) {
       setCursor(Cursor.V_RESIZE);
@@ -420,13 +600,19 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
     }
   }
 
+  /**
+   * Publishes the hovered point and crosshair coordinates to the interactor.
+   *
+   * @param x the canvas x coordinate
+   * @param y the canvas y coordinate
+   */
   private void updateStatusLinePoint(double x, double y) {
     if (model.pricePoints.isEmpty()) {
       interactor.movePointer(null, null, null, false);
       return;
     }
 
-    ChartBounds bounds = renderer.chartBounds();
+    ChartBounds bounds = renderer.chartBounds(renderStyle());
     Integer pointIndex = null;
     Double nextCrosshairX = null;
     Double nextCrosshairY = null;
@@ -440,7 +626,8 @@ final class ChartCanvasViewBuilder extends Canvas implements Builder<Canvas>, Re
       }
     }
 
-    boolean hovered = renderer.isOverPriceAxisArea(x, y, bounds) || renderer.isOverAutoscaleButton(x, y, bounds);
+    boolean hovered =
+      renderer.isOverPriceAxisArea(x, y, bounds) || renderer.isOverAutoscaleButton(x, y, bounds, renderStyle());
     interactor.movePointer(pointIndex, nextCrosshairX, nextCrosshairY, hovered);
   }
 }

@@ -198,7 +198,7 @@ public final class ChartWorkspace implements AutoCloseable {
     LogoSession logos = null;
     try {
       logos = services.createLogoSession();
-      Chart chart = new Chart(List.of(), settings.symbol(), settings.interval(), marketData, logos, uiExecutor);
+      Chart chart = new Chart(settings.symbol(), settings.interval(), List.of(), logos, marketData, uiExecutor);
       chart.setChartType(settings.chartType());
       return chart;
     } catch (RuntimeException | Error failure) {

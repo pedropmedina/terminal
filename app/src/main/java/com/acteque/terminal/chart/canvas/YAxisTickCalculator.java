@@ -3,6 +3,7 @@ package com.acteque.terminal.chart.canvas;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Calculates cent-aligned labels for a displayed vertical price range. */
 final class YAxisTickCalculator {
 
   private static final int DEFAULT_INTERVAL_COUNT = 10;
@@ -10,8 +11,18 @@ final class YAxisTickCalculator {
   private static final double CENT_ROUNDING_EPSILON = 0.000_000_1;
   private static final long MIN_TICK_SIZE_IN_CENTS = 1L;
 
+  /** Prevents utility-class instantiation. */
   private YAxisTickCalculator() {}
 
+  /**
+   * Calculates collision-safe price ticks.
+   *
+   * @param minPrice the displayed minimum price
+   * @param maxPrice the displayed maximum price
+   * @param chartHeight the drawable chart height
+   * @param zoomScale the current vertical zoom scale
+   * @return immutable ascending price ticks, or an empty list for invalid geometry
+   */
   static List<Double> calculate(double minPrice, double maxPrice, double chartHeight, double zoomScale) {
     if (
       !Double.isFinite(minPrice) ||

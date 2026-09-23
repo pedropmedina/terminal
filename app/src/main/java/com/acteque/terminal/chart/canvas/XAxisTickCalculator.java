@@ -7,10 +7,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 
+/** Calculates calendar labels for visible and projected horizontal-axis slots. */
 final class XAxisTickCalculator {
 
+  /** Prevents utility-class instantiation. */
   private XAxisTickCalculator() {}
 
+  /**
+   * Calculates daily-spaced labels.
+   *
+   * @param dates complete ordered dates
+   * @param firstVisibleDataIndex source index of the first visible slot
+   * @param visibleSlotCount number of visible and projected slots
+   * @param chartWidth drawable chart width
+   * @param minimumLabelSpacing minimum desired label spacing
+   * @return immutable axis ticks
+   */
   static List<XAxisTick> calculate(
     List<LocalDate> dates,
     int firstVisibleDataIndex,
@@ -21,6 +33,17 @@ final class XAxisTickCalculator {
     return calculate(dates, firstVisibleDataIndex, visibleSlotCount, chartWidth, minimumLabelSpacing, Period.ofDays(1));
   }
 
+  /**
+   * Calculates labels using the supplied projection period.
+   *
+   * @param dates complete ordered dates
+   * @param firstVisibleDataIndex source index of the first visible slot
+   * @param visibleSlotCount number of visible and projected slots
+   * @param chartWidth drawable chart width
+   * @param minimumLabelSpacing minimum desired label spacing
+   * @param period date increment for projected future slots
+   * @return immutable axis ticks
+   */
   static List<XAxisTick> calculate(
     List<LocalDate> dates,
     int firstVisibleDataIndex,
@@ -114,5 +137,12 @@ final class XAxisTickCalculator {
     return dates.get(dates.size() - 1).plus(period.multipliedBy(dataIndex - dates.size() + 1));
   }
 
+  /**
+   * A horizontal-axis label positioned by visible slot and source-data index.
+   *
+   * @param slotIndex index within the visible viewport
+   * @param dataIndex corresponding index in the complete or projected series
+   * @param label formatted axis label
+   */
   record XAxisTick(int slotIndex, int dataIndex, String label) {}
 }

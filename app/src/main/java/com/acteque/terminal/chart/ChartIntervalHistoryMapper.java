@@ -8,6 +8,7 @@ import java.util.Optional;
 /** Maps selectable chart intervals to the provider-neutral historical requests. */
 public final class ChartIntervalHistoryMapper {
 
+  /** Prevents utility-class instantiation. */
   private ChartIntervalHistoryMapper() {}
 
   /**

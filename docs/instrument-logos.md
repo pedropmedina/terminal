@@ -4,9 +4,8 @@ The chart loads company/instrument logos from [Elbstream](https://elbstream.com/
 
 ## Behavior
 
-- An initial-letter fallback occupies the logo slot while loading or when a logo cannot be resolved or loaded. If metadata is unavailable, lookup uses the selected symbol.
-- The status line displays the logo beside the instrument name. Symbol selection and OHLCV interactions are unchanged.
-- The symbol-selection tooltip includes the non-interactive **Logos by Elbstream** attribution at 12pt whenever the logo is displayed.
+- The workspace-menu instrument button displays the selected symbol while loading or when a logo cannot be resolved or loaded. If metadata is unavailable, lookup uses the selected symbol.
+- The workspace menu replaces the symbol with the loaded logo. The chart status line remains independent and displays only OHLCV metadata.
 - Only selected instruments are requested, not the ticker catalog. Loading prices and earlier history never waits for a logo download.
 - New selections and application shutdown invalidate pending logo updates, including updates already queued on the JavaFX thread.
 - There is no disk cache, self-hosting, or reusable image cache. The current decoded image is retained only for display and view refreshes.
@@ -25,7 +24,7 @@ https://api.elbstream.com/logos/symbol/{encoded-symbol}?format=png&size=64
 
 This is best-effort ticker matching. Symbols remain provider-scoped in our metadata, and Elbstream's symbol lookup does not disambiguate exchanges. The integration preserves ticker punctuation and does not guess exchange suffixes or company domains. ISIN-based matching would be preferable if a future metadata source supplies a stable ISIN.
 
-`LogoSessionDefault` wraps any `InstrumentLogos` implementation and owns its executor and cancellable download task. Each chart owns its own session and closes it on shutdown. Providers may be shared between sessions; closing one session does not close or cancel another. The status-line interactor owns decoding, stale-result suppression, and JavaFX-thread model updates. The chart owns image presentation and does not perform HTTP requests.
+`LogoSessionDefault` wraps any `InstrumentLogos` implementation and owns its executor and cancellable download task. Each chart owns its own session and closes it on shutdown. Providers may be shared between sessions; closing one session does not close or cancel another. The chart interactor owns decoding, stale-result suppression, and JavaFX-thread model updates. The workspace menu observes the chart's decoded image and does not perform HTTP requests.
 
 To add a provider, implement `LogoProvider` and `LogoProviderFactory` in a `market-logos/<name>/` module, keeping URLs, transport, parsing, and provider-specific mapping there. Reference resolution must be local and fast; `load` performs blocking I/O on the session's executor. Implementations must support concurrent calls from independent sessions. Register its factory in `AppService`, which creates shared providers and independent sessions. No chart or market-data changes are required. Provider selection is explicit dependency injection; dynamic plugin discovery is not implemented.
 
@@ -47,11 +46,11 @@ References checked during implementation:
 
 ## Validation
 
-Provider tests use injected transports and local HTTP fixtures, not live provider endpoints. Tests cover provider substitution, session isolation, metadata preservation, error normalization, bounded downloads, async loading, stale completions, decoding failures, fallback display, tooltip attribution, theme sizing, and view refreshes.
+Provider tests use injected transports and local HTTP fixtures, not live provider endpoints. Tests cover provider substitution, session isolation, metadata preservation, error normalization, bounded downloads, async loading, stale completions, decoding failures, workspace-menu fallback display, and theme sizing.
 
 ```sh
 ./gradlew :market-logos:core:test :market-logos:elbstream:test :market-data:core:test
-./gradlew :app:test --tests 'com.acteque.terminal.chart.statusline.ChartStatusLineLogoInteractorTest' --tests 'com.acteque.terminal.chart.statusline.ChartStatusLineTest'
+./gradlew :app:test --tests 'com.acteque.terminal.chart.ChartInstrumentLogoInteractorTest' --tests 'com.acteque.terminal.chart.ChartInstrumentLogosTest'
 ./gradlew test
 ```
 

@@ -21,25 +21,27 @@ import javafx.scene.text.TextAlignment;
 /** Renders chart-canvas state and provides its drawing-coordinate geometry. */
 final class CanvasRenderer {
 
-  private static final double LEFT_MARGIN = 0.0;
-  private static final double RIGHT_MARGIN = 64.0;
-  private static final double TOP_MARGIN = 0.0;
-  private static final double BOTTOM_MARGIN = 32.0;
-  private static final double CURRENT_PRICE_TEXT_OFFSET = 10.0;
-  private static final double AUTOSCALE_BUTTON_SIZE = 24.0;
-  private static final double AUTOSCALE_BUTTON_X_OFFSET = 8.0;
-  private static final double AUTOSCALE_BUTTON_Y_OFFSET = 0.0;
-
   private final Canvas canvas;
   private final ChartCanvasModel model;
   private final CrosshairRenderer crosshair;
 
+  /**
+   * @param canvas the canvas to render and measure
+   * @param model the canvas state to render
+   */
   CanvasRenderer(Canvas canvas, ChartCanvasModel model) {
     this.canvas = Objects.requireNonNull(canvas, "canvas cannot be null");
     this.model = Objects.requireNonNull(model, "model cannot be null");
     crosshair = new CrosshairRenderer();
   }
 
+  /**
+   * Draws the complete chart in layer order.
+   *
+   * @param style CSS-resolved presentation values
+   * @param visibleWindow the visible data slice
+   * @param priceRange the displayed vertical range, or {@code null} for empty data
+   */
   void draw(RenderStyle style, VisibleWindow visibleWindow, PriceRange priceRange) {
     double width = canvas.getWidth();
     double height = canvas.getHeight();
@@ -54,7 +56,7 @@ final class CanvasRenderer {
       return;
     }
 
-    ChartBounds bounds = chartBounds();
+    ChartBounds bounds = chartBounds(style);
     List<XAxisTick> xAxisTicks = xAxisTicks(bounds, visibleWindow, style);
     List<Double> yAxisTicks = YAxisTickCalculator.calculate(
       priceRange.min(),
@@ -74,36 +76,46 @@ final class CanvasRenderer {
     drawAutoscaleButton(graphics, bounds, style);
   }
 
-  ChartBounds chartBounds() {
+  /**
+   * @param style CSS-resolved chart margins
+   * @return drawable bounds within the canvas
+   */
+  ChartBounds chartBounds(RenderStyle style) {
     return new ChartBounds(
-      LEFT_MARGIN,
-      TOP_MARGIN,
-      Math.max(1.0, canvas.getWidth() - LEFT_MARGIN - RIGHT_MARGIN),
-      Math.max(1.0, canvas.getHeight() - TOP_MARGIN - BOTTOM_MARGIN)
+      style.leftMargin(),
+      style.topMargin(),
+      Math.max(1.0, canvas.getWidth() - style.leftMargin() - style.rightMargin()),
+      Math.max(1.0, canvas.getHeight() - style.topMargin() - style.bottomMargin())
     );
   }
 
+  /** @return true when {@code y} lies within the date-axis area */
   boolean isOverDateAxisArea(double y, ChartBounds bounds) {
     return y >= bounds.bottom() && y <= canvas.getHeight();
   }
 
+  /** @return true when the coordinates lie within the plot area */
   boolean isOverChartArea(double x, double y, ChartBounds bounds) {
     return x >= bounds.left() && x <= bounds.right() && y >= bounds.top() && y <= bounds.bottom();
   }
 
+  /** @return true when the coordinates lie within the price-axis area */
   boolean isOverPriceAxisArea(double x, double y, ChartBounds bounds) {
     return x >= bounds.right() && x <= canvas.getWidth() && y >= bounds.top() && y <= bounds.bottom();
   }
 
-  boolean isOverAutoscaleButton(double x, double y, ChartBounds bounds) {
-    ButtonBounds button = autoscaleButtonBounds(bounds);
+  /** @return true when the coordinates lie within the CSS-sized autoscale button */
+  boolean isOverAutoscaleButton(double x, double y, ChartBounds bounds, RenderStyle style) {
+    ButtonBounds button = autoscaleButtonBounds(bounds, style);
     return x >= button.x() && x <= button.x() + button.width() && y >= button.y() && y <= button.y() + button.height();
   }
 
+  /** @return the nearest visible slot for the supplied x coordinate */
   int slotIndexForX(double x, ChartBounds bounds) {
     return (int) Math.round(((x - bounds.left()) / bounds.width()) * Math.max(0, model.visiblePricePointCount - 1));
   }
 
+  /** Draws plot boundary axes using the supplied graphics, bounds, and style. */
   private void drawAxes(GraphicsContext graphics, ChartBounds bounds, RenderStyle style) {
     graphics.setStroke(style.axis());
     graphics.setLineWidth(style.axisLineWidth());
@@ -111,12 +123,13 @@ final class CanvasRenderer {
     graphics.strokeLine(bounds.left(), bounds.bottom(), bounds.right(), bounds.bottom());
   }
 
+  /** Draws the autoscale control when the price axis is hovered. */
   private void drawAutoscaleButton(GraphicsContext graphics, ChartBounds bounds, RenderStyle style) {
     if (!model.priceAxisHovered) {
       return;
     }
 
-    ButtonBounds button = autoscaleButtonBounds(bounds);
+    ButtonBounds button = autoscaleButtonBounds(bounds, style);
     boolean autoscaleActive = model.lockedPriceRange == null;
     graphics.setFill(autoscaleActive ? style.primary() : style.background());
     graphics.fillRoundRect(
@@ -145,6 +158,7 @@ final class CanvasRenderer {
     graphics.fillText("A", button.x() + button.width() / 2.0, button.y() + button.height() / 2.0);
   }
 
+  /** Draws horizontal grid lines at the supplied price ticks. */
   private void drawHorizontalGridLines(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -160,6 +174,7 @@ final class CanvasRenderer {
     }
   }
 
+  /** Draws price-axis tick marks and labels. */
   private void drawYAxisTicks(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -175,11 +190,12 @@ final class CanvasRenderer {
     graphics.setFill(style.mutedForeground());
     for (double price : ticks) {
       double y = yForPrice(price, bounds, priceRange);
-      graphics.strokeLine(bounds.right(), y, bounds.right() + 5.0, y);
-      graphics.fillText(String.format(Locale.US, "%.2f", price), bounds.right() + 10.0, y);
+      graphics.strokeLine(bounds.right(), y, bounds.right() + style.axisTickLength(), y);
+      graphics.fillText(String.format(Locale.US, "%.2f", price), bounds.right() + style.axisTextOffset(), y);
     }
   }
 
+  /** Draws the newest visible closing-price badge when it lies within the viewport. */
   private void drawCurrentPriceBadge(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -200,9 +216,14 @@ final class CanvasRenderer {
     graphics.setFont(style.badgeFont());
     graphics.setTextAlign(TextAlignment.LEFT);
     graphics.setTextBaseline(VPos.CENTER);
-    graphics.fillText(String.format(Locale.US, "%.2f", currentPrice), bounds.right() + CURRENT_PRICE_TEXT_OFFSET, y);
+    graphics.fillText(
+      String.format(Locale.US, "%.2f", currentPrice),
+      bounds.right() + style.currentPriceTextOffset(),
+      y
+    );
   }
 
+  /** Draws the active crosshair and its axis badges. */
   private void drawCrosshair(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -235,6 +256,7 @@ final class CanvasRenderer {
     );
   }
 
+  /** Draws vertical grid lines at the supplied date ticks. */
   private void drawVerticalGridLines(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -249,6 +271,7 @@ final class CanvasRenderer {
     }
   }
 
+  /** Draws date-axis tick marks and labels. */
   private void drawXAxisTicks(GraphicsContext graphics, ChartBounds bounds, List<XAxisTick> ticks, RenderStyle style) {
     graphics.setFont(style.axisFont());
     graphics.setTextAlign(TextAlignment.CENTER);
@@ -257,12 +280,15 @@ final class CanvasRenderer {
       double x = xForSlot(tick.slotIndex(), model.visiblePricePointCount, bounds);
       graphics.setStroke(style.axis());
       graphics.setLineWidth(style.gridLineWidth());
-      graphics.strokeLine(x, bounds.bottom(), x, bounds.bottom() + 5.0);
+      graphics.strokeLine(x, bounds.bottom(), x, bounds.bottom() + style.axisTickLength());
       graphics.setFill(style.mutedForeground());
-      graphics.fillText(tick.label(), x, bounds.bottom() + 10.0);
+      graphics.fillText(tick.label(), x, bounds.bottom() + style.axisTextOffset());
     }
   }
 
+  /**
+   * @return calendar or intraday ticks for the visible window
+   */
   private List<XAxisTick> xAxisTicks(ChartBounds bounds, VisibleWindow visibleWindow, RenderStyle style) {
     if (hasIntradayBars()) {
       return IntradayXAxisTickCalculator.calculate(
@@ -286,6 +312,7 @@ final class CanvasRenderer {
     );
   }
 
+  /** @return the date projection period for the selected calendar interval */
   private Period calendarPeriod() {
     return switch (model.interval.classification()) {
       case WEEKS -> Period.ofWeeks(model.interval.amount());
@@ -294,6 +321,7 @@ final class CanvasRenderer {
     };
   }
 
+  /** @return the selected intraday duration, or {@code null} for calendar intervals */
   private Duration intradayInterval() {
     return ChartIntervalHistoryMapper.map(model.interval)
       .filter(interval -> interval instanceof HistoricalInterval.Intraday)
@@ -301,6 +329,7 @@ final class CanvasRenderer {
       .orElse(null);
   }
 
+  /** @return true when every loaded point belongs to an intraday interval */
   private boolean hasIntradayBars() {
     return (
       intradayInterval() != null &&
@@ -309,6 +338,7 @@ final class CanvasRenderer {
     );
   }
 
+  /** @return the timestamp label for a visible or unavailable projected slot */
   private String timeForSlot(int slotIndex, VisibleWindow visibleWindow) {
     int dataIndex = visibleWindow.firstDataIndex() + slotIndex;
     return dataIndex < model.pricePoints.size()
@@ -316,6 +346,7 @@ final class CanvasRenderer {
       : "No bar";
   }
 
+  /** Draws the selected series type clipped to chart bounds. */
   private void drawSeries(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -344,6 +375,7 @@ final class CanvasRenderer {
     graphics.restore();
   }
 
+  /** Draws OHLC bars for visible points. */
   private void drawBars(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -371,6 +403,7 @@ final class CanvasRenderer {
     }
   }
 
+  /** Draws the translucent area beneath visible closing prices. */
   private void drawPriceArea(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -399,6 +432,7 @@ final class CanvasRenderer {
     graphics.restore();
   }
 
+  /** Draws a continuous line through visible closing prices. */
   private void drawPriceLine(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -424,6 +458,7 @@ final class CanvasRenderer {
     }
   }
 
+  /** Draws point markers on visible closing prices. */
   private void drawPriceMarkers(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -440,6 +475,7 @@ final class CanvasRenderer {
     }
   }
 
+  /** Draws a step line through visible closing prices. */
   private void drawStepLine(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -463,6 +499,7 @@ final class CanvasRenderer {
     }
   }
 
+  /** Draws a visible glyph when a line series contains only one point. */
   private void drawSinglePoint(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -480,6 +517,7 @@ final class CanvasRenderer {
     );
   }
 
+  /** Draws candle bodies and wicks for visible points. */
   private void drawCandlesticks(
     GraphicsContext graphics,
     ChartBounds bounds,
@@ -511,6 +549,7 @@ final class CanvasRenderer {
     }
   }
 
+  /** @return the x coordinate for a visible slot */
   private double xForSlot(int index, int pointCount, ChartBounds bounds) {
     if (pointCount == 1) {
       return bounds.left() + bounds.width() / 2.0;
@@ -518,16 +557,19 @@ final class CanvasRenderer {
     return bounds.left() + ((double) index / (pointCount - 1)) * bounds.width();
   }
 
+  /** @return the y coordinate representing a price */
   private double yForPrice(double price, ChartBounds bounds, PriceRange priceRange) {
     double normalized = (price - priceRange.min()) / priceRange.span();
     return bounds.bottom() - normalized * bounds.height();
   }
 
+  /** @return the price represented by a y coordinate */
   private double priceForY(double y, ChartBounds bounds, PriceRange priceRange) {
     double normalized = (bounds.bottom() - y) / bounds.height();
     return priceRange.min() + normalized * priceRange.span();
   }
 
+  /** @return the loaded or projected date for a visible slot */
   private LocalDate dateForSlot(int slotIndex, VisibleWindow visibleWindow) {
     int dataIndex = visibleWindow.firstDataIndex() + slotIndex;
     if (dataIndex < model.pricePoints.size()) {
@@ -537,22 +579,27 @@ final class CanvasRenderer {
     return newestPoint.date().plus(calendarPeriod().multipliedBy(dataIndex - model.pricePoints.size() + 1));
   }
 
-  private ButtonBounds autoscaleButtonBounds(ChartBounds bounds) {
+  /** @return CSS-sized autoscale control bounds */
+  private ButtonBounds autoscaleButtonBounds(ChartBounds bounds, RenderStyle style) {
     return new ButtonBounds(
-      bounds.right() + AUTOSCALE_BUTTON_X_OFFSET,
-      bounds.bottom() + AUTOSCALE_BUTTON_Y_OFFSET,
-      AUTOSCALE_BUTTON_SIZE,
-      AUTOSCALE_BUTTON_SIZE
+      bounds.right() + style.autoscaleButtonXOffset(),
+      bounds.bottom() + style.autoscaleButtonYOffset(),
+      style.autoscaleButtonSize(),
+      style.autoscaleButtonSize()
     );
   }
 
+  /** Rectangle occupied by the autoscale control. */
   private record ButtonBounds(double x, double y, double width, double height) {}
 
+  /** Rectangle occupied by the drawable chart area. */
   record ChartBounds(double left, double top, double width, double height) {
+    /** @return the right edge */
     double right() {
       return left + width;
     }
 
+    /** @return the bottom edge */
     double bottom() {
       return top + height;
     }

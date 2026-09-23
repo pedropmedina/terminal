@@ -11,7 +11,6 @@ import com.acteque.terminal.marketlogos.LogoException;
 import com.acteque.terminal.marketlogos.LogoRequest;
 import com.acteque.terminal.marketlogos.LogoSession;
 import com.acteque.terminal.test.FxTestSupport;
-import com.acteque.terminal.ui.Button;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
@@ -21,15 +20,14 @@ import org.junit.jupiter.api.Test;
 class ChartInstrumentLogosTest {
 
   @Test
-  void composesIndependentSessionsAndDisplaysTheInstrumentEvenWhenLogoLoadingFails() {
+  void composesIndependentSessionsAndKeepsTheInstrumentWhenLogoLoadingFails() {
     FxTestSupport.runAndWait(() -> {
       for (String outcome : List.of("pending", "missing", "resolution-failed", "download-failed")) {
         StubMarketData marketData = new StubMarketData();
         StubLogos logos = new StubLogos(outcome);
-        try (Chart chart = new Chart(List.of(), "IBM", ChartInterval.DAILY, marketData, logos, Runnable::run)) {
-          var view = chart.getView();
+        try (Chart chart = new Chart("IBM", ChartInterval.DAILY, List.of(), logos, marketData, Runnable::run)) {
           chart.loadInitialInstrument();
-          assertEquals("Provider Name", ((Button) view.lookup(".chart-instrument-button")).getText());
+          assertEquals("IBM", chart.getSymbol());
           assertEquals(new LogoRequest("Provider:Ab.C", Optional.of("Market")), logos.request);
           assertEquals(outcome.equals("pending") || outcome.equals("download-failed") ? 1 : 0, logos.loads);
           if (outcome.equals("pending")) {

@@ -20,24 +20,45 @@ final class ChartDateFormatter {
   );
   private static final ZoneId MARKET_ZONE = ZoneId.of("America/New_York");
 
+  /** Prevents utility-class instantiation. */
   private ChartDateFormatter() {}
 
+  /**
+   * @param date the date to format
+   * @return its abbreviated month
+   */
   static String month(LocalDate date) {
     return Objects.requireNonNull(date, "date cannot be null").format(MONTH);
   }
 
+  /**
+   * @param date the date to format
+   * @return its unpadded day of month
+   */
   static String day(LocalDate date) {
     return Objects.requireNonNull(date, "date cannot be null").format(DAY);
   }
 
+  /**
+   * @param date the date to format
+   * @return its four-digit year
+   */
   static String year(LocalDate date) {
     return Objects.requireNonNull(date, "date cannot be null").format(YEAR);
   }
 
+  /**
+   * @param date the date to format
+   * @return its calendar crosshair label
+   */
   static String crosshair(LocalDate date) {
     return Objects.requireNonNull(date, "date cannot be null").format(CROSSHAIR);
   }
 
+  /**
+   * @param timestamp the instant to format
+   * @return its New York intraday crosshair label
+   */
   static String crosshair(Instant timestamp) {
     return Objects.requireNonNull(timestamp, "timestamp cannot be null").atZone(MARKET_ZONE).format(INTRADAY_CROSSHAIR);
   }

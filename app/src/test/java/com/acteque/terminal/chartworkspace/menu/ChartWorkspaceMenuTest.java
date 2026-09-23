@@ -81,7 +81,7 @@ class ChartWorkspaceMenuTest {
 
         Color color = Color.hsb(210.0, 0.72, 0.85);
         second.setIdentifierColor(color);
-        second.setInstrument("AAPL", "Apple", List.of(), Optional.empty());
+        second.setInstrument("AAPL", List.of(), Optional.empty());
         second.setChartType(ChartType.AREA);
         menu.setActiveChart(second);
         menu.setMultipleCharts(true);
@@ -92,7 +92,7 @@ class ChartWorkspaceMenuTest {
         assertEquals(6, buttons.getChildren().size());
         assertNull(root.getClip());
 
-        first.setInstrument("IGNORED", "Ignored", List.of(), Optional.empty());
+        first.setInstrument("IGNORED", List.of(), Optional.empty());
         assertEquals("AAPL", assertInstanceOf(Button.class, buttons.getChildren().getFirst()).getText());
       }
     });
@@ -104,7 +104,7 @@ class ChartWorkspaceMenuTest {
       CompletableFuture<Optional<byte[]>> pendingLogo = new CompletableFuture<>();
       LogoSession logos = ignored -> pendingLogo;
       try (
-        Chart first = new Chart(List.of(), "IBM", ChartInterval.DAILY, logos, Runnable::run);
+        Chart first = new Chart("IBM", ChartInterval.DAILY, List.of(), logos, Runnable::run);
         Chart second = chart("MSFT");
         ChartWorkspaceMenu menu = new ChartWorkspaceMenu(first)
       ) {
@@ -112,7 +112,7 @@ class ChartWorkspaceMenuTest {
         Color secondColor = Color.hsb(210.0, 0.72, 0.85);
         first.setIdentifierColor(firstColor);
         second.setIdentifierColor(secondColor);
-        first.setInstrument("IBM", "International Business Machines", List.of(), Optional.of(LOGO));
+        first.setInstrument("IBM", List.of(), Optional.of(LOGO));
 
         ChartWorkspaceMenuItems root = assertInstanceOf(ChartWorkspaceMenuItems.class, menu.getView());
         Button instrument = assertInstanceOf(Button.class, root.getButtons().getChildren().getFirst());
@@ -126,8 +126,8 @@ class ChartWorkspaceMenuTest {
         assertEquals(OverrunStyle.ELLIPSIS, instrument.getTextOverrun());
         assertEquals(30.0, instrument.getWidth());
         assertEquals(30.0, instrument.getHeight());
-        assertEquals(Color.web("#0a0a0a"), instrument.getBackground().getFills().getFirst().getFill());
-        assertEquals(Color.WHITE, instrument.getTextFill());
+        assertEquals(Color.TRANSPARENT, instrument.getBackground().getFills().getFirst().getFill());
+        assertEquals(Color.web("#0a0a0a"), instrument.getTextFill());
         assertColorEquals(
           firstColor,
           assertInstanceOf(Color.class, instrument.getBorder().getStrokes().getFirst().getTopStroke())
@@ -175,6 +175,27 @@ class ChartWorkspaceMenuTest {
           assertInstanceOf(Color.class, instrument.getBorder().getStrokes().getFirst().getTopStroke())
         );
         assertEquals("Select symbol or instrument, currently IBM", instrument.getAccessibleText());
+      }
+    });
+  }
+
+  @Test
+  void observesLogosLoadedByTheActiveChart() {
+    FxTestSupport.runAndWait(() -> {
+      LogoSession logos = ignored -> CompletableFuture.completedFuture(Optional.of(PNG));
+      try (
+        Chart chart = new Chart("IBM", ChartInterval.DAILY, List.of(), logos, Runnable::run);
+        ChartWorkspaceMenu menu = new ChartWorkspaceMenu(chart)
+      ) {
+        ChartWorkspaceMenuItems root = assertInstanceOf(ChartWorkspaceMenuItems.class, menu.getView());
+        Button instrument = assertInstanceOf(Button.class, root.getButtons().getChildren().getFirst());
+        assertEquals("IBM", instrument.getText());
+        assertNull(instrument.getGraphic());
+
+        chart.setInstrument("IBM", List.of(), Optional.of(LOGO));
+
+        assertEquals("", instrument.getText());
+        assertInstanceOf(Region.class, instrument.getGraphic());
       }
     });
   }
@@ -242,7 +263,7 @@ class ChartWorkspaceMenuTest {
   }
 
   private static Chart chart(String symbol) {
-    return new Chart(List.of(), symbol, ChartInterval.DAILY);
+    return new Chart(symbol, ChartInterval.DAILY, List.of());
   }
 
   private static String splitActionLabel(Button button) {
