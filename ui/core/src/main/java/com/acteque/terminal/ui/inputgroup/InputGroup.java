@@ -14,7 +14,7 @@ import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.Pane;
 
 /** A composable control that visually joins text input with supporting content and actions. */
-public final class InputGroup extends Pane {
+public class InputGroup extends Pane {
 
   private static final String ROOT_STYLE_CLASS = "core-input-group";
   private static final String WITH_INPUT_STYLE_CLASS = "with-input";

@@ -3,7 +3,7 @@ package com.acteque.terminal.ui.inputgroup;
 import com.acteque.terminal.ui.Input;
 
 /** A single-line control displayed inside an {@link InputGroup}. */
-public final class InputGroupInput extends Input implements InputGroupControl {
+public class InputGroupInput extends Input implements InputGroupControl {
 
   private static final String CONTROL_STYLE_CLASS = "input-group-control";
   private static final String INPUT_STYLE_CLASS = "input-group-input";

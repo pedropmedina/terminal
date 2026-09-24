@@ -4,7 +4,7 @@ import com.acteque.terminal.ui.Button;
 import javafx.scene.Node;
 
 /** A compact button displayed in an input-group addon. */
-public final class InputGroupButton extends Button {
+public class InputGroupButton extends Button {
 
   private static final String ROOT_STYLE_CLASS = "core-input-group-button";
 

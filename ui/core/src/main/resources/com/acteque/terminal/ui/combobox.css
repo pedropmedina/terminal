@@ -1,0 +1,248 @@
+.core-combobox-input {
+  -fx-pref-width: 240px;
+}
+
+.core-combobox-input > .core-input-group-addon.input-group-addon-inline-end {
+  -fx-padding: 3px 8px 3px 0;
+}
+
+.core-combobox-trigger > .lucide-icon > .lucide-icon-path,
+.core-combobox-clear > .lucide-icon > .lucide-icon-path {
+  -fx-stroke: -app-muted-foreground;
+}
+
+.core-combobox-content {
+  -fx-background-color: -app-popover;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-dialog-ring;
+  -fx-border-radius: 8px;
+  -fx-border-width: 1px;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 6px, 0.1, 0, 4px);
+  -fx-opacity: 1;
+  -fx-padding: 0;
+  -fx-scale-x: 1;
+  -fx-scale-y: 1;
+  -fx-text-fill: -app-popover-foreground;
+  -fx-translate-x: 0;
+  -fx-translate-y: 0;
+  transition-property:
+    -fx-opacity,
+    -fx-scale-x,
+    -fx-scale-y,
+    -fx-translate-x,
+    -fx-translate-y;
+  transition-duration: 100ms;
+  transition-timing-function: ease-out;
+}
+
+.core-combobox-content:opening,
+.core-combobox-content:closing,
+.core-combobox-content:closed {
+  -fx-opacity: 0;
+  -fx-scale-x: 0.95;
+  -fx-scale-y: 0.95;
+}
+
+.core-combobox-content:opening.combobox-side-bottom,
+.core-combobox-content:closed.combobox-side-bottom {
+  -fx-translate-y: -8px;
+}
+
+.core-combobox-content:opening.combobox-side-top,
+.core-combobox-content:closed.combobox-side-top {
+  -fx-translate-y: 8px;
+}
+
+.core-combobox-content:opening.combobox-side-left,
+.core-combobox-content:closed.combobox-side-left {
+  -fx-translate-x: 8px;
+}
+
+.core-combobox-content:opening.combobox-side-right,
+.core-combobox-content:closed.combobox-side-right {
+  -fx-translate-x: -8px;
+}
+
+.core-combobox-content > .core-input-group {
+  -fx-background-color: -app-input-background;
+  -fx-border-color: rgba(127, 127, 127, 0.3);
+  -fx-effect: null;
+  -fx-min-height: 32px;
+  -fx-pref-height: 32px;
+  -fx-max-height: 32px;
+}
+
+.core-combobox-list {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-border-width: 0;
+  -fx-fit-to-width: true;
+  -fx-padding: 4px;
+}
+
+.core-combobox-list:empty {
+  -fx-padding: 0;
+}
+
+.core-combobox-list > .viewport,
+.core-combobox-list > .viewport > .combobox-list-entries,
+.core-combobox-collection,
+.core-combobox-group {
+  -fx-background-color: transparent;
+  -fx-spacing: 0;
+}
+
+.core-combobox-list > .corner,
+.core-combobox-list > .scroll-bar:horizontal,
+.core-combobox-list > .scroll-bar:vertical {
+  -fx-opacity: 0;
+  -fx-pref-width: 0;
+  -fx-pref-height: 0;
+  -fx-min-width: 0;
+  -fx-min-height: 0;
+  -fx-max-width: 0;
+  -fx-max-height: 0;
+}
+
+.core-combobox-item {
+  -fx-alignment: center-left;
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 6px;
+  -fx-border-color: transparent;
+  -fx-border-width: 0;
+  -fx-cursor: default;
+  -fx-font-size: 14px;
+  -fx-font-weight: normal;
+  -fx-padding: 4px 8px 4px 6px;
+  -fx-text-fill: -app-popover-foreground;
+}
+
+.core-combobox-item:highlighted,
+.core-combobox-item:hover {
+  -fx-background-color: -app-accent;
+  -fx-text-fill: -app-accent-foreground;
+}
+
+.core-combobox-item:disabled {
+  -fx-opacity: 0.5;
+}
+
+.core-combobox-item > .combobox-item-content {
+  -fx-alignment: center-left;
+  -fx-spacing: 8px;
+}
+
+.core-combobox-item .label {
+  -fx-text-fill: -app-popover-foreground;
+}
+
+.core-combobox-item:highlighted .label {
+  -fx-text-fill: -app-accent-foreground;
+}
+
+.combobox-item-indicator {
+  -fx-min-width: 16px;
+  -fx-pref-width: 16px;
+  -fx-max-width: 16px;
+  -fx-min-height: 16px;
+  -fx-pref-height: 16px;
+  -fx-max-height: 16px;
+}
+
+.combobox-item-indicator > .lucide-icon > .lucide-icon-path {
+  -fx-stroke: -app-popover-foreground;
+}
+
+.core-combobox-label {
+  -fx-font-size: 12px;
+  -fx-font-weight: normal;
+  -fx-padding: 6px 8px;
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-combobox-empty {
+  -fx-alignment: center;
+  -fx-font-size: 14px;
+  -fx-padding: 8px;
+  -fx-text-alignment: center;
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-combobox-separator {
+  -fx-translate-x: -4px;
+  -fx-padding: 4px 0;
+}
+
+.core-combobox-chips {
+  -fx-alignment: center-left;
+  -fx-background-color: transparent;
+  -fx-background-radius: 8px;
+  -fx-border-color: -app-input;
+  -fx-border-radius: 8px;
+  -fx-border-width: 1px;
+  -fx-min-height: 32px;
+  -fx-padding: 4px 10px;
+  transition-property:
+    -fx-background-color,
+    -fx-border-color;
+  transition-duration: 100ms;
+}
+
+.core-combobox-chips:control-focus-visible {
+  -fx-border-color:
+    -app-ring,
+    -app-input-focus-ring;
+  -fx-border-insets:
+    0,
+    -3px;
+  -fx-border-radius: 8px, 11px;
+  -fx-border-width: 1px, 3px;
+}
+
+:root.theme-dark .core-combobox-chips {
+  -fx-background-color: -app-input-background;
+}
+
+.core-combobox-value {
+  -fx-alignment: center-left;
+  -fx-hgap: 4px;
+  -fx-vgap: 4px;
+}
+
+.core-combobox-chip {
+  -fx-alignment: center;
+  -fx-background-color: -app-muted;
+  -fx-background-radius: 2px;
+  -fx-font-size: 12px;
+  -fx-font-weight: 500;
+  -fx-min-height: 21px;
+  -fx-pref-height: 21px;
+  -fx-max-height: 21px;
+  -fx-padding: 0 0 0 6px;
+  -fx-spacing: 4px;
+}
+
+.core-combobox-chip > .label {
+  -fx-text-fill: -app-foreground;
+}
+
+.core-combobox-chip > .combobox-chip-remove {
+  -fx-opacity: 0.5;
+}
+
+.core-combobox-chip > .combobox-chip-remove:hover {
+  -fx-opacity: 1;
+}
+
+.core-combobox-chips-input,
+.core-combobox-chips-input:focused {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-border-color: transparent;
+  -fx-border-width: 0;
+  -fx-effect: null;
+  -fx-min-width: 64px;
+  -fx-pref-width: 96px;
+  -fx-padding: 0;
+}
