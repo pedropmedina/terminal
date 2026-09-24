@@ -9,60 +9,48 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-/**
- * A small JavaFX Canvas application that plots stock prices fetched from the configured provider.
- *
- * <p>The app uses Canvas instead of JavaFX chart controls so the coordinate mapping, axes, and
- * drawing steps are visible in one place. That makes it easier to understand how raw market data is
- * transformed into screen coordinates.
- */
+/** Loads application configuration and manages the JavaFX and service lifecycles. */
 public class App extends Application {
 
   private static final String SYMBOL = "IBM";
   private static final ChartInterval INTERVAL = ChartInterval.DAILY;
   private static final ChartType CHART_TYPE = ChartType.CANDLESTICK;
-  private static final double MIN_CANVAS_WIDTH = 1060.0;
-  private static final double MIN_CANVAS_HEIGHT = 760.0;
+  private static final AppTheme THEME = AppTheme.LIGHT;
+  private static final double WINDOW_WIDTH = 1060.0;
+  private static final double WINDOW_HEIGHT = 760.0;
 
+  private AppService service;
   private ChartWorkspace chartWorkspace;
-  private AppService services;
 
+  /**
+   * Launches the JavaFX application.
+   *
+   * @param arguments the command-line arguments forwarded to JavaFX
+   */
   public static void main(String[] args) {
     launch(args);
   }
 
+  /**
+   * Composes and displays the primary application window.
+   *
+   * @param stage the primary JavaFX stage
+   */
   @Override
   public void start(Stage stage) {
     Dotenv configuration = Dotenv.configure().ignoreIfMissing().load();
-    services = AppService.create(configuration::get);
+    service = AppService.create(configuration::get);
     try {
-      startChart(stage);
+      Scene scene = initializeWorkspace();
+      showStage(stage, scene);
+      chartWorkspace.start();
     } catch (RuntimeException | Error failure) {
-      try {
-        stop();
-      } catch (RuntimeException closeFailure) {
-        failure.addSuppressed(closeFailure);
-      }
+      closeAfterStartupFailure(failure);
       throw failure;
     }
   }
 
-  private void startChart(Stage stage) {
-    chartWorkspace = new ChartWorkspace(services, SYMBOL, INTERVAL, CHART_TYPE, Platform::runLater);
-    Scene scene = new Scene(chartWorkspace.getView(), MIN_CANVAS_WIDTH, MIN_CANVAS_HEIGHT);
-
-    // This is find for now, but we might want defined up top if we need to access the theme manager later
-    new AppThemeManager(scene, AppTheme.LIGHT);
-
-    stage.setTitle("Terminal");
-    stage.setMinWidth(MIN_CANVAS_WIDTH);
-    stage.setMinHeight(MIN_CANVAS_HEIGHT);
-    stage.setScene(scene);
-    stage.show();
-
-    chartWorkspace.start();
-  }
-
+  /** Closes the workspace before releasing its shared application services. */
   @Override
   public void stop() {
     try {
@@ -70,9 +58,51 @@ public class App extends Application {
         chartWorkspace.close();
       }
     } finally {
-      if (services != null) {
-        services.close();
+      if (service != null) {
+        service.close();
       }
+    }
+  }
+
+  /**
+   * Creates the workspace and its scene-level theme manager.
+   *
+   * @return the composed application scene
+   */
+  private Scene initializeWorkspace() {
+    chartWorkspace = new ChartWorkspace(service, SYMBOL, INTERVAL, CHART_TYPE, Platform::runLater);
+    Scene scene = new Scene(chartWorkspace.getView(), WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    // TODO: Come back to the theme once we have a better idea of how to implement settings
+    new AppThemeManager(scene, THEME);
+
+    return scene;
+  }
+
+  /**
+   * Configures and displays the primary stage.
+   *
+   * @param stage the primary JavaFX stage
+   * @param scene the composed application scene
+   */
+  private void showStage(Stage stage, Scene scene) {
+    stage.setTitle("Terminal");
+    stage.setMinWidth(WINDOW_WIDTH);
+    stage.setMinHeight(WINDOW_HEIGHT);
+    stage.setScene(scene);
+    stage.show();
+  }
+
+  /**
+   * Releases partially initialized resources and attaches cleanup failures to the startup failure.
+   *
+   * @param startupFailure the failure that interrupted application startup
+   */
+  private void closeAfterStartupFailure(Throwable startupFailure) {
+    try {
+      stop();
+    } catch (RuntimeException closeFailure) {
+      startupFailure.addSuppressed(closeFailure);
     }
   }
 }

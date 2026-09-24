@@ -31,4 +31,22 @@ class AppThemeManagerTest {
       assertEquals(4, scene.getStylesheets().size());
     });
   }
+
+  @Test
+  void appliesTheCurrentThemeWhenTheSceneRootChanges() {
+    FxTestSupport.runAndWait(() -> {
+      StackPane initialRoot = new StackPane();
+      Scene scene = new Scene(initialRoot);
+      AppThemeManager themes = new AppThemeManager(scene, AppTheme.DARK);
+      StackPane replacementRoot = new StackPane();
+
+      scene.setRoot(replacementRoot);
+      themes.refreshStylesheets();
+      themes.refreshStylesheets();
+
+      assertFalse(replacementRoot.getStyleClass().contains("theme-light"));
+      assertTrue(replacementRoot.getStyleClass().contains("theme-dark"));
+      assertEquals(4, scene.getStylesheets().size());
+    });
+  }
 }
