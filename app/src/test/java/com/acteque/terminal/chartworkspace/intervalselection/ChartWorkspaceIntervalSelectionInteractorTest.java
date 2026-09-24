@@ -1,11 +1,15 @@
 package com.acteque.terminal.chartworkspace.intervalselection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.acteque.terminal.chart.ChartInterval;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class ChartWorkspaceIntervalSelectionInteractorTest {
@@ -45,19 +49,48 @@ class ChartWorkspaceIntervalSelectionInteractorTest {
   }
 
   @Test
-  void findsASoleMatchAndUpdatesTheSelection() {
+  void findsASoleMatchAndRoutesAnAvailableSelection() {
     ChartWorkspaceIntervalSelectionModel model = new ChartWorkspaceIntervalSelectionModel();
     ChartWorkspaceIntervalSelectionInteractor interactor = new ChartWorkspaceIntervalSelectionInteractor(model);
+    AtomicReference<ChartInterval> selected = new AtomicReference<>();
     interactor.initialize(ChartInterval.DAILY);
+    interactor.onIntervalSelected(selected::set);
+    interactor.show();
 
     assertNull(interactor.soleMatch());
 
     interactor.setQuery("4h");
     ChartInterval match = interactor.soleMatch();
-    interactor.select(match);
+    interactor.selectInterval(match);
 
     assertSame(ChartInterval.FOUR_HOURS, match);
     assertSame(ChartInterval.FOUR_HOURS, model.getCurrentInterval());
+    assertSame(ChartInterval.FOUR_HOURS, selected.get());
+    assertFalse(model.isOpen());
+  }
+
+  @Test
+  void ignoresUnavailableSelectionsAndRoutesCloseRequests() {
+    ChartWorkspaceIntervalSelectionModel model = new ChartWorkspaceIntervalSelectionModel();
+    ChartWorkspaceIntervalSelectionInteractor interactor = new ChartWorkspaceIntervalSelectionInteractor(model);
+    AtomicReference<ChartInterval> selected = new AtomicReference<>();
+    AtomicInteger closeRequests = new AtomicInteger();
+    interactor.initialize(ChartInterval.DAILY);
+    interactor.setAvailability(interval -> interval != ChartInterval.FOUR_HOURS);
+    interactor.onIntervalSelected(selected::set);
+    interactor.onRequestClose(closeRequests::incrementAndGet);
+    interactor.show();
+
+    interactor.selectInterval(ChartInterval.FOUR_HOURS);
+
+    assertSame(ChartInterval.DAILY, model.getCurrentInterval());
+    assertNull(selected.get());
+    assertTrue(model.isOpen());
+
+    interactor.requestClose();
+
+    assertFalse(model.isOpen());
+    assertEquals(1, closeRequests.get());
   }
 
   @Test

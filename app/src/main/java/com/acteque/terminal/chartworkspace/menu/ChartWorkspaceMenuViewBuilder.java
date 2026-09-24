@@ -58,6 +58,13 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
   private Button chartTypeButton;
   private boolean chartTypeSelectionOpen;
 
+  /**
+   * Creates and connects the workspace-menu JavaFX composition.
+   *
+   * @param model the observable workspace-menu state
+   * @param actionRequestedHandler the menu-item request callback
+   * @param splitRequestedHandler the directional-split callback
+   */
   ChartWorkspaceMenuViewBuilder(
     ChartWorkspaceMenuModel model,
     Consumer<Item> actionRequestedHandler,
@@ -71,23 +78,44 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
     this.splitRequestedHandler = Objects.requireNonNull(splitRequestedHandler, "splitRequestedHandler cannot be null");
 
     splitPopover = createSplitPopover();
-    root.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-    model.itemsProperty().addListener((ListChangeListener<Item>) ignored -> rebuildItems());
-    model.chartTypeProperty().addListener((ignored, previous, current) -> updateChartTypeButton());
+    configureRoot();
+    connectModel();
     refreshView();
     ReloadHooks.register(this);
   }
 
+  /** Configures stable sizing for the workspace-menu root. */
+  private void configureRoot() {
+    root.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+  }
+
+  /** Connects observable menu state to the corresponding view updates. */
+  private void connectModel() {
+    model.itemsProperty().addListener((ListChangeListener<Item>) ignored -> rebuildItems());
+    model.chartTypeProperty().addListener((ignored, previous, current) -> updateChartTypeButton());
+  }
+
+  /**
+   * Returns the assembled workspace menu.
+   *
+   * @return the workspace-menu root
+   */
   @Override
   public Region build() {
     return root;
   }
 
+  /** Rebuilds reloadable menu controls from the current model state. */
   @Override
   public void refreshView() {
     rebuildItems();
   }
 
+  /**
+   * Updates the chart-type button's open-state presentation.
+   *
+   * @param value true when the chart-type selector is open
+   */
   void setChartTypeSelectionOpen(boolean value) {
     chartTypeSelectionOpen = value;
     if (chartTypeButton != null) {
@@ -95,24 +123,43 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
     }
   }
 
+  /** Closes menu-owned transient controls. */
   void closeTransientUi() {
     splitPopover.setOpen(false);
   }
 
+  /** Rebuilds the ordered menu controls and closes the split popover. */
   private void rebuildItems() {
     splitPopover.setOpen(false);
+    chartTypeButton = null;
+
     List<Node> items = new ArrayList<>();
     for (Item item : model.getItems()) {
       if (item == Item.SPLIT) {
-        Separator separator = new Separator(Orientation.VERTICAL);
-        separator.getStyleClass().add("chart-workspace-menu-separator");
-        items.add(separator);
+        items.add(createSplitSeparator());
       }
       items.add(createItem(item));
     }
     root.setItems(items.toArray(Node[]::new));
   }
 
+  /**
+   * Creates the separator displayed before the split action.
+   *
+   * @return the configured vertical separator
+   */
+  private static Separator createSplitSeparator() {
+    Separator separator = new Separator(Orientation.VERTICAL);
+    separator.getStyleClass().add("chart-workspace-menu-separator");
+    return separator;
+  }
+
+  /**
+   * Creates a control for one menu item and binds its dynamic presentation.
+   *
+   * @param item the represented menu item
+   * @return the configured menu control
+   */
   private Button createItem(Item item) {
     if (item == Item.SPLIT) {
       PopoverTrigger trigger = new PopoverTrigger(
@@ -162,7 +209,7 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
           .styleProperty()
           .bind(
             Bindings.createStringBinding(
-              () -> "-chart-workspace-menu-instrument-ring: " + cssColor(model.identifierColorProperty().get()) + ";",
+              () -> "-chart-workspace-menu-instrument-ring: " + cssColor(model.getIdentifierColor()) + ";",
               model.identifierColorProperty()
             )
           );
@@ -203,6 +250,12 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
     return button;
   }
 
+  /**
+   * Creates a circular region displaying a loaded instrument logo.
+   *
+   * @param image the loaded logo image, or null
+   * @return the clipped logo region, or null when no image is loaded
+   */
   private static Node createInstrumentLogo(Image image) {
     if (image == null) {
       return null;
@@ -228,6 +281,12 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
     return logo;
   }
 
+  /**
+   * Converts a JavaFX color to a locale-independent CSS color expression.
+   *
+   * @param color the color to convert
+   * @return the CSS rgba expression
+   */
   private static String cssColor(Color color) {
     return String.format(
       Locale.ROOT,
@@ -239,6 +298,11 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
     );
   }
 
+  /**
+   * Creates the directional split-action popover.
+   *
+   * @return the configured split popover
+   */
   private Popover createSplitPopover() {
     VBox actions = new VBox();
     actions.getStyleClass().add("chart-workspace-split-actions");
@@ -252,6 +316,14 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
     return new Popover(content);
   }
 
+  /**
+   * Adds one directional split action to the split popover.
+   *
+   * @param actions the split-action container
+   * @param label the action label and accessible text
+   * @param key the displayed shortcut key
+   * @param direction the requested chart split direction
+   */
   private void addSplitAction(VBox actions, String label, String key, ChartSplitDirection direction) {
     Label actionLabel = new Label(label);
     actionLabel.getStyleClass().add("chart-workspace-split-action-label");
@@ -282,6 +354,7 @@ final class ChartWorkspaceMenuViewBuilder implements Builder<Region>, ReloadTarg
     actions.getChildren().add(button);
   }
 
+  /** Updates the chart-type control to represent the active chart type. */
   private void updateChartTypeButton() {
     if (chartTypeButton == null) {
       return;

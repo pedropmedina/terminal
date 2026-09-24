@@ -316,15 +316,15 @@ class ChartWorkspaceTest {
       Chart right = fixture.model.getActiveChart();
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
-        fixture.interactor::activate,
-        fixture.interactor::navigateActive,
-        fixture.interactor::splitActive,
-        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
         new Dialog(),
-        true
+        true,
+        fixture.interactor::activate,
+        fixture.interactor::navigateActive,
+        fixture.interactor::splitActive,
+        fixture.interactor::removeActive
       );
       AtomicInteger propagatedEvents = new AtomicInteger();
       viewBuilder.build().addEventHandler(KeyEvent.KEY_PRESSED, ignored -> propagatedEvents.incrementAndGet());
@@ -355,15 +355,15 @@ class ChartWorkspaceTest {
       Chart right = fixture.model.getActiveChart();
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
-        fixture.interactor::activate,
-        fixture.interactor::navigateActive,
-        fixture.interactor::splitActive,
-        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
         new Dialog(),
-        true
+        true,
+        fixture.interactor::activate,
+        fixture.interactor::navigateActive,
+        fixture.interactor::splitActive,
+        fixture.interactor::removeActive
       );
       right.showInstrumentSearch();
       AtomicInteger propagatedEvents = new AtomicInteger();
@@ -386,14 +386,14 @@ class ChartWorkspaceTest {
       Chart source = fixture.initialize();
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
-        fixture.interactor::activate,
-        fixture.interactor::navigateActive,
-        fixture.interactor::splitActive,
-        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
-        new Dialog()
+        new Dialog(),
+        fixture.interactor::activate,
+        fixture.interactor::navigateActive,
+        fixture.interactor::splitActive,
+        fixture.interactor::removeActive
       );
       KeyEvent event = shortcutEvent(KeyCode.L);
       AtomicInteger propagatedEvents = new AtomicInteger();
@@ -417,14 +417,14 @@ class ChartWorkspaceTest {
       Chart source = fixture.initialize();
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
-        fixture.interactor::activate,
-        fixture.interactor::navigateActive,
-        fixture.interactor::splitActive,
-        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
-        new Dialog()
+        new Dialog(),
+        fixture.interactor::activate,
+        fixture.interactor::navigateActive,
+        fixture.interactor::splitActive,
+        fixture.interactor::removeActive
       );
       source.showInstrumentSearch();
       KeyEvent event = shortcutEvent(KeyCode.L);
@@ -447,14 +447,14 @@ class ChartWorkspaceTest {
       Chart source = fixture.initialize();
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
-        fixture.interactor::activate,
-        fixture.interactor::navigateActive,
-        fixture.interactor::splitActive,
-        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
-        new Dialog()
+        new Dialog(),
+        fixture.interactor::activate,
+        fixture.interactor::navigateActive,
+        fixture.interactor::splitActive,
+        fixture.interactor::removeActive
       );
       StackPane view = viewBuilder.build();
       new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
@@ -475,14 +475,14 @@ class ChartWorkspaceTest {
       Chart created = ((ChartWorkspaceLeaf) ((ChartWorkspaceSplit) fixture.model.getRoot()).second()).chart();
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
-        fixture.interactor::activate,
-        fixture.interactor::navigateActive,
-        fixture.interactor::splitActive,
-        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
-        new Dialog()
+        new Dialog(),
+        fixture.interactor::activate,
+        fixture.interactor::navigateActive,
+        fixture.interactor::splitActive,
+        fixture.interactor::removeActive
       );
       StackPane view = viewBuilder.build();
       AppThemeManager themeManager = new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);
@@ -581,14 +581,14 @@ class ChartWorkspaceTest {
       Chart source = fixture.initialize();
       ChartWorkspaceViewBuilder viewBuilder = new ChartWorkspaceViewBuilder(
         fixture.model,
-        fixture.interactor::activate,
-        fixture.interactor::navigateActive,
-        fixture.interactor::splitActive,
-        fixture.interactor::removeActive,
         new Region(),
         new Drawer(),
         new Dialog(),
-        new Dialog()
+        new Dialog(),
+        fixture.interactor::activate,
+        fixture.interactor::navigateActive,
+        fixture.interactor::splitActive,
+        fixture.interactor::removeActive
       );
       StackPane view = viewBuilder.build();
       new AppThemeManager(new Scene(view, 1_000.0, 600.0), AppTheme.LIGHT);

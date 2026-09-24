@@ -25,6 +25,7 @@ import com.acteque.terminal.ui.inputgroup.InputGroupAlignment;
 import com.acteque.terminal.ui.togglegroup.ToggleGroup;
 import com.acteque.terminal.ui.togglegroup.ToggleGroupItem;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
@@ -223,6 +224,24 @@ class ChartWorkspaceIntervalSelectionDialogTest {
       );
       assertFalse(dialog.isOpen());
       assertFalse(selection.openProperty().get());
+    });
+  }
+
+  @Test
+  void mirrorsDialogDismissalsIntoStateAndRoutesTheCloseRequest() {
+    FxTestSupport.runAndWait(() -> {
+      ChartWorkspaceIntervalSelection selection = new ChartWorkspaceIntervalSelection(ChartInterval.DAILY);
+      Dialog dialog = selection.getView();
+      new Scene(new StackPane(dialog), 800.0, 600.0);
+      AtomicInteger closeRequests = new AtomicInteger();
+      selection.onRequestClose(closeRequests::incrementAndGet);
+      selection.show();
+
+      dialog.close();
+
+      assertFalse(selection.openProperty().get());
+      assertFalse(dialog.isOpen());
+      assertEquals(1, closeRequests.get());
     });
   }
 
