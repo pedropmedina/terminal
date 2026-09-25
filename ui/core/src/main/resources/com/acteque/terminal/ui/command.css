@@ -1,0 +1,190 @@
+.core-command {
+  -fx-background-color: -app-popover;
+  -fx-background-radius: 12px;
+  -fx-fill-width: true;
+  -fx-padding: 4px;
+  -fx-text-fill: -app-popover-foreground;
+}
+
+.core-command-input-wrapper {
+  -fx-padding: 4px 4px 0;
+}
+
+.core-command-input-group {
+  -fx-background-color: -app-input-background;
+  -fx-border-color: rgba(127, 127, 127, 0.3);
+  -fx-effect: null;
+  -fx-min-height: 32px;
+  -fx-pref-height: 32px;
+  -fx-max-height: 32px;
+  -fx-background-radius: 8px;
+  -fx-border-radius: 8px;
+}
+
+.core-command-input-group > .core-input-group-addon.input-group-addon-inline-start {
+  -fx-padding: 3px 0 3px 8px;
+}
+
+.core-command-input,
+.core-command-input:focused,
+.core-command-input:disabled {
+  -fx-font-size: 14px;
+}
+
+.core-command-input:disabled {
+  -fx-cursor: default;
+  -fx-opacity: 0.5;
+}
+
+.command-input-search-icon {
+  -fx-opacity: 0.5;
+  -fx-min-width: 16px;
+  -fx-pref-width: 16px;
+  -fx-max-width: 16px;
+  -fx-min-height: 16px;
+  -fx-pref-height: 16px;
+  -fx-max-height: 16px;
+}
+
+.command-input-search-icon > .lucide-icon-path {
+  -fx-stroke: -app-popover-foreground;
+}
+
+.core-command-list {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-border-width: 0;
+  -fx-fit-to-width: true;
+  -fx-max-height: 288px;
+  -fx-padding: 0;
+}
+
+.core-command-list > .viewport,
+.core-command-list > .viewport > .command-list-entries,
+.core-command-list .command-group-entries {
+  -fx-background-color: transparent;
+  -fx-spacing: 0;
+}
+
+.core-command-list > .corner,
+.core-command-list > .scroll-bar:horizontal,
+.core-command-list > .scroll-bar:vertical {
+  -fx-opacity: 0;
+  -fx-pref-width: 0;
+  -fx-pref-height: 0;
+  -fx-min-width: 0;
+  -fx-min-height: 0;
+  -fx-max-width: 0;
+  -fx-max-height: 0;
+}
+
+.core-label.core-command-empty {
+  -fx-alignment: center;
+  -fx-font-size: 14px;
+  -fx-max-width: infinity;
+  -fx-padding: 24px 0;
+  -fx-text-alignment: center;
+  -fx-text-fill: -app-popover-foreground;
+}
+
+.core-command-group {
+  -fx-padding: 4px;
+  -fx-text-fill: -app-foreground;
+}
+
+.command-group-heading {
+  -fx-font-size: 12px;
+  -fx-font-weight: 500;
+  -fx-padding: 6px 8px;
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-command-separator {
+  -fx-padding: 0;
+  -fx-pref-height: 1px;
+  -fx-max-height: 1px;
+  -fx-translate-x: -4px;
+}
+
+.core-command-item {
+  -fx-alignment: center-left;
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-background-radius: 2px;
+  -fx-border-color: transparent;
+  -fx-border-width: 0;
+  -fx-cursor: default;
+  -fx-font-size: 14px;
+  -fx-font-weight: normal;
+  -fx-padding: 6px 8px;
+  -fx-text-fill: -app-popover-foreground;
+}
+
+.core-command-dialog .core-command-item {
+  -fx-background-radius: 8px;
+}
+
+.core-command-item:selected,
+.core-command-item:hover {
+  -fx-background-color: -app-muted;
+  -fx-text-fill: -app-foreground;
+}
+
+.core-command-item:disabled {
+  -fx-opacity: 0.5;
+}
+
+.core-command-item > .command-item-content {
+  -fx-alignment: center-left;
+  -fx-spacing: 8px;
+}
+
+.core-command-item .label {
+  -fx-text-fill: -app-popover-foreground;
+}
+
+.core-command-item:selected .label {
+  -fx-text-fill: -app-foreground;
+}
+
+.core-command-item .lucide-icon {
+  -fx-min-width: 16px;
+  -fx-pref-width: 16px;
+  -fx-max-width: 16px;
+  -fx-min-height: 16px;
+  -fx-pref-height: 16px;
+  -fx-max-height: 16px;
+}
+
+.core-command-item .lucide-icon > .lucide-icon-path {
+  -fx-stroke: -app-popover-foreground;
+}
+
+.core-command-item:selected .lucide-icon > .lucide-icon-path {
+  -fx-stroke: -app-foreground;
+}
+
+.command-item-indicator {
+  -fx-min-width: 16px;
+  -fx-pref-width: 16px;
+  -fx-max-width: 16px;
+  -fx-min-height: 16px;
+  -fx-pref-height: 16px;
+  -fx-max-height: 16px;
+}
+
+.core-command-shortcut {
+  -fx-font-size: 12px;
+  -fx-text-fill: -app-muted-foreground;
+}
+
+.core-command-item:selected .core-command-shortcut {
+  -fx-text-fill: -app-foreground;
+}
+
+.core-command-dialog-content {
+  -fx-background-radius: 12px;
+  -fx-border-radius: 12px;
+  -fx-padding: 0;
+  -fx-spacing: 0;
+}

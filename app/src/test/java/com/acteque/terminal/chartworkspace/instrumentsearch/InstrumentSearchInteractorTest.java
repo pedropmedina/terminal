@@ -35,7 +35,7 @@ class InstrumentSearchInteractorTest {
   }
 
   @Test
-  void initializesAndFiltersNormalizedQueriesBySymbolOrExchange() {
+  void initializesCurrentSymbolAndLoadsCatalog() {
     InstrumentSearchModel model = new InstrumentSearchModel();
     InstrumentSearchInteractor interactor = interactor(model, List.of(APPLE, IBM));
 
@@ -43,16 +43,8 @@ class InstrumentSearchInteractorTest {
     interactor.loadCatalog();
 
     assertEquals("IBM", model.getCurrentSymbol());
-    assertEquals("ibm", model.getQuery());
-    assertEquals(List.of(IBM), List.copyOf(model.matchingInstrumentsProperty()));
+    assertEquals(List.of(APPLE, IBM), List.copyOf(model.instrumentsProperty()));
     assertSame(InstrumentSearchModel.LoadState.LOADED, model.getLoadState());
-
-    interactor.setQuery("  nas  ");
-    assertEquals("nas", model.getQuery());
-    assertEquals(List.of(APPLE), List.copyOf(model.matchingInstrumentsProperty()));
-
-    interactor.setQuery(null);
-    assertEquals(List.of(APPLE, IBM), List.copyOf(model.matchingInstrumentsProperty()));
   }
 
   @Test
@@ -120,7 +112,6 @@ class InstrumentSearchInteractorTest {
     interactor.selectInstrument(APPLE);
 
     assertEquals("AAPL", model.getCurrentSymbol());
-    assertEquals("aapl", model.getQuery());
     assertFalse(model.isOpen());
     assertEquals("AAPL", selected.get());
   }

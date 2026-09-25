@@ -1,73 +1,28 @@
-.instrument-search-dialog {
-  -fx-alignment: center;
+.instrument-search-dialog .core-command-dialog-content {
+  -fx-pref-width: 384px;
 }
 
-.instrument-search-dialog > .core-dialog-portal > .core-dialog-overlay {
-  -fx-fill: -app-overlay;
+.instrument-search-list {
+  -fx-padding: 4px;
 }
 
-.instrument-search-card {
-  -fx-pref-width: 640px;
-  -fx-spacing: 16px;
-  -fx-padding: 24px;
-  -fx-background-color: -app-card;
-  -fx-background-radius: 8px;
-  -fx-border-color: -app-border;
-  -fx-border-radius: 8px;
-}
-
-.instrument-search-title {
-  -fx-font-family: "System";
-  -fx-font-size: 18px;
-  -fx-font-weight: 600;
-  -fx-text-fill: -app-card-foreground;
-}
-
-.instrument-list {
-  -fx-pref-height: 360px;
-  -fx-background-color: transparent;
-  -fx-background-insets: 0;
-  -fx-border-width: 0;
-}
-
-.instrument-cell {
-  -fx-background-color: transparent;
-  -fx-border-width: 0;
-}
-
-.instrument-cell:filled {
-  -fx-border-color: transparent transparent -app-border transparent;
-  -fx-border-width: 0 0 1px 0;
-}
-
-.instrument-cell:filled:hover {
-  -fx-background-color: -app-accent;
-}
-
-.instrument-list:gliding .instrument-cell:filled:hover {
-  -fx-background-color: transparent;
-}
-
-.instrument-row {
+.instrument-search-row {
   -fx-alignment: center-left;
-  -fx-spacing: 16px;
-  -fx-padding: 8px 4px;
+  -fx-spacing: 8px;
 }
 
-.instrument-ticker {
-  -fx-min-width: 120px;
+.instrument-search-symbol {
+  -fx-min-width: 72px;
   -fx-font-family: "System";
-  -fx-font-size: 13px;
   -fx-font-weight: 600;
-  -fx-text-fill: -app-foreground;
 }
 
-.instrument-description {
+.instrument-search-description,
+.instrument-search-exchange {
   -fx-text-fill: -app-muted-foreground;
 }
 
-.instrument-exchange {
-  -fx-min-width: 100px;
+.instrument-search-exchange {
+  -fx-min-width: 72px;
   -fx-alignment: center-right;
-  -fx-text-fill: -app-muted-foreground;
 }

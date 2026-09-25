@@ -33,7 +33,6 @@ public final class InstrumentSearch {
 
     viewBuilder = new InstrumentSearchViewBuilder(
       model,
-      interactor::setQuery,
       interactor::loadCatalog,
       interactor::selectInstrument,
       interactor::requestClose

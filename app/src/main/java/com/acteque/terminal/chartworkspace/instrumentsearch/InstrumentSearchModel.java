@@ -29,15 +29,9 @@ final class InstrumentSearchModel {
 
   private final ReadOnlyStringWrapper currentSymbol = new ReadOnlyStringWrapper(this, "currentSymbol", "");
   private final ReadOnlyBooleanWrapper open = new ReadOnlyBooleanWrapper(this, "open");
-  private final ReadOnlyStringWrapper query = new ReadOnlyStringWrapper(this, "query", "");
   private final ReadOnlyListWrapper<Instrument> instruments = new ReadOnlyListWrapper<>(
     this,
     "instruments",
-    FXCollections.observableArrayList()
-  );
-  private final ReadOnlyListWrapper<Instrument> matchingInstruments = new ReadOnlyListWrapper<>(
-    this,
-    "matchingInstruments",
     FXCollections.observableArrayList()
   );
   private final ReadOnlyObjectWrapper<LoadState> loadState = new ReadOnlyObjectWrapper<>(
@@ -101,24 +95,6 @@ final class InstrumentSearchModel {
   }
 
   /**
-   * Returns the normalized search query.
-   *
-   * @return the normalized query
-   */
-  String getQuery() {
-    return query.get();
-  }
-
-  /**
-   * Updates the normalized search query.
-   *
-   * @param value the normalized query
-   */
-  void setQuery(String value) {
-    query.set(value);
-  }
-
-  /**
    * Returns the loaded instrument catalog.
    *
    * @return the read-only instrument-list property
@@ -134,24 +110,6 @@ final class InstrumentSearchModel {
    */
   void setInstruments(List<Instrument> values) {
     instruments.setAll(values);
-  }
-
-  /**
-   * Returns the instruments matching the current query.
-   *
-   * @return the read-only matching-instrument property
-   */
-  ReadOnlyListProperty<Instrument> matchingInstrumentsProperty() {
-    return matchingInstruments.getReadOnlyProperty();
-  }
-
-  /**
-   * Replaces the instruments matching the current query.
-   *
-   * @param values the matching instruments
-   */
-  void setMatchingInstruments(List<Instrument> values) {
-    matchingInstruments.setAll(values);
   }
 
   /**

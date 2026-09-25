@@ -3,47 +3,51 @@ package com.acteque.terminal.chartworkspace.instrumentsearch;
 import com.acteque.terminal.marketdata.Instrument;
 import com.acteque.terminal.reload.ReloadHooks;
 import com.acteque.terminal.reload.ReloadTarget;
-import com.acteque.terminal.ui.Input;
-import com.acteque.terminal.ui.ListView;
+import com.acteque.terminal.ui.command.Command;
+import com.acteque.terminal.ui.command.CommandDialog;
+import com.acteque.terminal.ui.command.CommandEmpty;
+import com.acteque.terminal.ui.command.CommandInput;
+import com.acteque.terminal.ui.command.CommandItem;
+import com.acteque.terminal.ui.command.CommandList;
 import com.acteque.terminal.ui.dialog.Dialog;
-import com.acteque.terminal.ui.dialog.DialogContent;
-import com.acteque.terminal.ui.dialog.DialogTitle;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.application.Platform;
-import javafx.css.PseudoClass;
+import javafx.collections.ListChangeListener;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.util.Builder;
 
-/** Builds the reactive JavaFX view for instrument search. */
+/** Builds the instrument-search view from the shared command component family. */
 final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget {
 
-  private static final double MAX_VIEWPORT_WIDTH_RATIO = 0.70;
-  private static final double MAX_VIEWPORT_HEIGHT_RATIO = 0.70;
-  private static final PseudoClass GLIDING_PSEUDO_CLASS = PseudoClass.getPseudoClass("gliding");
+  private static final String DIALOG_TITLE = "Instrument search";
+  private static final String DIALOG_DESCRIPTION = "Search instruments by symbol or exchange";
+  private static final int MAX_RENDERED_RESULTS = 50;
 
   private final InstrumentSearchModel model;
   private final Consumer<Instrument> instrumentSelectedHandler;
-  private final Dialog root = new Dialog();
-  private final Input symbolField = new Input();
-  private final ListView<Instrument> instruments = new ListView<>();
+  private final Command command = new Command();
+  private final CommandInput input = new CommandInput(command);
+  private final CommandEmpty empty = new CommandEmpty(command, "Loading instruments…");
+  private final CommandList instruments = new CommandList(command, empty);
+  private final CommandDialog root = new CommandDialog(command, DIALOG_TITLE, DIALOG_DESCRIPTION);
+  private final List<CommandItem> instrumentItems = new ArrayList<>();
 
   /**
-   * Creates and connects the instrument-search JavaFX composition.
+   * Creates and connects the instrument-search command composition.
    *
    * @param model the observable instrument-search state
-   * @param queryChangedHandler the search-query callback
    * @param catalogRequestedHandler the catalog-load callback
    * @param instrumentSelectedHandler the instrument-selection callback
    * @param closeRequestHandler the dialog-close callback
    */
   InstrumentSearchViewBuilder(
     InstrumentSearchModel model,
-    Consumer<String> queryChangedHandler,
     Runnable catalogRequestedHandler,
     Consumer<Instrument> instrumentSelectedHandler,
     Runnable closeRequestHandler
@@ -52,10 +56,6 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
     this.instrumentSelectedHandler = Objects.requireNonNull(
       instrumentSelectedHandler,
       "instrumentSelectedHandler cannot be null"
-    );
-    Consumer<String> validatedQueryChangedHandler = Objects.requireNonNull(
-      queryChangedHandler,
-      "queryChangedHandler cannot be null"
     );
     Runnable validatedCatalogRequestedHandler = Objects.requireNonNull(
       catalogRequestedHandler,
@@ -66,14 +66,10 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
       "closeRequestHandler cannot be null"
     );
 
-    configureDialog();
-    configureSymbolField();
-    configureInstrumentList();
-    connectComponents(validatedQueryChangedHandler, validatedCatalogRequestedHandler, validatedCloseRequestHandler);
-
+    configureView();
+    connectComponents(validatedCatalogRequestedHandler, validatedCloseRequestHandler);
     refreshView();
     displayOpenState(model.isOpen(), validatedCatalogRequestedHandler);
-    updatePlaceholder();
     ReloadHooks.register(this);
   }
 
@@ -87,65 +83,36 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
     return root;
   }
 
-  /** Rebuilds reloadable dialog content while retaining model listeners and controls. */
+  /** Rebuilds reloadable command content while retaining model listeners and controls. */
   @Override
   public void refreshView() {
-    DialogTitle title = new DialogTitle("Instrument search");
-    title.getStyleClass().add("instrument-search-title");
-
-    symbolField.setPromptText("Symbol");
-    symbolField.setAccessibleText("Stock symbol");
-
-    DialogContent card = new DialogContent(title, symbolField, instruments);
-    card.getStyleClass().add("instrument-search-card");
-    card.maxWidthProperty().bind(root.widthProperty().multiply(MAX_VIEWPORT_WIDTH_RATIO));
-    card.maxHeightProperty().bind(root.heightProperty().multiply(MAX_VIEWPORT_HEIGHT_RATIO));
-    DialogContent.setVgrow(instruments, Priority.ALWAYS);
-    root.setContent(card);
+    input.getEditor().setPromptText("Symbol");
+    input.getEditor().setAccessibleText("Stock symbol");
+    command.getChildren().setAll(input, instruments);
+    command.setSearchText(model.getCurrentSymbol());
+    rebuildInstrumentItems();
+    updateEmptyState();
   }
 
-  /** Configures the dialog's stable structural styling. */
-  private void configureDialog() {
+  /** Configures the command dialog's stable structural styling. */
+  private void configureView() {
     root.getStyleClass().add("instrument-search-dialog");
-  }
-
-  /** Initializes the search field from the current model state. */
-  private void configureSymbolField() {
-    symbolField.setText(model.getCurrentSymbol());
-  }
-
-  /** Configures the searchable instrument list and its gliding presentation state. */
-  private void configureInstrumentList() {
-    instruments.getStyleClass().add("instrument-list");
-    instruments.setItems(model.matchingInstrumentsProperty());
-    instruments.setCellFactory(ignored -> new InstrumentCell());
-    instruments
-      .glidingProperty()
-      .addListener((ignored, wasGliding, isGliding) ->
-        instruments.pseudoClassStateChanged(GLIDING_PSEUDO_CLASS, isGliding)
-      );
+    command.getStyleClass().add("instrument-search-command");
+    command.setFilter(null);
+    instruments.getStyleClass().add("instrument-search-list");
   }
 
   /**
    * Connects model observations and forwards control intents to the interactor.
    *
-   * @param queryChangedHandler the validated search-query callback
    * @param catalogRequestedHandler the validated catalog-load callback
    * @param closeRequestHandler the validated dialog-close callback
    */
-  private void connectComponents(
-    Consumer<String> queryChangedHandler,
-    Runnable catalogRequestedHandler,
-    Runnable closeRequestHandler
-  ) {
-    symbolField.textProperty().addListener((ignored, oldValue, newValue) -> queryChangedHandler.accept(newValue));
-    model.currentSymbolProperty().addListener((ignored, oldValue, newValue) -> {
-      if (!Objects.equals(symbolField.getText(), newValue)) {
-        symbolField.setText(newValue);
-      }
-    });
-    model.loadStateProperty().addListener(ignored -> updatePlaceholder());
-
+  private void connectComponents(Runnable catalogRequestedHandler, Runnable closeRequestHandler) {
+    command.searchTextProperty().addListener(ignored -> rebuildInstrumentItems());
+    model.currentSymbolProperty().addListener((ignored, previous, current) -> command.setSearchText(current));
+    model.instrumentsProperty().addListener((ListChangeListener<Instrument>) change -> rebuildInstrumentItems());
+    model.loadStateProperty().addListener(ignored -> updateEmptyState());
     model.openProperty().addListener((ignored, wasOpen, isOpen) -> displayOpenState(isOpen, catalogRequestedHandler));
     root.openProperty().addListener((ignored, wasOpen, isOpen) -> {
       if (!isOpen && model.isOpen()) {
@@ -155,78 +122,96 @@ final class InstrumentSearchViewBuilder implements Builder<Dialog>, ReloadTarget
   }
 
   /**
-   * Mirrors model visibility into the dialog and prepares the search field when opened.
+   * Mirrors model visibility into the dialog and prepares the command input when opened.
    *
    * @param open true to open the dialog
    * @param catalogRequestedHandler the catalog-load callback
    */
   private void displayOpenState(boolean open, Runnable catalogRequestedHandler) {
     root.setOpen(open);
-    if (open) {
-      symbolField.selectAll();
-      Platform.runLater(symbolField::requestFocus);
-      catalogRequestedHandler.run();
+    if (!open) {
+      return;
+    }
+
+    command.setSearchText(model.getCurrentSymbol());
+    input.getEditor().selectAll();
+    Platform.runLater(() -> {
+      input.getEditor().requestFocus();
+      input.getEditor().selectAll();
+    });
+    catalogRequestedHandler.run();
+  }
+
+  /** Replaces the rendered commands with a bounded window of matching catalog entries. */
+  private void rebuildInstrumentItems() {
+    instrumentItems.forEach(CommandItem::dispose);
+    instrumentItems.clear();
+    instruments.getEntries().setAll(empty);
+
+    String normalizedQuery = command.getSearchText().strip().toLowerCase(Locale.ROOT);
+    for (Instrument instrument : model.instrumentsProperty()) {
+      if (!matches(instrument, normalizedQuery)) {
+        continue;
+      }
+      CommandItem item = createInstrumentItem(instrument);
+      instrumentItems.add(item);
+      instruments.getEntries().add(item);
+      if (instrumentItems.size() == MAX_RENDERED_RESULTS) {
+        break;
+      }
     }
   }
 
-  /** Displays placeholder text appropriate to the current catalog loading state. */
-  private void updatePlaceholder() {
-    instruments.setPlaceholder(
-      new Label(
-        switch (model.getLoadState()) {
-          case NOT_LOADED, LOADING -> "Loading instruments…";
-          case LOADED -> "No matching instruments";
-          case FAILED -> "Unable to load instruments";
-        }
-      )
+  /**
+   * Creates one searchable and invokable instrument command.
+   *
+   * @param instrument the instrument represented by the command
+   * @return the configured command item
+   */
+  private CommandItem createInstrumentItem(Instrument instrument) {
+    Label symbol = new Label(instrument.symbol());
+    Label description = new Label(instrument.name().orElse(""));
+    Label exchange = new Label(instrument.exchange().orElse(""));
+    HBox row = new HBox(symbol, description, exchange);
+
+    row.getStyleClass().add("instrument-search-row");
+    row.setMaxWidth(Double.MAX_VALUE);
+    symbol.getStyleClass().add("instrument-search-symbol");
+    description.getStyleClass().add("instrument-search-description");
+    description.setMaxWidth(Double.MAX_VALUE);
+    HBox.setHgrow(description, Priority.ALWAYS);
+    exchange.getStyleClass().add("instrument-search-exchange");
+    HBox.setHgrow(row, Priority.ALWAYS);
+
+    CommandItem item = new CommandItem(command, instrument.symbol(), row);
+    instrument.exchange().ifPresent(item.getKeywords()::add);
+    item.setOnAction(ignored -> instrumentSelectedHandler.accept(instrument));
+    return item;
+  }
+
+  /**
+   * Reports whether an instrument matches the normalized command query.
+   *
+   * @param instrument the candidate instrument
+   * @param normalizedQuery the stripped, lower-case command query
+   * @return true when the symbol or exchange contains the query
+   */
+  private static boolean matches(Instrument instrument, String normalizedQuery) {
+    return (
+      normalizedQuery.isEmpty() ||
+      instrument.symbol().toLowerCase(Locale.ROOT).contains(normalizedQuery) ||
+      instrument.exchange().orElse("").toLowerCase(Locale.ROOT).contains(normalizedQuery)
     );
   }
 
-  /** Renders an instrument result and forwards valid primary-button selections. */
-  private final class InstrumentCell extends ListCell<Instrument> {
-
-    private final Label symbol = new Label();
-    private final Label description = new Label();
-    private final Label exchange = new Label();
-    private final HBox row = new HBox(symbol, description, exchange);
-
-    /** Creates and styles a reusable instrument-result cell. */
-    private InstrumentCell() {
-      getStyleClass().add("instrument-cell");
-      row.getStyleClass().add("instrument-row");
-      symbol.getStyleClass().add("instrument-ticker");
-      exchange.getStyleClass().add("instrument-exchange");
-      description.getStyleClass().add("instrument-description");
-      description.setMaxWidth(Double.MAX_VALUE);
-      HBox.setHgrow(description, Priority.ALWAYS);
-
-      setOnMouseClicked(event -> {
-        if (event.getButton() == MouseButton.PRIMARY && !isEmpty() && getItem() != null && !instruments.isGliding()) {
-          instrumentSelectedHandler.accept(getItem());
-          event.consume();
-        }
-      });
-    }
-
-    /**
-     * Updates the cell's labels and graphic for its current instrument.
-     *
-     * @param instrument the instrument to display
-     * @param empty true when the cell has no item
-     */
-    @Override
-    protected void updateItem(Instrument instrument, boolean empty) {
-      super.updateItem(instrument, empty);
-      setText(null);
-      if (empty || instrument == null) {
-        setGraphic(null);
-        return;
+  /** Displays placeholder text appropriate to the current catalog loading state. */
+  private void updateEmptyState() {
+    empty.setText(
+      switch (model.getLoadState()) {
+        case NOT_LOADED, LOADING -> "Loading instruments…";
+        case LOADED -> "No matching instruments";
+        case FAILED -> "Unable to load instruments";
       }
-
-      symbol.setText(instrument.symbol());
-      description.setText(instrument.name().orElse(""));
-      exchange.setText(instrument.exchange().orElse(""));
-      setGraphic(row);
-    }
+    );
   }
 }

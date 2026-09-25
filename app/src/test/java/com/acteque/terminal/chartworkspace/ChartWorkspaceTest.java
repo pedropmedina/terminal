@@ -183,11 +183,26 @@ class ChartWorkspaceTest {
         layout(view);
         Dialog instrumentSearch = assertInstanceOf(Dialog.class, view.lookup(".instrument-search-dialog"));
         assertTrue(instrumentSearch.isOpen());
-        Region instrumentSearchCard = assertInstanceOf(Region.class, view.lookup(".instrument-search-card"));
+        Region instrumentSearchContent = assertInstanceOf(
+          Region.class,
+          view.lookup(".instrument-search-dialog .core-command-dialog-content")
+        );
+        Region instrumentSearchInput = assertInstanceOf(
+          Region.class,
+          view.lookup(".instrument-search-dialog .core-command-input-group")
+        );
+        Region instrumentSearchEmpty = assertInstanceOf(
+          Region.class,
+          view.lookup(".instrument-search-dialog .core-command-empty")
+        );
         Bounds workspaceBounds = view.localToScene(view.getBoundsInLocal());
-        Bounds cardBounds = instrumentSearchCard.localToScene(instrumentSearchCard.getBoundsInLocal());
-        assertEquals(workspaceBounds.getCenterX(), cardBounds.getCenterX(), 0.01);
-        assertEquals(workspaceBounds.getCenterY(), cardBounds.getCenterY(), 0.01);
+        Bounds contentBounds = instrumentSearchContent.localToScene(instrumentSearchContent.getBoundsInLocal());
+        Bounds inputBounds = instrumentSearchInput.localToScene(instrumentSearchInput.getBoundsInLocal());
+        Bounds emptyBounds = instrumentSearchEmpty.localToScene(instrumentSearchEmpty.getBoundsInLocal());
+        assertEquals(workspaceBounds.getCenterX(), contentBounds.getCenterX(), 0.01);
+        assertEquals(workspaceBounds.getMinY() + workspaceBounds.getHeight() / 3.0, contentBounds.getMinY(), 1.01);
+        assertEquals(inputBounds.getMinX(), emptyBounds.getMinX(), 0.01);
+        assertEquals(inputBounds.getMaxX(), emptyBounds.getMaxX(), 0.01);
         instrumentSearch.close();
 
         assertInstanceOf(Button.class, menuItems.getChildren().getLast()).fire();

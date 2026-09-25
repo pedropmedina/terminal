@@ -3,7 +3,6 @@ package com.acteque.terminal.chartworkspace.instrumentsearch;
 import com.acteque.terminal.marketdata.Instrument;
 import com.acteque.terminal.marketdata.InstrumentCatalog;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -68,25 +67,6 @@ final class InstrumentSearchInteractor {
     String value = Objects.requireNonNull(symbol, "symbol cannot be null");
 
     model.setCurrentSymbol(value);
-    setQuery(value);
-  }
-
-  /**
-   * Normalizes and applies a query against instrument symbols and exchanges.
-   *
-   * @param query the entered search text, or null to show all instruments
-   */
-  void setQuery(String query) {
-    String normalizedQuery = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
-
-    model.setQuery(normalizedQuery);
-    model.setMatchingInstruments(
-      model
-        .instrumentsProperty()
-        .stream()
-        .filter(instrument -> matches(instrument, normalizedQuery))
-        .toList()
-    );
   }
 
   /** Loads the instrument catalog once and publishes its result on the UI executor. */
@@ -103,7 +83,6 @@ final class InstrumentSearchInteractor {
           return;
         }
         model.setInstruments(List.copyOf(instruments));
-        setQuery(model.getQuery());
         model.setLoadState(InstrumentSearchModel.LoadState.LOADED);
       })
     );
@@ -144,20 +123,5 @@ final class InstrumentSearchInteractor {
   void requestClose() {
     close();
     closeRequestHandler.run();
-  }
-
-  /**
-   * Reports whether an instrument matches the normalized search query.
-   *
-   * @param instrument the candidate instrument
-   * @param normalizedQuery the stripped, lower-case query
-   * @return true when the symbol or exchange contains the query
-   */
-  private static boolean matches(Instrument instrument, String normalizedQuery) {
-    return (
-      normalizedQuery.isEmpty() ||
-      instrument.symbol().toLowerCase(Locale.ROOT).contains(normalizedQuery) ||
-      instrument.exchange().orElse("").toLowerCase(Locale.ROOT).contains(normalizedQuery)
-    );
   }
 }
